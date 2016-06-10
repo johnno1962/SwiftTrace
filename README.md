@@ -3,7 +3,7 @@
 Trace Swift and Objective-C method invocations of classes in an app bundle or framework.
 Think [Xtrace](https://github.com/johnno1962/Xtrace) but for Swift and Objective-C.
 
-SwiftTrace is most easily used as a CocoaPod and can be added to your project by adding the
+SwiftTrace is most easily used as a CocoaPod and can be added to your project by temporarily adding the
 following line to it's Podfile:
 
     pod 'SwiftTrace'
@@ -13,11 +13,12 @@ the following to the beginning of it's didFinishLaunchingWithOptions method:
 
     SwiftTrace.traceBundleContainingClass(self.dynamicType)
 
+This traces all classes defined in the main application bundle.
 To trace, for example, all classes in the RxSwift framework add the following
 
     SwiftTrace.traceBundleContainingClass(RxSwift.DisposeBase.self)
 
-This yields output something like:
+This gives output in the Xcode debug console something like:
 
     RxSwift.SingleAssignmentDisposable.dispose () -> ()
     RxSwift.SingleAssignmentDisposable.disposable.setter : RxSwift.Disposable11
@@ -42,7 +43,7 @@ Individual classes can be traced using the underlying:
 Output can be filtered using inclusion and exclusion regexps. 
 
     SwiftTrace.include( "TestClass" )
-    SwiftTrace.exclude( ".getter" )
+    SwiftTrace.exclude( "\\.getter" )
 
 These methods must be called before you start the trace as they are applied during the "Swizzle".
 
