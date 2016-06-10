@@ -91,7 +91,7 @@ private func tracer( info: AnyObject ) -> IMP {
 
 extension NSObject {
 
-    public class func traceBubdle() {
+    public class func traceBundle() {
         SwiftTrace.traceBundleContainingClass( self )
     }
 
