@@ -1,6 +1,7 @@
 # SwiftTrace
 
 Trace Swift and Objective-C method invocations of classes in an app bundle or framework.
+Think [Xtrace](https://github.com/johnno1962/Xtrace) but for Swift and Objective-C.
 
 SwiftTrace is most easily used as a CocoaPod and can be added to your project by adding the
 following line to it's Podfile:
@@ -43,7 +44,7 @@ Output can be filtered using inclusion and exclusion regexps.
     SwiftTrace.include( "TestClass" )
     SwiftTrace.exclude( ".getter" )
 
-These methods must be classed before you start the trace as they are applied during the "Swizzle".
+These methods must be called before you start the trace as they are applied during the "Swizzle".
 
 If you want to further process output you can define a custom tracing class:
 
@@ -58,7 +59,10 @@ If you want to further process output you can define a custom tracing class:
     
     SwiftTrace.traceClass = MyTracer.self
 
-Please file an issue if you encounter a project that doesn't work while tracing or
-the author can be contacted on Twitter [@Injection4Xcode](https://twitter.com/@Injection4Xcode).
+Please file an issue if you encounter a project that doesn't work while tracing. It should
+be 100% reliable as it uses assembly language trampolines rather than Swizzling like Xtrace.
+Otherwise, the author can be contacted on Twitter [@Injection4Xcode](https://twitter.com/@Injection4Xcode).
+Big thanks goes out to Oliver Letterer for his [imp_implementationForwardingToSelector](https://github.com/OliverLetterer/imp_implementationForwardingToSelector)
+super clean code to set up the trampolines.
 
 Enjoy!
