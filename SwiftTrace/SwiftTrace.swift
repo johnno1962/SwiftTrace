@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#3 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#4 $
 //
 
 import Foundation
@@ -145,7 +145,10 @@ public class SwiftTrace: NSObject {
 
     public class func traceBundleContainingClass( theClass: AnyClass ) {
         var info = Dl_info()
-        dladdr(unsafeBitCast(theClass, UnsafePointer<Void>.self), &info)
+        if dladdr(unsafeBitCast(theClass, UnsafePointer<Void>.self), &info) == 0 {
+            print( "SwiftTrace: Could not find bundle for class \(theClass)" )
+            return
+        }
         let bundlePath = info.dli_fname
 
         var nc: UInt32 = 0
