@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#2 $
 //
 //  With thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector

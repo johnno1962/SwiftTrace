@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#1 $
 //
 
 import Foundation
@@ -57,13 +57,13 @@ private struct ClassMetadataSwift {
 }
 
 // stores trace state
-public class SwiftTraceInfo {
+public class SwiftTraceInfo: NSObject {
 
-    let sym: String
-    let original: IMP
+    public let symbol: String
+    public let original: IMP
 
     public required init( sym: String, original: IMP ) {
-        self.sym = sym
+        self.symbol = sym
         self.original = original
     }
 
@@ -76,8 +76,8 @@ public class SwiftTraceInfo {
         return imp_implementationForwardingToTracer(voidPointer(), unsafeBitCast(tracerp, IMP.self))
     }
 
-    func trace() -> IMP {
-        print( sym )
+    public func trace() -> IMP {
+        print( symbol )
         return original
     }
 
@@ -91,7 +91,7 @@ private func tracer( info: AnyObject ) -> IMP {
 
 extension NSObject {
 
-    public class func traceBubdle() {
+    public class func traceBundle() {
         SwiftTrace.traceBundleContainingClass( self )
     }
 
@@ -112,7 +112,6 @@ extension NSRegularExpression {
     func matches( sym: String ) -> Bool {
         return rangeOfFirstMatchInString( sym, options: [],
                                           range: NSMakeRange( 0, sym.utf16.count ) ).location != NSNotFound
-
     }
 
 }
@@ -154,9 +153,9 @@ public class SwiftTrace: NSObject {
         }
     }
 
-    class func trace(aClass: AnyClass) {
+    public class func trace(aClass: AnyClass) {
 
-        if aClass == SwiftTrace.self {
+        if aClass == self || class_getSuperclass(aClass) == SwiftTraceInfo.self {
             return
         }
 

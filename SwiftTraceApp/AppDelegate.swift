@@ -42,7 +42,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
         // any inclusions or exlusiona need to come before trace enabled
         //SwiftTrace.include( "Swift.Optiona|TestClass" )
-        self.dynamicType.traceBubdle()
+
+        class MyTracer: SwiftTraceInfo {
+
+            override func trace() -> IMP {
+                print( ">> "+symbol )
+                return original
+            }
+            
+        }
+        
+        SwiftTrace.traceClass = MyTracer.self
+
+        self.dynamicType.traceBundle()
 
         let a = TestClass()
         a.x()
