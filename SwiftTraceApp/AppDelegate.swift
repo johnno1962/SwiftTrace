@@ -51,8 +51,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             }
             
         }
-        
-        SwiftTrace.traceClass = MyTracer.self
+
+        SwiftTrace.tracerClass = MyTracer.self
 
         self.dynamicType.traceBundle()
 

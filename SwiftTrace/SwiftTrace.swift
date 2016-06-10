@@ -6,17 +6,17 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#2 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#3 $
 //
 
 import Foundation
 
-typealias SIMP = (@convention(c) ( _: AnyObject! ) -> Void)?
+typealias SIMP = @convention(c) ( _: AnyObject ) -> Void
 
 // needs to be kept in sync with include/swift/Runtime/Metadata.h
 private struct ClassMetadataSwift {
 
-    let MetaClass = UnsafePointer<ClassMetadataSwift>(nil), SuperClass = UnsafePointer<ClassMetadataSwift>(nil);
+    let MetaClass = UnsafePointer<ClassMetadataSwift>(nil), SuperClass = UnsafePointer<ClassMetadataSwift>(nil)
     let CacheData1 = UnsafePointer<Void>(nil), CacheData2 = UnsafePointer<Void>(nil)
 
     let Data: uintptr_t = 0
@@ -53,7 +53,13 @@ private struct ClassMetadataSwift {
 
     /// A function for destroying instance variables, used to clean up
     /// after an early return from a constructor.
-    var IVarDestroyer: SIMP = nil
+    var IVarDestroyer: SIMP? = nil
+}
+
+// called before each traced method
+private func tracer( info: AnyObject ) -> IMP {
+    let sinfo = info as! SwiftTraceInfo
+    return sinfo.trace()
 }
 
 // stores trace state
@@ -62,8 +68,8 @@ public class SwiftTraceInfo: NSObject {
     public let symbol: String
     public let original: IMP
 
-    public required init( sym: String, original: IMP ) {
-        self.symbol = sym
+    public required init( symbol: String, original: IMP ) {
+        self.symbol = symbol
         self.original = original
     }
 
@@ -83,16 +89,14 @@ public class SwiftTraceInfo: NSObject {
 
 }
 
-// called before each traced method
-private func tracer( info: AnyObject ) -> IMP {
-    let sinfo = info as! SwiftTraceInfo
-    return sinfo.trace()
-}
-
 extension NSObject {
 
     public class func traceBundle() {
         SwiftTrace.traceBundleContainingClass( self )
+    }
+
+    public class func traceClass() {
+        SwiftTrace.traceClass( self )
     }
 
 }
@@ -116,12 +120,14 @@ extension NSRegularExpression {
 
 }
 
+public let swiftTraceDefaultExclusions = "\\.getter|retain]|_isDeallocating]|\\[UINibStringIDTable|\\[UIView"
+
 public class SwiftTrace: NSObject {
 
-    public static var traceClass = SwiftTraceInfo.self
+    public static var tracerClass = SwiftTraceInfo.self
 
     static var inclusionRegexp: NSRegularExpression?
-    static var exclusionRegexp: NSRegularExpression? = NSRegularExpression( pattern: "\\.getter" )
+    static var exclusionRegexp: NSRegularExpression? = NSRegularExpression( pattern: swiftTraceDefaultExclusions )
 
     public class func include( pattern: String ) {
         inclusionRegexp = NSRegularExpression(pattern: pattern)
@@ -133,34 +139,49 @@ public class SwiftTrace: NSObject {
 
     class func valid( sym: String ) -> Bool {
         return
-            (inclusionRegexp == nil || inclusionRegexp!.matches( sym)) &&
-            (exclusionRegexp == nil || !exclusionRegexp!.matches( sym))
+            (inclusionRegexp == nil ||  inclusionRegexp!.matches(sym)) &&
+            (exclusionRegexp == nil || !exclusionRegexp!.matches(sym))
     }
 
     public class func traceBundleContainingClass( theClass: AnyClass ) {
         var info = Dl_info()
-        dladdr( unsafeBitCast(theClass, UnsafePointer<Void>.self), &info )
+        dladdr(unsafeBitCast(theClass, UnsafePointer<Void>.self), &info)
         let bundlePath = info.dli_fname
 
         var nc: UInt32 = 0
         let classes = objc_copyClassList( &nc )
-        for i in 0..<nc {
-            let aClass: AnyClass = classes[Int(i)]!
-            dladdr( unsafeBitCast(aClass, UnsafePointer<Void>.self), &info )
-            if info.dli_fname != nil && info.dli_fname == bundlePath {
-                trace(aClass)
+        for i in 0..<Int(nc) {
+            let aClass: AnyClass = classes[i]!
+            dladdr(unsafeBitCast(aClass, UnsafePointer<Void>.self), &info)
+            if info.dli_fname != nil && info.dli_fname == bundlePath &&
+                    NSStringFromClass( aClass ) != "__ARCLite__" {
+                traceClass(aClass)
             }
         }
     }
 
-    public class func trace(aClass: AnyClass) {
+    public class func traceClassesMatching( pattern: String ) {
+        if let regexp = NSRegularExpression( pattern: pattern ) {
+            var nc: UInt32 = 0
+            let classes = objc_copyClassList( &nc )
+            
+            for i in 0..<Int(nc) {
+                let aClass: AnyClass = classes[i]!
+                if regexp.matches( NSStringFromClass( aClass ) ) {
+                    traceClass( aClass )
+                }
+            }
+        }
+    }
+
+    public class func traceClass( aClass: AnyClass ) {
 
         if aClass == self || class_getSuperclass(aClass) == SwiftTraceInfo.self {
             return
         }
 
-        traceObjcClass( object_getClass( aClass ), which:"+")
-        traceObjcClass( aClass, which: "-" )
+        traceObjcClass(object_getClass( aClass ), which: "+")
+        traceObjcClass(aClass, which: "-")
 
         let swiftClass = unsafeBitCast(aClass, UnsafeMutablePointer<ClassMetadataSwift>.self)
 
@@ -171,18 +192,18 @@ public class SwiftTrace: NSObject {
 
         withUnsafeMutablePointer(&swiftClass.memory.IVarDestroyer) {
             (sym_start) in
-            let sym_end = UnsafeMutablePointer<SIMP>(UnsafePointer<Int8>(swiftClass) +
+            let sym_end = UnsafeMutablePointer<SIMP?>(UnsafePointer<Int8>(swiftClass) +
                 -Int(swiftClass.memory.ClassAddressPoint) + Int(swiftClass.memory.ClassSize))
 
             var info = Dl_info()
-            for i in 0..<(sym_end-sym_start) {
+            for i in 0..<(sym_end - sym_start) {
                 if let fptr = sym_start[i] {
                     let vptr = unsafeBitCast(fptr, UnsafePointer<Void>.self)
-                    if dladdr(vptr, &info) != 0 && info.dli_sname != nil {
-                        let demangled = _stdlib_demangleName( String.fromCString(info.dli_sname )! )
+                    if dladdr( vptr, &info ) != 0 && info.dli_sname != nil {
+                        let demangled = _stdlib_demangleName( String.fromCString( info.dli_sname )! )
                         if valid( demangled ) {
-                            let info = traceClass.init( sym: demangled,
-                                                        original: unsafeBitCast(fptr, IMP.self) )
+                            let info = tracerClass.init( symbol: demangled,
+                                                         original: unsafeBitCast(fptr, IMP.self) )
                             sym_start[i] = unsafeBitCast(info.forwardingImplementation(), SIMP.self)
                         }
                     }
@@ -203,19 +224,19 @@ public class SwiftTrace: NSObject {
             let symbol = "\(which)[\(className) \(selName)] -> \(String.fromCString(type) ?? "?")"
 
             if !valid( symbol ) || (which == "+" ?
-                selName.hasPrefix("sharded") :
-                dontSwizzleProperty( aClass, sel:sel )) {
-                continue;
+                    selName.hasPrefix("sharded") :
+                    dontSwizzleProperty( aClass, sel:sel )) {
+                continue
             }
 
-            let info = traceClass.init( sym: symbol, original: method_getImplementation(methods[i]) )
-            class_replaceMethod(aClass, sel, info.forwardingImplementation(), type)
+            let info = tracerClass.init( symbol: symbol, original: method_getImplementation(methods[i]) )
+            class_replaceMethod( aClass, sel, info.forwardingImplementation(), type )
         }
     }
 
     class func dontSwizzleProperty( aClass: AnyClass, sel: Selector ) -> Bool {
         var name = [Int8]( count:5000, repeatedValue: 0 )
-        strcpy(&name, sel_getName(sel));
+        strcpy(&name, sel_getName(sel))
         if strncmp(name, "is", 2) == 0 && isupper(Int32(name[2])) != 0 {
             name[2] = Int8(towlower(Int32(name[2])))
             return class_getProperty(aClass, &name[2]) != nil
@@ -225,7 +246,7 @@ public class SwiftTrace: NSObject {
         }
         else {
             name[3] = Int8(tolower(Int32(name[3])))
-            name[Int(strlen(name)-1)] = 0;
+            name[Int(strlen(name)-1)] = 0
             return class_getProperty(aClass, &name[3]) != nil
         }
     }
