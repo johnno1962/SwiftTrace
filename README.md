@@ -63,6 +63,6 @@ Please file an issue if you encounter a project that doesn't work while tracing.
 be 100% reliable as it uses assembly language trampolines rather than Swizzling like Xtrace.
 Otherwise, the author can be contacted on Twitter [@Injection4Xcode](https://twitter.com/@Injection4Xcode).
 Big thanks goes out to Oliver Letterer for his [imp_implementationForwardingToSelector](https://github.com/OliverLetterer/imp_implementationForwardingToSelector)
-super clean code to set up the trampolines.
+to set up the trampolines.
 
 Enjoy!

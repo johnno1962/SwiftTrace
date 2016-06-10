@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#1 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#2 $
 //
 
 import Foundation
@@ -121,7 +121,7 @@ public class SwiftTrace: NSObject {
     public static var traceClass = SwiftTraceInfo.self
 
     static var inclusionRegexp: NSRegularExpression?
-    static var exclusionRegexp: NSRegularExpression? = NSRegularExpression( pattern: ".getter" )
+    static var exclusionRegexp: NSRegularExpression? = NSRegularExpression( pattern: "\\.getter" )
 
     public class func include( pattern: String ) {
         inclusionRegexp = NSRegularExpression(pattern: pattern)
