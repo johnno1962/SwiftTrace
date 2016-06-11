@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#6 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#7 $
 //
 //  With thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -42,9 +42,9 @@ typedef int32_t SPLForwardingTrampolineEntryPointBlock[2];
 #if defined(__i386__)
 static const int32_t SPLForwardingTrampolineInstructionCount = 8;
 #elif defined(_ARM_ARCH_7)
-static const int32_t SPLForwardingTrampolineInstructionCount = 10;
+static const int32_t SPLForwardingTrampolineInstructionCount = 12;
 #undef PAGE_SIZE
-#define PAGE_SIZE (1<<12)
+#define PAGE_SIZE (1<<14)
 #elif defined(__arm64__)
 static const int32_t SPLForwardingTrampolineInstructionCount = 32;
 #undef PAGE_SIZE
@@ -85,7 +85,7 @@ static SPLForwardingTrampolinePage *SPLForwardingTrampolinePageAlloc()
     vm_address_t newTrampolinePage = 0;
     kern_return_t kernReturn = KERN_SUCCESS;
 
-    //printf( "%d %d %d %d\n", &xt_forwarding_trampolines_start - &xt_forwarding_trampoline_page, SPLForwardingTrampolineInstructionCount*4, &xt_forwarding_trampolines_end - &xt_forwarding_trampoline_page, &xt_forwarding_trampolines_next - &xt_forwarding_trampolines_start );
+    //printf( "%d %d %d %d %d\n", vm_page_size, &xt_forwarding_trampolines_start - &xt_forwarding_trampoline_page, SPLForwardingTrampolineInstructionCount*4, &xt_forwarding_trampolines_end - &xt_forwarding_trampoline_page, &xt_forwarding_trampolines_next - &xt_forwarding_trampolines_start );
 
     assert( &xt_forwarding_trampolines_start - &xt_forwarding_trampoline_page ==
            SPLForwardingTrampolineInstructionCount * sizeof(int32_t) );

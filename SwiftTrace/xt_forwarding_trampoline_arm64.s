@@ -14,9 +14,9 @@ tracer:
 
 _xt_forwarding_trampoline_page:
 _xt_forwarding_trampoline:
-    sub x12, lr, #0x8       // x12 = lr - 8, that is the address of the corresponding `mov x13, lr` instruction of the current trampoline
-    sub x12, x12, #0x4000   // x12 = x12 - 16384, that is where the data for this trampoline is stored
-    mov lr, x13             // restore the link register to that to be used when calling the original implementation
+    sub x16, lr, #0x8       // x16 = lr - 8, that is the address of the corresponding `mov x17, lr` instruction of the current trampoline
+    sub x16, x16, #0x4000   // x16 = x16 - 16384, that is where the data for this trampoline is stored
+    mov lr, x17             // restore the link register to that to be used when calling the original implementation
     stp	x29, x30, [sp, #-16]! // save frame pointer and link register
     stp	x0, x1, [sp, #-32]! // save all regs used in parameter passing
     stp	x2, x3, [sp, #-48]!
@@ -29,10 +29,10 @@ _xt_forwarding_trampoline:
     stp	x8, x18, [sp, #-160]! // r8 is pointer for return of structs
     mov	x29, sp
     sub	sp, sp, #160  // update space used on stack
-    ldr x0, [x12]   // first argument is trace info structure
-    ldr x12, tracer
-    blr x12         // call tracer routine
-    mov x12, x0     // original implementation is returned
+    ldr x0, [x16]   // first argument is trace info structure
+    ldr x16, tracer
+    blr x16         // call tracer routine
+    mov x16, x0     // original implementation is returned
     mov	sp, x29     // restore registers
     ldp	x8, x18, [sp], #160
     ldp	d6, d7, [sp], #144
@@ -44,8137 +44,8137 @@ _xt_forwarding_trampoline:
     ldp	x2, x3, [sp], #48
     ldp	x0, x1, [sp], #32
     ldp	x29, x30, [sp], #16
-    br x12          // continue onto original implemntation
+    br x16          // continue onto original implemntation
     nop
 
 _xt_forwarding_trampolines_start:
 # Save lr, which contains the address to where we need to branch back after function returns, then jump to the actual trampoline implementation
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 _xt_forwarding_trampolines_next:
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 # Next trampoline entry point
-mov x13, lr
+mov x17, lr
 bl _xt_forwarding_trampoline;
 
 _xt_forwarding_trampolines_end:

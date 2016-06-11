@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#8 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#9 $
 //
 
 import Foundation
@@ -122,7 +122,7 @@ extension NSRegularExpression {
 
 }
 
-public let swiftTraceDefaultExclusions = "\\.getter|retain]|_tryRetain]|_isDeallocating]|\\[UINibStringIDTable|\\[UIView"
+public let swiftTraceDefaultExclusions = "\\.getter|retain]|_tryRetain]|_isDeallocating]|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[UIView |UIButton _defaultBackgroundImageForType:andState:|RxSwift.ScheduledDisposable.dispose"
 
 public class SwiftTrace: NSObject {
 

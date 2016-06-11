@@ -52,7 +52,7 @@ Output can be filtered using inclusion and exclusion regexps.
 These methods must be called before you start the trace as they are applied during the "Swizzle".
 There is a default set of exclusions setup as a result of testing, tracing UIKit.
                       
-    public let swiftTraceDefaultExclusions = "\\.getter|retain]|_tryRetain]|_isDeallocating]|\\[UINibStringIDTable|\\[UIView"
+    public let swiftTraceDefaultExclusions = "\\.getter|retain]|_tryRetain]|_isDeallocating]|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[UIView |UIButton _defaultBackgroundImageForType:andState:|RxSwift.ScheduledDisposable.dispose"
 
 If you want to further process output you can define a custom tracing class:
 

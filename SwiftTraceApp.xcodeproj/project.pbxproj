@@ -23,6 +23,7 @@
 		BBC3D1F91D0A445D00520F38 /* SwiftTrace.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F81D0A445D00520F38 /* SwiftTrace.swift */; };
 		BBC3D1FF1D0A928000520F38 /* SwiftTrace.podspec in Resources */ = {isa = PBXBuildFile; fileRef = BBC3D1FE1D0A928000520F38 /* SwiftTrace.podspec */; };
 		BBC3D2011D0A941900520F38 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = BBC3D2001D0A941900520F38 /* LICENSE */; };
+		BBF6EC621D0C174900C5A202 /* xt_forwarding_trampoline_arm7.s in Sources */ = {isa = PBXBuildFile; fileRef = BBF6EC611D0C174900C5A202 /* xt_forwarding_trampoline_arm7.s */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -69,6 +70,7 @@
 		BBC3D1FC1D0A85E800520F38 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		BBC3D1FE1D0A928000520F38 /* SwiftTrace.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SwiftTrace.podspec; sourceTree = "<group>"; };
 		BBC3D2001D0A941900520F38 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		BBF6EC611D0C174900C5A202 /* xt_forwarding_trampoline_arm7.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = xt_forwarding_trampoline_arm7.s; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -133,6 +135,7 @@
 				BBC3D1F61D0A442F00520F38 /* SwiftTrace.mm */,
 				BBC3D1F21D0A43E800520F38 /* xt_forwarding_trampoline_x86.s */,
 				BBC3D1F11D0A43E800520F38 /* xt_forwarding_trampoline_x64.s */,
+				BBF6EC611D0C174900C5A202 /* xt_forwarding_trampoline_arm7.s */,
 				BBC3D1F01D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s */,
 				BBC3D1E71D0A43B300520F38 /* Info.plist */,
 			);
@@ -264,6 +267,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BBF6EC621D0C174900C5A202 /* xt_forwarding_trampoline_arm7.s in Sources */,
 				BBC3D1F41D0A43E800520F38 /* xt_forwarding_trampoline_x64.s in Sources */,
 				BBC3D1F71D0A442F00520F38 /* SwiftTrace.mm in Sources */,
 				BBC3D1F31D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s in Sources */,
