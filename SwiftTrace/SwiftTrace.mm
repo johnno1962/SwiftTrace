@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#5 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#6 $
 //
 //  With thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -32,28 +32,25 @@ static OSSpinLock lock = OS_SPINLOCK_INIT;
 
 // trampoline implementation specific stuff...
 typedef struct {
-#if !defined(__arm64__)
+#if !defined(__LP64__)
     IMP tracer;
 #endif
     void *info;
 } XtraceTrampolineDataBlock;
 
-#if defined(__i386__)
 typedef int32_t SPLForwardingTrampolineEntryPointBlock[2];
+#if defined(__i386__)
 static const int32_t SPLForwardingTrampolineInstructionCount = 8;
 #elif defined(_ARM_ARCH_7)
-typedef int32_t SPLForwardingTrampolineEntryPointBlock[2];
 static const int32_t SPLForwardingTrampolineInstructionCount = 10;
 #undef PAGE_SIZE
 #define PAGE_SIZE (1<<12)
 #elif defined(__arm64__)
-typedef int32_t SPLForwardingTrampolineEntryPointBlock[2];
 static const int32_t SPLForwardingTrampolineInstructionCount = 32;
 #undef PAGE_SIZE
 #define PAGE_SIZE (1<<14)
 #elif defined(__LP64__)
-typedef int32_t SPLForwardingTrampolineEntryPointBlock[4];
-static const int32_t SPLForwardingTrampolineInstructionCount = 32;
+static const int32_t SPLForwardingTrampolineInstructionCount = 34;
 #else
 #error SwiftTrace is not supported on this platform
 #endif
@@ -63,7 +60,7 @@ static const size_t numberOfTrampolinesPerPage = (PAGE_SIZE - SPLForwardingTramp
 typedef struct {
     union {
         struct {
-#if defined(__arm64__)
+#if defined(__LP64__)
             IMP tracer;
 #endif
             int32_t nextAvailableTrampolineIndex;
@@ -141,7 +138,7 @@ IMP imp_implementationForwardingToTracer(void *info, IMP tracer)
 
     int32_t nextAvailableTrampolineIndex = dataPageLayout->nextAvailableTrampolineIndex;
 
-#if !defined(__arm64__)
+#if !defined(__LP64__)
     dataPageLayout->trampolineData[nextAvailableTrampolineIndex].tracer = tracer;
 #else
     dataPageLayout->tracer = tracer;

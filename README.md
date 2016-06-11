@@ -74,15 +74,15 @@ additional data documented in the `ClassMetadataSwift` in SwiftTrace.swift. Afte
 there is a vtable of pointers to the class and instance member functions of the class up to
 the size of the class instance. SwiftTrace replaces these function pointers with a pointer
 to a unique assembly language "trampoline" entry point which has destination function and
-data pointers associated with it. All registers are saved and this function is called passing
+data pointers associated with it. Registers are saved and this function is called passing
 the data pointer to log the method name. The method name is determined by de-mangling the
-symbol name associated the function address of the implementing method. All registers are
+symbol name associated the function address of the implementing method. The registers are
 then restored and control is passed to the original function implementing the method. 
  
 Please file an issue if you encounter a project that doesn't work while tracing. It should
 be 100% reliable as it uses assembly language trampolines rather than Swizzling like Xtrace.
 Otherwise, the author can be contacted on Twitter [@Injection4Xcode](https://twitter.com/@Injection4Xcode). 
-Big thanks goes out to Oliver Letterer for his [imp_implementationForwardingToSelector](https://github.com/OliverLetterer/imp_implementationForwardingToSelector)
-to set up the trampolines.
+Thanks to Oliver Letterer for [imp_implementationForwardingToSelector](https://github.com/OliverLetterer/imp_implementationForwardingToSelector)
+used to set up the trampolines.
 
 Enjoy!

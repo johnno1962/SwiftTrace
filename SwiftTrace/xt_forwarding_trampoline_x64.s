@@ -1,5 +1,9 @@
 #if defined(__LP64__) && !defined(__arm64__)
 .text
+.align 14
+tracer:
+    .quad 0
+
 .align 12
 .globl _xt_forwarding_trampoline_page
 .globl _xt_forwarding_trampolines_start
@@ -27,9 +31,9 @@ _xt_forwarding_trampoline:
     movsd   %xmm6, -56(%rbp)
     movsd   %xmm7, -64(%rbp)
     subq    $4096+5, %rax   // frind trampoline info relative to return address
-    movq    8(%rax), %rdi   // first argument is pointer to forwarding info
-    movq    (%rax), %rax
-    callq   *%rax           // call tracing routine
+    movq    (%rax), %rdi    // first argument is pointer to forwarding info
+    leaq    tracer(%rip), %rax
+    callq   *(%rax)          // call tracing routine
     movsd   -64(%rbp), %xmm7 // restore all registers
     movsd   -56(%rbp), %xmm6
     movsd   -48(%rbp), %xmm5
@@ -48,14 +52,15 @@ _xt_forwarding_trampoline:
     popq    %rdi
     jmpq    *%rax   // forward onto original implementation
     nop
+    nop
+    nop
+    nop
+    nop
+    nop
 
 _xt_forwarding_trampolines_start:
 
 // 508 trampoline entry points
-callq _xt_forwarding_trampoline
-nop
-nop
-nop
 callq _xt_forwarding_trampoline
 nop
 nop
