@@ -18,6 +18,10 @@ To trace, for example, all classes in the RxSwift framework add the following
 
     SwiftTrace.traceBundleContainingClass(RxSwift.DisposeBase.self)
 
+To trace a system framework such as UIKit you can trace classes using a pattern:
+
+    SwiftTrace.traceClassesMatching( "^UI" )
+
 This gives output in the Xcode debug console something like:
 
     RxSwift.SingleAssignmentDisposable.dispose () -> ()
@@ -46,6 +50,9 @@ Output can be filtered using inclusion and exclusion regexps.
     SwiftTrace.exclude( "\\.getter" )
 
 These methods must be called before you start the trace as they are applied during the "Swizzle".
+There is a default set of exclusions setup as a result of testing, tracing UIKit.
+                      
+    public let swiftTraceDefaultExclusions = "\\.getter|retain]|_tryRetain]|_isDeallocating]|\\[UINibStringIDTable|\\[UIView"
 
 If you want to further process output you can define a custom tracing class:
 
@@ -59,7 +66,19 @@ If you want to further process output you can define a custom tracing class:
     }
     
     SwiftTrace.tracerClass = MyTracer.self
-
+                      
+#### How it works
+                      
+A Swift `AnyClass` instance has a layout similar to an Objective-C class with some
+additional data documented in the `ClassMetadataSwift` in SwiftTrace.swift. After this data
+there is a vtable of pointers to the class and instance member functions of the class up to
+the size of the class instance. SwiftTrace replaces these function pointers with a pointer
+to a unique assembly language "trampoline" entry point which has destination function and
+data pointers associated with it. All registers are saved and this function is called passing
+the data pointer to log the method name. The method name is determined by de-mangling the
+symbol name associated the function address of the implementing method. All registers are
+then restored and control is passed to the original function implementing the method. 
+ 
 Please file an issue if you encounter a project that doesn't work while tracing. It should
 be 100% reliable as it uses assembly language trampolines rather than Swizzling like Xtrace.
 Otherwise, the author can be contacted on Twitter [@Injection4Xcode](https://twitter.com/@Injection4Xcode). 

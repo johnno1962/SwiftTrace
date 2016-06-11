@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#4 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#8 $
 //
 
 import Foundation
@@ -54,6 +54,8 @@ private struct ClassMetadataSwift {
     /// A function for destroying instance variables, used to clean up
     /// after an early return from a constructor.
     var IVarDestroyer: SIMP? = nil
+
+    /// vtable of function pointers to methods (and ivar offsets) follows...
 }
 
 // called before each traced method
@@ -120,7 +122,7 @@ extension NSRegularExpression {
 
 }
 
-public let swiftTraceDefaultExclusions = "\\.getter|retain]|_isDeallocating]|\\[UINibStringIDTable|\\[UIView"
+public let swiftTraceDefaultExclusions = "\\.getter|retain]|_tryRetain]|_isDeallocating]|\\[UINibStringIDTable|\\[UIView"
 
 public class SwiftTrace: NSObject {
 
@@ -156,8 +158,7 @@ public class SwiftTrace: NSObject {
         for i in 0..<Int(nc) {
             let aClass: AnyClass = classes[i]!
             dladdr(unsafeBitCast(aClass, UnsafePointer<Void>.self), &info)
-            if info.dli_fname != nil && info.dli_fname == bundlePath &&
-                    NSStringFromClass( aClass ) != "__ARCLite__" {
+            if info.dli_fname != nil && info.dli_fname == bundlePath {
                 traceClass(aClass)
             }
         }
@@ -179,7 +180,12 @@ public class SwiftTrace: NSObject {
 
     public class func traceClass( aClass: AnyClass ) {
 
-        if aClass == self || class_getSuperclass(aClass) == SwiftTraceInfo.self {
+        if aClass == self || aClass == SwiftTraceInfo.self || class_getSuperclass(aClass) == SwiftTraceInfo.self {
+            return
+        }
+
+        let className = NSStringFromClass( aClass )
+        if className == "__ARCLite__" || className.hasPrefix("Swift_") || className.hasPrefix("__ObjC.") {
             return
         }
 

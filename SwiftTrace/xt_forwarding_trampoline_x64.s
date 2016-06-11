@@ -3,7 +3,7 @@
 .align 12
 .globl _xt_forwarding_trampoline_page
 .globl _xt_forwarding_trampolines_start
-.globl _xt_forwarding_trampolines_second
+.globl _xt_forwarding_trampolines_next
 .globl _xt_forwarding_trampolines_end
 
 _xt_forwarding_trampoline_page:
@@ -56,11 +56,11 @@ callq _xt_forwarding_trampoline
 nop
 nop
 nop
-_xt_forwarding_trampolines_second:
 callq _xt_forwarding_trampoline
 nop
 nop
 nop
+_xt_forwarding_trampolines_next:
 callq _xt_forwarding_trampoline
 nop
 nop

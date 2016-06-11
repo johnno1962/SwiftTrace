@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#2 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#5 $
 //
 //  With thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -26,13 +26,15 @@
 #import <mach/mach_init.h>
 
 extern char xt_forwarding_trampoline_page, xt_forwarding_trampolines_start,
-            xt_forwarding_trampolines_second, xt_forwarding_trampolines_end;
+            xt_forwarding_trampolines_next, xt_forwarding_trampolines_end;
 
 static OSSpinLock lock = OS_SPINLOCK_INIT;
 
 // trampoline implementation specific stuff...
 typedef struct {
+#if !defined(__arm64__)
     IMP tracer;
+#endif
     void *info;
 } XtraceTrampolineDataBlock;
 
@@ -45,7 +47,7 @@ static const int32_t SPLForwardingTrampolineInstructionCount = 10;
 #undef PAGE_SIZE
 #define PAGE_SIZE (1<<12)
 #elif defined(__arm64__)
-typedef int32_t SPLForwardingTrampolineEntryPointBlock[4];
+typedef int32_t SPLForwardingTrampolineEntryPointBlock[2];
 static const int32_t SPLForwardingTrampolineInstructionCount = 32;
 #undef PAGE_SIZE
 #define PAGE_SIZE (1<<14)
@@ -61,6 +63,9 @@ static const size_t numberOfTrampolinesPerPage = (PAGE_SIZE - SPLForwardingTramp
 typedef struct {
     union {
         struct {
+#if defined(__arm64__)
+            IMP tracer;
+#endif
             int32_t nextAvailableTrampolineIndex;
         };
         int32_t trampolineSize[SPLForwardingTrampolineInstructionCount];
@@ -83,11 +88,12 @@ static SPLForwardingTrampolinePage *SPLForwardingTrampolinePageAlloc()
     vm_address_t newTrampolinePage = 0;
     kern_return_t kernReturn = KERN_SUCCESS;
 
-    //printf( "%d %d %d %d\n", &xt_forwarding_trampolines_start - &xt_forwarding_trampoline_page, SPLForwardingTrampolineInstructionCount*4, &xt_forwarding_trampolines_end - &xt_forwarding_trampoline_page, &xt_forwarding_trampolines_second - &xt_forwarding_trampolines_start );
+    //printf( "%d %d %d %d\n", &xt_forwarding_trampolines_start - &xt_forwarding_trampoline_page, SPLForwardingTrampolineInstructionCount*4, &xt_forwarding_trampolines_end - &xt_forwarding_trampoline_page, &xt_forwarding_trampolines_next - &xt_forwarding_trampolines_start );
 
     assert( &xt_forwarding_trampolines_start - &xt_forwarding_trampoline_page ==
            SPLForwardingTrampolineInstructionCount * sizeof(int32_t) );
     assert( &xt_forwarding_trampolines_end - &xt_forwarding_trampoline_page == PAGE_SIZE );
+    assert( &xt_forwarding_trampolines_next - &xt_forwarding_trampolines_start == sizeof(XtraceTrampolineDataBlock) );
 
     // allocate two consequent memory pages
     kernReturn = vm_allocate(mach_task_self(), &newTrampolinePage, PAGE_SIZE * 2, VM_FLAGS_ANYWHERE);
@@ -135,7 +141,11 @@ IMP imp_implementationForwardingToTracer(void *info, IMP tracer)
 
     int32_t nextAvailableTrampolineIndex = dataPageLayout->nextAvailableTrampolineIndex;
 
+#if !defined(__arm64__)
     dataPageLayout->trampolineData[nextAvailableTrampolineIndex].tracer = tracer;
+#else
+    dataPageLayout->tracer = tracer;
+#endif
     dataPageLayout->trampolineData[nextAvailableTrampolineIndex].info = info;
     dataPageLayout->nextAvailableTrampolineIndex++;
 
