@@ -15,28 +15,28 @@ _xt_forwarding_trampoline:
     pushq   %rcx
     pushq   %r8
     pushq   %r9
-	pushq	%rbp
-	movq	%rsp, %rbp
+    pushq	%rbp
+    movq	%rsp, %rbp
     subq    $64, %rsp   // make space for floating point regeisters and save
-	movsd	%xmm0, -8(%rbp)
-	movsd	%xmm1, -16(%rbp)
-	movsd	%xmm2, -24(%rbp)
-	movsd	%xmm3, -32(%rbp)
-	movsd	%xmm4, -40(%rbp)
-	movsd	%xmm5, -48(%rbp)
-	movsd	%xmm6, -56(%rbp)
-	movsd	%xmm7, -64(%rbp)
+    movsd	%xmm0, -8(%rbp)
+    movsd	%xmm1, -16(%rbp)
+    movsd	%xmm2, -24(%rbp)
+    movsd	%xmm3, -32(%rbp)
+    movsd	%xmm4, -40(%rbp)
+    movsd	%xmm5, -48(%rbp)
+    movsd	%xmm6, -56(%rbp)
+    movsd	%xmm7, -64(%rbp)
     subq    $4096+5, %rax   // frind trampoline info relative to return address
     movq    8(%rax), %rdi   // first argument is pointer to forwarding info
     movq    (%rax), %rax
     callq   *%rax           // call tracing routine
-	movsd	-64(%rbp), %xmm7 // restore all registers
-	movsd	-56(%rbp), %xmm6
-	movsd	-48(%rbp), %xmm5
-	movsd	-40(%rbp), %xmm4
-	movsd	-32(%rbp), %xmm3
-	movsd	-24(%rbp), %xmm2
-	movsd	-16(%rbp), %xmm1
+    movsd	-64(%rbp), %xmm7 // restore all registers
+    movsd	-56(%rbp), %xmm6
+    movsd	-48(%rbp), %xmm5
+    movsd	-40(%rbp), %xmm4
+    movsd	-32(%rbp), %xmm3
+    movsd	-24(%rbp), %xmm2
+    movsd	-16(%rbp), %xmm1
     movsd	-8(%rbp), %xmm0
     addq    $64, %rsp
     popq    %rbp
