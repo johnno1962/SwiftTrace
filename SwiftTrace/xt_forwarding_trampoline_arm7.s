@@ -1,4 +1,4 @@
-#ifndef __i386__
+#ifdef __arm__
 
 #include <arm/arch.h>
 #if defined(_ARM_ARCH_7)
@@ -19,7 +19,7 @@ _xt_forwarding_trampoline:
     sub r12, #0x4000        // r12 = r12 - 4096, that is where the data for this trampoline is stored
     ldr r0, [r12, #-4]      // first arg is user data ptr
     ldr r12, [r12]          // get potinter to hander func
-    blx r12                 // branch directly to r12, which now contains the address to objc_msgSend
+    blx r12                 // call tracer function
     mov r12, r0
     pop {r0, r1, r2, r3, r9}
 	mov	sp, r7              // unwind stack
