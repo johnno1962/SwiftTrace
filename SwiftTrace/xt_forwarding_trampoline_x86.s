@@ -1,3 +1,6 @@
+
+//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_x86.s#3 $
+
 #if defined(__i386__)
 .text
 .align 12

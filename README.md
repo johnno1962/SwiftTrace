@@ -18,10 +18,6 @@ To trace, for example, all classes in the RxSwift framework add the following
 
     SwiftTrace.traceBundleContainingClass(RxSwift.DisposeBase.self)
 
-To trace a system framework such as UIKit you can trace classes using a pattern:
-
-    SwiftTrace.traceClassesMatching( "^UI" )
-
 This gives output in the Xcode debug console something like:
 
     RxSwift.SingleAssignmentDisposable.dispose () -> ()
@@ -39,6 +35,10 @@ This gives output in the Xcode debug console something like:
     RxSwift.SingleAssignmentDisposable.dispose () -> ()
 
 The line beginning "-[RxSwift" is where the old Objective-C dynamic dispatch is being used.
+
+To trace a system framework such as UIKit you can trace classes using a pattern:
+
+    SwiftTrace.traceClassesMatching( "^UI" )
 
 Individual classes can be traced using the underlying:
 

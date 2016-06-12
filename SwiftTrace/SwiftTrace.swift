@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#9 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#10 $
 //
 
 import Foundation
@@ -233,7 +233,7 @@ public class SwiftTrace: NSObject {
             let symbol = "\(which)[\(className) \(selName)] -> \(String.fromCString(type) ?? "?")"
 
             if !valid( symbol ) || (which == "+" ?
-                    selName.hasPrefix("sharded") :
+                    selName.hasPrefix("shared") :
                     dontSwizzleProperty( aClass, sel:sel )) {
                 continue
             }

@@ -9,7 +9,15 @@
 import UIKit
 import SwiftTrace
 
-public class TestClass {
+public protocol P {
+
+    func x()
+    func y() -> Float
+    func z( d: Int, f: Double, g: Float, h: Double, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int )
+
+}
+
+public class TestClass: P {
 
     let i = 999
 
@@ -49,14 +57,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 print( ">> "+symbol )
                 return original
             }
-            
+
         }
 
         SwiftTrace.tracerClass = MyTracer.self
 
         self.dynamicType.traceBundle()
 
-        let a = TestClass()
+        let a: P = TestClass()
         a.x()
         print( a.y() )
         a.x()
