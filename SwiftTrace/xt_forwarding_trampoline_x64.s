@@ -1,9 +1,9 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_x64.s#7 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_x64.s#8 $
 
 #if defined(__LP64__) && !defined(__arm64__)
 .text
-.align 14
+.align 12
 tracer:
     .quad 0
 
