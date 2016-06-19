@@ -62,7 +62,7 @@ class SwiftTraceTests: XCTestCase {
     override func setUp() {
         super.setUp()
         // Put setup code here. This method is called before the invocation of each test method in the class.
-        SwiftTrace.traceClass( TestClass.self )
+        SwiftTrace.trace( aClass: TestClass.self )
     }
 
     override func tearDown() {
@@ -80,15 +80,15 @@ class SwiftTraceTests: XCTestCase {
         XCTAssertEqual( p.y(), -222.0 )
         XCTAssertEqual( got, "111" )
 
-        p.z( 88, f: 66, g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
+        p.z( d: 88, f: 66, g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
         XCTAssertEqual( got, "111 88 77 66.0 55.0 44.0 66.0 55.0 44.0 66.0 55.0 44.0" )
 
-        XCTAssertEqual( p.s( TestStruct() ), TestStruct() )
+        XCTAssertEqual( p.s( a: TestStruct() ), TestStruct() )
     }
 
     func testPerformanceExample() {
         // This is an example of a performance test case.
-        self.measureBlock {
+        self.measure {
             // Put the code you want to measure the time of here.
         }
     }

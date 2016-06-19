@@ -8,15 +8,19 @@ following line to it's Podfile:
 
     pod 'SwiftTrace'
 
+This project has been updated to Swift 3 from the Xocde 8 beta. If you want to use the [Swift2 branch](https://github.com/johnno1962/SwiftTrace/tree/swift2-branch}:
+
+    pod 'SwiftTrace', '2.1'
+
 Once the project has rebuilt import SwiftTrace into the application's AppDelegate and add something like
 the following to the beginning of it's didFinishLaunchingWithOptions method:
 
-    SwiftTrace.traceBundleContainingClass(self.dynamicType)
+    SwiftTrace.traceBundleContaining( aClass: self.dynamicType )
 
 This traces all classes defined in the main application bundle.
 To trace, for example, all classes in the RxSwift framework add the following
 
-    SwiftTrace.traceBundleContainingClass(RxSwift.DisposeBase.self)
+    SwiftTrace.traceBundleContaining( aClass: RxSwift.DisposeBase.self )
 
 This gives output in the Xcode debug console something like:
 
@@ -38,16 +42,16 @@ The line beginning "-[RxSwift" is where the old Objective-C dynamic dispatch is 
 
 To trace a system framework such as UIKit you can trace classes using a pattern:
 
-    SwiftTrace.traceClassesMatching( "^UI" )
+    SwiftTrace.traceClassesMatching( pattern:"^UI" )
 
 Individual classes can be traced using the underlying:
 
-    SwiftTrace.traceClass( MyClass.self )
+    SwiftTrace.trace( aClass: MyClass.self )
 
 Output can be filtered using inclusion and exclusion regexps. 
 
-    SwiftTrace.include( "TestClass" )
-    SwiftTrace.exclude( "\\.getter" )
+    SwiftTrace.include( pattern: "TestClass" )
+    SwiftTrace.exclude( pattern: "\\.getter" )
 
 These methods must be called before you start the trace as they are applied during the "Swizzle".
 There is a default set of exclusions setup as a result of testing, tracing UIKit.

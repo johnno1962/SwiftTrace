@@ -43,7 +43,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @IBOutlet weak var window: NSWindow!
 
 
-    func applicationDidFinishLaunching(aNotification: NSNotification) {
+    func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Insert code here to initialize your application
 
         // any inclusions or exlusiona need to come before trace enabled
@@ -66,7 +66,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         a.x()
         print( a.y() )
         a.x()
-        a.z( 88, f: 66, g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
+        a.z( d: 88, f: 66, g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
     }
 
     func applicationWillTerminate(aNotification: NSNotification) {
