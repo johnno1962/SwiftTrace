@@ -8,7 +8,7 @@ following line to it's Podfile:
 
     pod 'SwiftTrace'
 
-This project has been updated to Swift 3 from the Xocde 8 beta. If you want to use the [Swift2 branch](https://github.com/johnno1962/SwiftTrace/tree/swift2-branch}:
+This project has been updated to Swift 3 from the Xocde 8 beta. If you want to use the [Swift2 branch](https://github.com/johnno1962/SwiftTrace/tree/swift2-branch):
 
     pod 'SwiftTrace', '2.1'
 
