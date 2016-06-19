@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#11 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#12 $
 //
 
 import Foundation
@@ -17,9 +17,9 @@ typealias SIMP = @convention(c) ( _: AnyObject ) -> Void
 /**
     Layout of a class instance. Needs to be kept in sync with ~swift/include/swift/Runtime/Metadata.h
  */
-private struct ClassMetadataSwift {
+private struct TargetClassMetadata {
 
-    let MetaClass = UnsafePointer<ClassMetadataSwift>(nil), SuperClass = UnsafePointer<ClassMetadataSwift>(nil)
+    let MetaClass = UnsafePointer<TargetClassMetadata>(nil), SuperClass = UnsafePointer<TargetClassMetadata>(nil)
     let CacheData1 = UnsafePointer<Void>(nil), CacheData2 = UnsafePointer<Void>(nil)
 
     let Data: uintptr_t = 0
@@ -58,7 +58,13 @@ private struct ClassMetadataSwift {
     /// after an early return from a constructor.
     var IVarDestroyer: SIMP? = nil
 
-    /// vtable of function pointers to methods (and ivar offsets) follows...
+    // After this come the class members, laid out as follows:
+    //   - class members for the superclass (recursively)
+    //   - metadata reference for the parent, if applicable
+    //   - generic parameters for this class
+    //   - class variables (if we choose to support these)
+    //   - "tabulated" virtual methods
+
 }
 
 /**
@@ -259,7 +265,7 @@ public class SwiftTrace: NSObject {
         traceObjcClass(aClass: object_getClass( aClass ), which: "+")
         traceObjcClass(aClass: aClass, which: "-")
 
-        let swiftClass = unsafeBitCast(aClass, to: UnsafeMutablePointer<ClassMetadataSwift>.self)
+        let swiftClass = unsafeBitCast(aClass, to: UnsafeMutablePointer<TargetClassMetadata>.self)
 
         if (swiftClass.pointee.Data & 0x1) == 0 {
             //print("Object is not instance of Swift class")
