@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#12 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#13 $
 //
 
 import Foundation
@@ -19,8 +19,8 @@ typealias SIMP = @convention(c) ( _: AnyObject ) -> Void
  */
 private struct TargetClassMetadata {
 
-    let MetaClass = UnsafePointer<TargetClassMetadata>(nil), SuperClass = UnsafePointer<TargetClassMetadata>(nil)
-    let CacheData1 = UnsafePointer<Void>(nil), CacheData2 = UnsafePointer<Void>(nil)
+    let MetaClass: uintptr_t = 0, SuperClass: uintptr_t = 0
+    let CacheData1: uintptr_t = 0, CacheData2: uintptr_t = 0
 
     let Data: uintptr_t = 0
 
@@ -52,7 +52,7 @@ private struct TargetClassMetadata {
     /// if this is an artificial subclass.  We currently provide no
     /// supported mechanism for making a non-artificial subclass
     /// dynamically.
-    let Description = UnsafePointer<Void>(nil)
+    let Description: uintptr_t = 0
 
     /// A function for destroying instance variables, used to clean up
     /// after an early return from a constructor.
@@ -79,13 +79,13 @@ private func tracer( _ info: AnyObject ) -> IMP {
 /**
     Strace "info" instance used to store information about a method
  */
-public class SwiftTraceInfo: NSObject {
+open class SwiftTraceInfo: NSObject {
 
     /** string representing Swift or Objective-C method to user */
-    public let symbol: String
+    open let symbol: String
 
     /** pointer to original function implementing method */
-    public let original: IMP
+    open let original: IMP
 
     /**
         designated initialiser
@@ -100,8 +100,8 @@ public class SwiftTraceInfo: NSObject {
     /**
         Take a unmanaged, retained potinter to this instance for storing in trampoline
      */
-    func voidPointer() -> UnsafeMutablePointer<Void> {
-        return unsafeBitCast( Unmanaged.passRetained( self ), to: UnsafeMutablePointer<Void>.self )
+    func voidPointer() -> UnsafeMutableRawPointer {
+        return unsafeBitCast( Unmanaged.passRetained( self ), to: UnsafeMutableRawPointer.self )
     }
 
     /**
@@ -116,7 +116,7 @@ public class SwiftTraceInfo: NSObject {
         called back by trampoline before each method is called
         - returns: pointer to original function implementing method
      */
-    public func trace() -> IMP {
+    open func trace() -> IMP {
         print( symbol )
         return original
     }
@@ -129,19 +129,19 @@ extension NSObject {
         Trace the bundle containing the target class
      */
     public class func traceBundle() {
-        SwiftTrace.traceBundleContaining( aClass: self )
+        SwiftTrace.traceBundleContaining( self )
     }
 
     /**
         Trace the target class
      */
     public class func traceClass() {
-        SwiftTrace.trace( aClass: self )
+        SwiftTrace.trace( self )
     }
 
 }
 
-extension RegularExpression {
+extension NSRegularExpression {
 
     convenience init?( pattern: String ) {
         do {
@@ -168,22 +168,22 @@ public let swiftTraceDefaultExclusions = "\\.getter|retain]|_tryRetain]|_isDeall
 /**
     Base class for SwiftTrace api through it's public class methods
  */
-public class SwiftTrace: NSObject {
+open class SwiftTrace: NSObject {
 
     /**
         A SwiftTraceInfo subclass, the "trace()" method of which will be called before each traced method
      */
-    public static var tracerClass = SwiftTraceInfo.self
+    open static var tracerClass = SwiftTraceInfo.self
 
-    static var inclusionRegexp: RegularExpression?
-    static var exclusionRegexp: RegularExpression? = RegularExpression( pattern: swiftTraceDefaultExclusions )
+    static var inclusionRegexp: NSRegularExpression?
+    static var exclusionRegexp: NSRegularExpression? = NSRegularExpression( pattern: swiftTraceDefaultExclusions )
 
     /**
         Include symbols matching pattern only
         - parameter pattern: regexp for symbols to include
      */
-    public class func include( _ pattern: String ) {
-        inclusionRegexp = RegularExpression(pattern: pattern)
+    open class func include( _ pattern: String ) {
+        inclusionRegexp = NSRegularExpression(pattern: pattern)
     }
 
     /**
@@ -191,8 +191,8 @@ public class SwiftTrace: NSObject {
         a default pattern in swiftTraceDefaultExclusions is used.
         - parameter pattern: regexp for symbols to exclude
      */
-    public class func exclude( _ pattern: String ) {
-        exclusionRegexp = RegularExpression(pattern: pattern)
+    open class func exclude( _ pattern: String ) {
+        exclusionRegexp = NSRegularExpression(pattern: pattern)
     }
 
     /**
@@ -209,9 +209,9 @@ public class SwiftTrace: NSObject {
         Intercepts and tracess all classes linked into the bundle containing a class.
         - parameter aClass: the class to specify the bundle
      */
-    public class func traceBundleContaining( aClass: AnyClass ) {
+    open class func traceBundleContaining( _ aClass: AnyClass ) {
         var info = Dl_info()
-        if dladdr(unsafeBitCast(aClass, to: UnsafePointer<Void>.self), &info) == 0 {
+        if dladdr(unsafeBitCast(aClass, to: UnsafeRawPointer.self), &info) == 0 {
             print( "SwiftTrace: Could not find bundle for class \(aClass)" )
             return
         }
@@ -222,9 +222,9 @@ public class SwiftTrace: NSObject {
         for i in 0..<Int(nc) {
             let aClass: AnyClass = classes![i]!
 
-            if dladdr(unsafeBitCast(aClass, to: UnsafePointer<Void>.self), &info) != 0 &&
+            if dladdr(unsafeBitCast(aClass, to: UnsafeRawPointer.self), &info) != 0 &&
                     info.dli_fname != nil && info.dli_fname == bundlePath {
-                trace(aClass: aClass)
+                trace(aClass)
             }
         }
     }
@@ -233,15 +233,16 @@ public class SwiftTrace: NSObject {
         Intercepts and tracess all classes with names matching regexp pattern
         - parameter pattern: regexp patten to specify classes to trace
      */
-    public class func traceClassesMatching( pattern: String ) {
-        if let regexp = RegularExpression( pattern: pattern ) {
+    open class func traceClassesMatching( _ pattern: String ) {
+        if let regexp = NSRegularExpression( pattern: pattern ) {
             var nc: UInt32 = 0
             let classes = objc_copyClassList( &nc )
             
             for i in 0..<Int(nc) {
                 let aClass: AnyClass = classes![i]!
-                if regexp.matches( NSStringFromClass( aClass ) ) {
-                    trace( aClass: aClass )
+                let className = NSStringFromClass( aClass ) as NSString
+                if regexp.firstMatch( in: String( describing: className ) as String, range: NSMakeRange(0, className.length) ) != nil {
+                    trace( aClass )
                 }
             }
         }
@@ -251,7 +252,7 @@ public class SwiftTrace: NSObject {
         Specify an individual classs to trace
         - parameter aClass: the class, the methods of which to trace
      */
-    public class func trace( aClass: AnyClass ) {
+    open class func trace( _ aClass: AnyClass ) {
 
         if aClass == self || aClass == SwiftTraceInfo.self || class_getSuperclass(aClass) == SwiftTraceInfo.self {
             return
@@ -262,8 +263,8 @@ public class SwiftTrace: NSObject {
             return
         }
 
-        traceObjcClass(aClass: object_getClass( aClass ), which: "+")
-        traceObjcClass(aClass: aClass, which: "-")
+        traceObjcClass(object_getClass( aClass ), which: "+")
+        traceObjcClass(aClass, which: "-")
 
         let swiftClass = unsafeBitCast(aClass, to: UnsafeMutablePointer<TargetClassMetadata>.self)
 
@@ -272,21 +273,27 @@ public class SwiftTrace: NSObject {
             return
         }
 
-        withUnsafeMutablePointer(&swiftClass.pointee.IVarDestroyer) {
+        withUnsafeMutablePointer(to: &swiftClass.pointee.IVarDestroyer) {
             (sym_start) in
-            let sym_end = UnsafeMutablePointer<SIMP?>(UnsafePointer<Int8>(swiftClass) +
-                -Int(swiftClass.pointee.ClassAddressPoint) + Int(swiftClass.pointee.ClassSize))
+            swiftClass.withMemoryRebound(to: Int8.self, capacity: 1) {
+                let ptr = ($0 + -Int(swiftClass.pointee.ClassAddressPoint) + Int(swiftClass.pointee.ClassSize))
+                ptr.withMemoryRebound(to: Optional<SIMP>.self, capacity: 1) {
+                    (sym_end) in
+//            let sym_end = UnsafeMutablePointer<SIMP?>($0 +
+//                -Int(swiftClass.pointee.ClassAddressPoint) + Int(swiftClass.pointee.ClassSize))
 
-            var info = Dl_info()
-            for i in 0..<(sym_end - sym_start) {
-                if let fptr = sym_start[i] {
-                    let vptr = unsafeBitCast(fptr, to: UnsafePointer<Void>.self)
-                    if dladdr( vptr, &info ) != 0 && info.dli_sname != nil {
-                        let demangled = _stdlib_demangleName( String( cString: info.dli_sname ) )
-                        if valid( demangled ) {
-                            let info = tracerClass.init( symbol: demangled,
-                                                         original: unsafeBitCast(fptr, to: IMP.self) )
-                            sym_start[i] = unsafeBitCast(info.forwardingImplementation(), to: SIMP.self)
+                    var info = Dl_info()
+                    for i in 0..<(sym_end - sym_start) {
+                        if let fptr = sym_start[i] {
+                            let vptr = unsafeBitCast(fptr, to: UnsafeRawPointer.self)
+                            if dladdr( vptr, &info ) != 0 && info.dli_sname != nil {
+                                let demangled = _stdlib_demangleName( String( cString: info.dli_sname ) )
+                                if valid( demangled ) {
+                                    let info = tracerClass.init( symbol: demangled,
+                                                                 original: unsafeBitCast(fptr, to: IMP.self) )
+                                    sym_start[i] = unsafeBitCast(info.forwardingImplementation(), to: SIMP.self)
+                                }
+                            }
                         }
                     }
                 }
@@ -299,7 +306,7 @@ public class SwiftTrace: NSObject {
         - parameter aClass: meta-class or class to be swizzled
         - parameter which: "+" for class methods, "-" for instance methods
      */
-    class func traceObjcClass( aClass: AnyClass, which: String ) {
+    class func traceObjcClass( _ aClass: AnyClass, which: String ) {
         var mc: UInt32 = 0
         let methods = class_copyMethodList(aClass, &mc)
         let className = NSStringFromClass(aClass)
@@ -308,11 +315,11 @@ public class SwiftTrace: NSObject {
             let sel = method_getName(methods?[i])
             let selName = NSStringFromSelector(sel!)
             let type = method_getTypeEncoding(methods?[i])
-            let symbol = "\(which)[\(className) \(selName)] -> \(String(cString: type!) ?? "?")"
+            let symbol = "\(which)[\(className) \(selName)] -> \(String(cString: type!))"
 
             if !valid( symbol ) || (which == "+" ?
                     selName.hasPrefix("shared") :
-                    dontSwizzleProperty(aClass: aClass, sel:sel!)) {
+                    dontSwizzleProperty(aClass, sel:sel!)) {
                 continue
             }
 
@@ -326,7 +333,7 @@ public class SwiftTrace: NSObject {
         - parameter aClass: class of method
         - parameter sel: selector of method being checked
      */
-    class func dontSwizzleProperty( aClass: AnyClass, sel: Selector ) -> Bool {
+    class func dontSwizzleProperty( _ aClass: AnyClass, sel: Selector ) -> Bool {
         var name = [Int8]( repeating: 0, count: 5000 )
         strcpy(&name, sel_getName(sel))
         if strncmp(name, "is", 2) == 0 && isupper(Int32(name[2])) != 0 {
@@ -346,24 +353,24 @@ public class SwiftTrace: NSObject {
 }
 
 // not public in Swift3
-@warn_unused_result
+
 @_silgen_name("swift_demangle")
 public
 func _stdlib_demangleImpl(
-    mangledName: UnsafePointer<UInt8>?,
+    _ mangledName: UnsafePointer<CChar>?,
     mangledNameLength: UInt,
     outputBuffer: UnsafeMutablePointer<UInt8>?,
     outputBufferSize: UnsafeMutablePointer<UInt>?,
     flags: UInt32
     ) -> UnsafeMutablePointer<CChar>?
 
-@warn_unused_result
+
 func _stdlib_demangleName(_ mangledName: String) -> String {
-    return mangledName.nulTerminatedUTF8.withUnsafeBufferPointer {
+    return mangledName.utf8CString.withUnsafeBufferPointer {
         (mangledNameUTF8) in
 
         let demangledNamePtr = _stdlib_demangleImpl(
-            mangledName: mangledNameUTF8.baseAddress,
+            mangledNameUTF8.baseAddress,
             mangledNameLength: UInt(mangledNameUTF8.count - 1),
             outputBuffer: nil,
             outputBufferSize: nil,
