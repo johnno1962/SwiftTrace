@@ -62,7 +62,7 @@ class SwiftTraceTests: XCTestCase {
     override func setUp() {
         super.setUp()
         // Put setup code here. This method is called before the invocation of each test method in the class.
-        SwiftTrace.trace( aClass: TestClass.self )
+        SwiftTrace.trace( TestClass.self )
     }
 
     override func tearDown() {
