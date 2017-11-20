@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#13 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#15 $
 //
 
 import Foundation
@@ -218,14 +218,16 @@ open class SwiftTrace: NSObject {
         let bundlePath = info.dli_fname
 
         var nc: UInt32 = 0
-        let classes = objc_copyClassList( &nc )
-        for i in 0..<Int(nc) {
-            let aClass: AnyClass = classes![i]!
+        if let classes = objc_copyClassList( &nc ) {
+            for i in 0..<Int(nc) {
+                let aClass: AnyClass = classes[i]
 
-            if dladdr(unsafeBitCast(aClass, to: UnsafeRawPointer.self), &info) != 0 &&
-                    info.dli_fname != nil && info.dli_fname == bundlePath {
-                trace(aClass)
+                if dladdr(unsafeBitCast(aClass, to: UnsafeRawPointer.self), &info) != 0 &&
+                        info.dli_fname != nil && info.dli_fname == bundlePath {
+                    trace(aClass)
+                }
             }
+            free(UnsafeMutableRawPointer(classes))
         }
     }
 
@@ -236,14 +238,15 @@ open class SwiftTrace: NSObject {
     open class func traceClassesMatching( _ pattern: String ) {
         if let regexp = NSRegularExpression( pattern: pattern ) {
             var nc: UInt32 = 0
-            let classes = objc_copyClassList( &nc )
-            
-            for i in 0..<Int(nc) {
-                let aClass: AnyClass = classes![i]!
-                let className = NSStringFromClass( aClass ) as NSString
-                if regexp.firstMatch( in: String( describing: className ) as String, range: NSMakeRange(0, className.length) ) != nil {
-                    trace( aClass )
+            if let classes = objc_copyClassList( &nc ) {
+                for i in 0..<Int(nc) {
+                    let aClass: AnyClass = classes[i]
+                    let className = NSStringFromClass( aClass ) as NSString
+                    if regexp.firstMatch( in: String( describing: className ) as String, range: NSMakeRange(0, className.length) ) != nil {
+                        trace( aClass )
+                    }
                 }
+                free(UnsafeMutableRawPointer(classes))
             }
         }
     }
@@ -263,7 +266,7 @@ open class SwiftTrace: NSObject {
             return
         }
 
-        traceObjcClass(object_getClass( aClass ), which: "+")
+        traceObjcClass(object_getClass( aClass )!, which: "+")
         traceObjcClass(aClass, which: "-")
 
         let swiftClass = unsafeBitCast(aClass, to: UnsafeMutablePointer<TargetClassMetadata>.self)
@@ -308,23 +311,24 @@ open class SwiftTrace: NSObject {
      */
     class func traceObjcClass( _ aClass: AnyClass, which: String ) {
         var mc: UInt32 = 0
-        let methods = class_copyMethodList(aClass, &mc)
-        let className = NSStringFromClass(aClass)
+        if let methods = class_copyMethodList(aClass, &mc) {
+            let className = NSStringFromClass(aClass)
+            for i in 0..<Int(mc) {
+                let sel = method_getName(methods[i])
+                let selName = NSStringFromSelector(sel)
+                let type = method_getTypeEncoding(methods[i])
+                let symbol = "\(which)[\(className) \(selName)] -> \(String(cString: type!))"
 
-        for i in 0..<Int(mc) {
-            let sel = method_getName(methods?[i])
-            let selName = NSStringFromSelector(sel!)
-            let type = method_getTypeEncoding(methods?[i])
-            let symbol = "\(which)[\(className) \(selName)] -> \(String(cString: type!))"
+                if !valid( symbol ) || (which == "+" ?
+                        selName.hasPrefix("shared") :
+                        dontSwizzleProperty(aClass, sel:sel)) {
+                    continue
+                }
 
-            if !valid( symbol ) || (which == "+" ?
-                    selName.hasPrefix("shared") :
-                    dontSwizzleProperty(aClass, sel:sel!)) {
-                continue
+                let info = tracerClass.init( symbol: symbol, original: method_getImplementation(methods[i]) )
+                class_replaceMethod( aClass, sel, info.forwardingImplementation(), type )
             }
-
-            let info = tracerClass.init( symbol: symbol, original: method_getImplementation(methods?[i]) )
-            class_replaceMethod( aClass, sel, info.forwardingImplementation(), type )
+            free(methods)
         }
     }
 

@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#7 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#8 $
 //
 //  With thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -74,9 +74,9 @@ typedef struct {
     SPLForwardingTrampolineEntryPointBlock trampolineEntryPoints[numberOfTrampolinesPerPage];
 } SPLForwardingTrampolinePage;
 
-check_compile_time(sizeof(SPLForwardingTrampolineEntryPointBlock) == sizeof(XtraceTrampolineDataBlock));
-check_compile_time(sizeof(SPLForwardingTrampolinePage) == 2 * PAGE_SIZE);
-check_compile_time(offsetof(SPLForwardingTrampolinePage, trampolineInstructions) == PAGE_SIZE);
+//check_compile_time(sizeof(SPLForwardingTrampolineEntryPointBlock) == sizeof(XtraceTrampolineDataBlock));
+//check_compile_time(sizeof(SPLForwardingTrampolinePage) == 2 * PAGE_SIZE);
+//check_compile_time(offsetof(SPLForwardingTrampolinePage, trampolineInstructions) == PAGE_SIZE);
 
 static SPLForwardingTrampolinePage *SPLForwardingTrampolinePageAlloc()
 {
