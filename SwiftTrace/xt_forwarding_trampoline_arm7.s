@@ -1,5 +1,7 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_arm7.s#8 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_arm7.s#9 $
+
+// This architecture is no longer supported
 
 #ifdef __arm__
 

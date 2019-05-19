@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#15 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#20 $
 //
 
 import Foundation
@@ -82,10 +82,10 @@ private func tracer( _ info: AnyObject ) -> IMP {
 open class SwiftTraceInfo: NSObject {
 
     /** string representing Swift or Objective-C method to user */
-    open let symbol: String
+    public let symbol: String
 
     /** pointer to original function implementing method */
-    open let original: IMP
+    public let original: IMP
 
     /**
         designated initialiser
@@ -163,7 +163,7 @@ extension NSRegularExpression {
 /**
     default pattern of symbols to be excluded from tracing
  */
-public let swiftTraceDefaultExclusions = "\\.getter|retain]|_tryRetain]|_isDeallocating]|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[UIView |UIButton _defaultBackgroundImageForType:andState:|RxSwift.ScheduledDisposable.dispose"
+public let swiftTraceDefaultExclusions = "\\.getter|retain]|release]|_tryRetain]|.cxx_destruct]|initWithCoder|_isDeallocating]|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[UIView |UIButton _defaultBackgroundImageForType:andState:|RxSwift.ScheduledDisposable.dispose"
 
 /**
     Base class for SwiftTrace api through it's public class methods
@@ -173,7 +173,7 @@ open class SwiftTrace: NSObject {
     /**
         A SwiftTraceInfo subclass, the "trace()" method of which will be called before each traced method
      */
-    open static var tracerClass = SwiftTraceInfo.self
+    public static var tracerClass = SwiftTraceInfo.self
 
     static var inclusionRegexp: NSRegularExpression?
     static var exclusionRegexp: NSRegularExpression? = NSRegularExpression( pattern: swiftTraceDefaultExclusions )
@@ -209,21 +209,12 @@ open class SwiftTrace: NSObject {
         Intercepts and tracess all classes linked into the bundle containing a class.
         - parameter aClass: the class to specify the bundle
      */
-    open class func traceBundleContaining( _ aClass: AnyClass ) {
-        var info = Dl_info()
-        if dladdr(unsafeBitCast(aClass, to: UnsafeRawPointer.self), &info) == 0 {
-            print( "SwiftTrace: Could not find bundle for class \(aClass)" )
-            return
-        }
-        let bundlePath = info.dli_fname
-
+    open class func traceBundleContaining( _ theClass: AnyClass ) {
+        let bundlePath = class_getImageName(theClass)
         var nc: UInt32 = 0
         if let classes = objc_copyClassList( &nc ) {
-            for i in 0..<Int(nc) {
-                let aClass: AnyClass = classes[i]
-
-                if dladdr(unsafeBitCast(aClass, to: UnsafeRawPointer.self), &info) != 0 &&
-                        info.dli_fname != nil && info.dli_fname == bundlePath {
+            for aClass in (0..<Int(nc)).map( { classes[$0] } ) {
+                if class_getImageName(aClass) == bundlePath {
                     trace(aClass)
                 }
             }
@@ -262,7 +253,7 @@ open class SwiftTrace: NSObject {
         }
 
         let className = NSStringFromClass( aClass )
-        if className == "__ARCLite__" || className.hasPrefix("Swift_") {
+        if className.hasPrefix("Swift") || className.hasPrefix("_TtG"){
             return
         }
 
@@ -271,7 +262,7 @@ open class SwiftTrace: NSObject {
 
         let swiftClass = unsafeBitCast(aClass, to: UnsafeMutablePointer<TargetClassMetadata>.self)
 
-        if (swiftClass.pointee.Data & 0x1) == 0 {
+        if (swiftClass.pointee.Data & 0x3) == 0 {
             //print("Object is not instance of Swift class")
             return
         }
@@ -312,12 +303,11 @@ open class SwiftTrace: NSObject {
     class func traceObjcClass( _ aClass: AnyClass, which: String ) {
         var mc: UInt32 = 0
         if let methods = class_copyMethodList(aClass, &mc) {
-            let className = NSStringFromClass(aClass)
-            for i in 0..<Int(mc) {
-                let sel = method_getName(methods[i])
+            for method in (0..<Int(mc)).map( { methods[$0] } ) {
+                let sel = method_getName(method)
                 let selName = NSStringFromSelector(sel)
-                let type = method_getTypeEncoding(methods[i])
-                let symbol = "\(which)[\(className) \(selName)] -> \(String(cString: type!))"
+                let type = method_getTypeEncoding(method)
+                let symbol = "\(which)[\(aClass) \(selName)] -> \(String(cString: type!))"
 
                 if !valid( symbol ) || (which == "+" ?
                         selName.hasPrefix("shared") :
@@ -325,8 +315,9 @@ open class SwiftTrace: NSObject {
                     continue
                 }
 
-                let info = tracerClass.init( symbol: symbol, original: method_getImplementation(methods[i]) )
-                class_replaceMethod( aClass, sel, info.forwardingImplementation(), type )
+                let info = tracerClass.init( symbol: symbol,
+                            original: method_getImplementation(method) )
+                method_setImplementation(method, info.forwardingImplementation() )
             }
             free(methods)
         }

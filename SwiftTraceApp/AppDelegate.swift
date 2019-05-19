@@ -9,11 +9,24 @@
 import UIKit
 import SwiftTrace
 
+public struct TestStruct: Equatable {
+
+    let a = 1.0, b = 2.0, c = 3.0
+    let i = 111, j = 222, k = 333
+
+}
+
+public func ==(lhs: TestStruct, rhs: TestStruct) -> Bool {
+
+    return lhs.a == lhs.a && lhs.b == lhs.b && lhs.c == lhs.c && lhs.i == lhs.i && lhs.j == lhs.j && lhs.k == lhs.k
+}
+
 public protocol P {
 
     func x()
     func y() -> Float
     func z( _ d: Int, f: Double, g: Float, h: Double, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int )
+    func ssssss( a: TestStruct ) -> TestStruct
 
 }
 
@@ -33,7 +46,11 @@ public class TestClass: P {
     public func z( _ d: Int, f: Double, g: Float, h: Double, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int ) {
         print( "HERE \(i) \(d) \(e) \(f) \(g) \(h) \(f1) \(g1) \(h1) \(f2) \(g2) \(h2)" )
     }
-    
+
+    public func ssssss( a: TestStruct ) -> TestStruct {
+        return a
+    }
+
 }
 
 @UIApplicationMain
@@ -69,6 +86,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print( a.y() )
         a.x()
         a.z( 88, f: 66, g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
+        a.ssssss( a: TestStruct() )
 
         return true
     }
