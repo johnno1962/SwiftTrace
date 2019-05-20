@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#1 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#2 $
 //
 
 #import <Foundation/Foundation.h>
@@ -23,6 +23,7 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
 extern "C" {
 #endif
     IMP imp_implementationForwardingToTracer(void *info, IMP tracer);
+    void findSwiftClasses(const char *path, void (^callback)(void *symbol));
 #ifdef __cplusplus
 }
 #endif

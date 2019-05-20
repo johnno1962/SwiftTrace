@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#9 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#12 $
 //
 //  With thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -151,4 +151,71 @@ IMP imp_implementationForwardingToTracer(void *info, IMP tracer)
     OSSpinLockUnlock(&lock);
     
     return implementation;
+}
+
+// https://stackoverflow.com/questions/20481058/find-pathname-from-dlopen-handle-on-osx
+
+#import <dlfcn.h>
+#import <mach-o/dyld.h>
+#import <mach-o/arch.h>
+#import <mach-o/getsect.h>
+#import <mach-o/nlist.h>
+
+#ifdef __LP64__
+typedef struct mach_header_64 mach_header_t;
+typedef struct segment_command_64 segment_command_t;
+typedef struct nlist_64 nlist_t;
+#else
+typedef struct mach_header mach_header_t;
+typedef struct segment_command segment_command_t;
+typedef struct nlist nlist_t;
+#endif
+
+void findSwiftClasses(const char *path, void (^callback)(void *aClass)) {
+    void *handle = dlopen(path, RTLD_LAZY);
+    for (int32_t i = _dyld_image_count(); i >= 0 ; i--)
+    {
+        const mach_header_t *header = (const mach_header_t *)_dyld_get_image_header(i);
+        Dl_info info;
+        if (dladdr(header, &info) && path == info.dli_fname) {
+            segment_command_t *seg_linkedit = NULL;
+            segment_command_t *seg_text = NULL;
+            struct symtab_command *symtab = NULL;
+
+            struct load_command *cmd = (struct load_command *)((intptr_t)header + sizeof(mach_header_t));
+            for (uint32_t i = 0; i < header->ncmds; i++, cmd = (struct load_command *)((intptr_t)cmd + cmd->cmdsize))
+            {
+                switch(cmd->cmd)
+                {
+                    case LC_SEGMENT:
+                    case LC_SEGMENT_64:
+                        if (!strcmp(((segment_command_t *)cmd)->segname, SEG_TEXT))
+                            seg_text = (segment_command_t *)cmd;
+                        else if (!strcmp(((segment_command_t *)cmd)->segname, SEG_LINKEDIT))
+                            seg_linkedit = (segment_command_t *)cmd;
+                        break;
+
+                    case LC_SYMTAB: {
+                        symtab = (struct symtab_command *)cmd;
+                        intptr_t file_slide = ((intptr_t)seg_linkedit->vmaddr - (intptr_t)seg_text->vmaddr) - seg_linkedit->fileoff;
+                        const char *strings = (const char *)header + (symtab->stroff + file_slide);
+                        nlist_t *sym = (nlist_t *)((intptr_t)header + (symtab->symoff + file_slide));
+
+                        for (uint32_t i = 0; i < symtab->nsyms; i++, sym++) {
+                            const char *sptr = strings + sym->n_un.n_strx;
+                            void *aClass;
+                            if ((sym->n_type & N_EXT) != N_EXT &&
+                                strncmp(sptr, "_$s", 3) == 0 &&
+                                strcmp(sptr+strlen(sptr)-2, "CN") == 0 &&
+                                (aClass = dlsym(handle, sptr + 1))) {
+                                callback(aClass);
+                            }
+                        }
+
+                        return;
+                    }
+                }
+            }
+        }
+    }
 }

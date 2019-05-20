@@ -6,66 +6,10 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#20 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#23 $
 //
 
 import Foundation
-
-/** pointer to a function implementing a Swift method */
-typealias SIMP = @convention(c) ( _: AnyObject ) -> Void
-
-/**
-    Layout of a class instance. Needs to be kept in sync with ~swift/include/swift/Runtime/Metadata.h
- */
-private struct TargetClassMetadata {
-
-    let MetaClass: uintptr_t = 0, SuperClass: uintptr_t = 0
-    let CacheData1: uintptr_t = 0, CacheData2: uintptr_t = 0
-
-    let Data: uintptr_t = 0
-
-    /// Swift-specific class flags.
-    let Flags: UInt32 = 0
-
-    /// The address point of instances of this type.
-    let InstanceAddressPoint: UInt32 = 0
-
-    /// The required size of instances of this type.
-    /// 'InstanceAddressPoint' bytes go before the address point;
-    /// 'InstanceSize - InstanceAddressPoint' bytes go after it.
-    let InstanceSize: UInt32 = 0
-
-    /// The alignment mask of the address point of instances of this type.
-    let InstanceAlignMask: UInt16 = 0
-
-    /// Reserved for runtime use.
-    let Reserved: UInt16 = 0
-
-    /// The total size of the class object, including prefix and suffix
-    /// extents.
-    let ClassSize: UInt32 = 0
-
-    /// The offset of the address point within the class object.
-    let ClassAddressPoint: UInt32 = 0
-
-    /// An out-of-line Swift-specific description of the type, or null
-    /// if this is an artificial subclass.  We currently provide no
-    /// supported mechanism for making a non-artificial subclass
-    /// dynamically.
-    let Description: uintptr_t = 0
-
-    /// A function for destroying instance variables, used to clean up
-    /// after an early return from a constructor.
-    var IVarDestroyer: SIMP? = nil
-
-    // After this come the class members, laid out as follows:
-    //   - class members for the superclass (recursively)
-    //   - metadata reference for the parent, if applicable
-    //   - generic parameters for this class
-    //   - class variables (if we choose to support these)
-    //   - "tabulated" virtual methods
-
-}
 
 /**
     tracer callback called by trampoline before each traced method is called
@@ -210,16 +154,26 @@ open class SwiftTrace: NSObject {
         - parameter aClass: the class to specify the bundle
      */
     open class func traceBundleContaining( _ theClass: AnyClass ) {
-        let bundlePath = class_getImageName(theClass)
+        traceBundlePath(class_getImageName(theClass))
+    }
+
+    @objc class func traceBundlePath(_ bundlePath: UnsafePointer<Int8>?) {
         var nc: UInt32 = 0
+        var registered = Set<UnsafeRawPointer>()
         if let classes = objc_copyClassList( &nc ) {
             for aClass in (0..<Int(nc)).map( { classes[$0] } ) {
                 if class_getImageName(aClass) == bundlePath {
                     trace(aClass)
+                    registered.insert(unsafeBitCast(aClass, to: UnsafeRawPointer.self))
                 }
             }
             free(UnsafeMutableRawPointer(classes))
         }
+        findSwiftClasses(bundlePath, { aClass in
+            if !registered.contains(aClass!) {
+                trace(unsafeBitCast(aClass, to: AnyClass.self))
+            }
+        })
     }
 
     /**
@@ -345,6 +299,62 @@ open class SwiftTrace: NSObject {
         }
     }
 
+    /** pointer to a function implementing a Swift method */
+    private typealias SIMP = @convention(c) ( _: AnyObject ) -> Void
+    
+    /**
+     Layout of a class instance. Needs to be kept in sync with ~swift/include/swift/Runtime/Metadata.h
+     */
+    private struct TargetClassMetadata {
+        
+        let MetaClass: uintptr_t = 0, SuperClass: uintptr_t = 0
+        let CacheData1: uintptr_t = 0, CacheData2: uintptr_t = 0
+        
+        let Data: uintptr_t = 0
+        
+        /// Swift-specific class flags.
+        let Flags: UInt32 = 0
+        
+        /// The address point of instances of this type.
+        let InstanceAddressPoint: UInt32 = 0
+        
+        /// The required size of instances of this type.
+        /// 'InstanceAddressPoint' bytes go before the address point;
+        /// 'InstanceSize - InstanceAddressPoint' bytes go after it.
+        let InstanceSize: UInt32 = 0
+        
+        /// The alignment mask of the address point of instances of this type.
+        let InstanceAlignMask: UInt16 = 0
+        
+        /// Reserved for runtime use.
+        let Reserved: UInt16 = 0
+        
+        /// The total size of the class object, including prefix and suffix
+        /// extents.
+        let ClassSize: UInt32 = 0
+        
+        /// The offset of the address point within the class object.
+        let ClassAddressPoint: UInt32 = 0
+        
+        /// An out-of-line Swift-specific description of the type, or null
+        /// if this is an artificial subclass.  We currently provide no
+        /// supported mechanism for making a non-artificial subclass
+        /// dynamically.
+        let Description: uintptr_t = 0
+        
+        /// A function for destroying instance variables, used to clean up
+        /// after an early return from a constructor.
+        var IVarDestroyer: SIMP? = nil
+        
+        // After this come the class members, laid out as follows:
+        //   - class members for the superclass (recursively)
+        //   - metadata reference for the parent, if applicable
+        //   - generic parameters for this class
+        //   - class variables (if we choose to support these)
+        //   - "tabulated" virtual methods
+        
+    }
+    
 }
 
 // not public in Swift3
