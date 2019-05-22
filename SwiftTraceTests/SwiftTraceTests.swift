@@ -55,12 +55,12 @@ class SwiftTwaceTests: XCTestCase {
         func s(a: TestStruct) -> TestStruct {
             return a
         }
-    }
 
-    class TestInvoke: SwiftTrace.Invocation {
+        class TestInvoke: SwiftTrace.Invocation {
 
-        override func onEntry() {
-            args = "\(theStack[1]) \(Unmanaged<TestClass>.fromOpaque(swiftSelf).takeUnretainedValue().i) \(Double(bitPattern: theStack[-1]))"
+            override func onEntry() {
+                args = "\(theStack[1]) \(Unmanaged<TestClass>.fromOpaque(swiftSelf).takeUnretainedValue().i) \(Double(bitPattern: theStack[-1]))"
+            }
         }
     }
 
@@ -69,7 +69,7 @@ class SwiftTwaceTests: XCTestCase {
     override func setUp() {
         super.setUp()
         // Put setup code here. This method is called before the invocation of each test method in the class.
-        SwiftTrace.invocationFactory = TestInvoke.self
+        SwiftTrace.invocationFactory = TestClass.TestInvoke.self
         SwiftTrace.trace(aClass: TestClass.self)
     }
 

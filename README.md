@@ -8,14 +8,14 @@ following line to it's Podfile:
 
     pod 'SwiftTrace'
 
-This project has been updated to Swift 3 from the Xocde 8 beta. If you want to use the [Swift2 branch](https://github.com/johnno1962/SwiftTrace/tree/swift2-branch):
+This project has been updated to Swift 5 from Xocde 10.2.:
 
     pod 'SwiftTrace', '2.2'
 
 Once the project has rebuilt import SwiftTrace into the application's AppDelegate and add something like
 the following to the beginning of it's didFinishLaunchingWithOptions method:
 
-SwiftTrace.traceBundleContaining( theClass: type(of: self) )
+    SwiftTrace.traceBundleContaining( theClass: type(of: self) )
 
 This traces all classes defined in the main application bundle.
 To trace, for example, all classes in the RxSwift framework add the following
@@ -24,19 +24,21 @@ To trace, for example, all classes in the RxSwift framework add the following
 
 This gives output in the Xcode debug console something like:
 
-    RxSwift.SingleAssignmentDisposable.dispose () -> ()
-    RxSwift.SingleAssignmentDisposable.disposable.setter : RxSwift.Disposable11
-    RxSwift.CompositeDisposable.addDisposable (RxSwift.Disposable11) -> Swift.Optional<RxSwift.BagKey>
-    RxSwift.CurrentThreadScheduler.schedule <A> (A, action : (A) -> RxSwift.Disposable11) -> RxSwift.Disposable11
-    -[RxSwift.CurrentThreadSchedulerKey copyWithZone:] -> @24@0:8^v16
-    RxSwift.CompositeDisposable.addDisposable (RxSwift.Disposable11) -> Swift.Optional<RxSwift.BagKey>
-    RxSwift.CompositeDisposable.addDisposable (RxSwift.Disposable11) -> Swift.Optional<RxSwift.BagKey>
-    RxSwift.SerialDisposable.disposable.setter : RxSwift.Disposable11
-    RxSwift.SingleAssignmentDisposable.dispose () -> ()
-    RxSwift.SingleAssignmentDisposable.disposable.setter : RxSwift.Disposable11
-    RxSwift.SingleAssignmentDisposable.dispose () -> ()
-    RxSwift.CompositeDisposable.removeDisposable (RxSwift.BagKey) -> ()
-    RxSwift.SingleAssignmentDisposable.dispose () -> ()
+            Unwrap.LearnCoordinator.activeStudyReview.setter : Swift.Optional<Unwrap.StudyReview> 0.0ms
+                  Unwrap.TappableTextView.addCustomizations() -> () 0.6ms
+                -[TappableTextView initWithFrame:textContainer:] -> @56@0:8{CGRect={CGPoint=dd}{CGSize=dd}}16@48 6.8ms
+              -[StudyTextView initWithFrame:textContainer:] -> @56@0:8{CGRect={CGPoint=dd}{CGSize=dd}}16@48 6.8ms
+            -[StudyViewController initWithNibName:bundle:] -> @32@0:8@16@24 7.1ms
+            Unwrap.StudyViewController.chapter.setter : Swift.String 0.0ms
+              Unwrap.StudyViewController.configureNavigation() -> () 0.2ms
+            Unwrap.StudyViewController.coordinator.setter : Swift.Optional<Unwrap.LearnCoordinator> 0.3ms
+          Unwrap.LearnCoordinator.studyViewController(for: Swift.String) -> Unwrap.StudyViewController 15.5ms
+              -[CoordinatedNavigationController initWithNibName:bundle:] -> @32@0:8@16@24 0.1ms
+            -[CoordinatedNavigationController initWithRootViewController:] -> @24@0:8@16 7.6ms
+          Unwrap.LearnCoordinator.startStudying(using: __C.UIViewController) -> () 20.9ms
+        Unwrap.LearnCoordinator.startStudying(title: Swift.String) -> () 36.5ms
+      Unwrap.LearnViewController.startStudying(title: Swift.String) -> () 36.6ms
+    -[LearnDataSource tableView:didSelectRowAtIndexPath:] -> v32@0:8@16@24 36.7ms
 
 The line beginning "-[RxSwift" is where the old Objective-C dynamic dispatch is being used.
 
