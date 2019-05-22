@@ -53,40 +53,40 @@ public class TestClass: P {
 
 }
 
+class MyTracer: SwiftTrace.Invocation {
+
+    override func onEntry() {
+        print( ">> "+method.name )
+    }
+
+}
+
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate {
 
     var window: UIWindow?
 
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey : Any]?) -> Bool {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]?) -> Bool {
         // Override point for customization after application launch.
         let splitViewController = self.window!.rootViewController as! UISplitViewController
         let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count-1] as! UINavigationController
         navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
         splitViewController.delegate = self
 
-        // any inclusions or exlusiona need to come before trace enabled
+        // any inclusions or exlusions need to come before trace enabled
         //SwiftTrace.include( "Swift.Optiona|TestClass" )
 
-        class MyTracer: SwiftTraceInfo {
-
-            override func trace() -> IMP {
-                print( ">> "+symbol )
-                return original
-            }
-
-        }
-
-        SwiftTrace.tracerClass = MyTracer.self
+        SwiftTrace.invocationFactory = MyTracer.self
 
         type(of: self).traceBundle()
+        SwiftTrace.trace(aClass: type(of: self))
 
         let a: P = TestClass()
         a.x()
         print( a.y() )
         a.x()
         a.z( 88, f: 66, g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
-        a.ssssss( a: TestStruct() )
+        _ = a.ssssss( a: TestStruct() )
 
         return true
     }

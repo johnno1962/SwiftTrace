@@ -3,17 +3,34 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#12 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#14 $
 //
-//  With thanks to:
+//  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
 //
 //  imp_implementationForwardingToSelector.m
 //  imp_implementationForwardingToSelector
 //
 //  Created by Oliver Letterer on 22.03.14.
-//  Copyright 2014 Sparrowlabs. All rights reserved.
+//  Copyright (c) 2014 Oliver Letterer <oliver.letterer@gmail.com>
 //
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
 //
 
 #import "SwiftTrace.h"
@@ -50,7 +67,7 @@ static const int32_t SPLForwardingTrampolineInstructionCount = 32;
 #undef PAGE_SIZE
 #define PAGE_SIZE (1<<14)
 #elif defined(__LP64__)
-static const int32_t SPLForwardingTrampolineInstructionCount = 42;
+static const int32_t SPLForwardingTrampolineInstructionCount = 86;
 #else
 #error SwiftTrace is not supported on this platform
 #endif
@@ -61,7 +78,8 @@ typedef struct {
     union {
         struct {
 #if defined(__LP64__)
-            IMP tracer;
+            IMP onEntry;
+            IMP onExit;
 #endif
             int32_t nextAvailableTrampolineIndex;
         };
@@ -130,7 +148,7 @@ static SPLForwardingTrampolinePage *nextTrampolinePage()
     return trampolinePage;
 }
 
-IMP imp_implementationForwardingToTracer(void *info, IMP tracer)
+IMP imp_implementationForwardingToTracer(void *info, IMP onEntry, IMP onExit)
 {
     OSSpinLockLock(&lock);
 
@@ -141,7 +159,8 @@ IMP imp_implementationForwardingToTracer(void *info, IMP tracer)
 #if !defined(__LP64__)
     dataPageLayout->trampolineData[nextAvailableTrampolineIndex].tracer = tracer;
 #else
-    dataPageLayout->tracer = tracer;
+    dataPageLayout->onEntry = onEntry;
+    dataPageLayout->onExit = onExit;
 #endif
     dataPageLayout->trampolineData[nextAvailableTrampolineIndex].info = info;
     dataPageLayout->nextAvailableTrampolineIndex++;

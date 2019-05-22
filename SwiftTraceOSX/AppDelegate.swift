@@ -7,7 +7,6 @@
 //
 
 import Cocoa
-import SwiftTraceX
 
 public protocol P {
 
@@ -49,16 +48,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // any inclusions or exlusiona need to come before trace enabled
         //SwiftTrace.include( "Swift.Optiona|TestClass" )
 
-        class MyTracer: SwiftTraceInfo {
+        class MyTracer: SwiftTrace.Invocation {
 
-            override func trace() -> IMP {
-                print( ">> "+symbol )
-                return original
+            override func onEntry() {
+                print( ">> "+method.name )
             }
 
         }
 
-        SwiftTrace.tracerClass = MyTracer.self
+        SwiftTrace.invocationFactory = MyTracer.self
 
         type(of: self).traceBundle()
 
