@@ -157,7 +157,7 @@ IMP imp_implementationForwardingToTracer(void *info, IMP onEntry, IMP onExit)
     int32_t nextAvailableTrampolineIndex = dataPageLayout->nextAvailableTrampolineIndex;
 
 #if !defined(__LP64__)
-    dataPageLayout->trampolineData[nextAvailableTrampolineIndex].tracer = tracer;
+    dataPageLayout->trampolineData[nextAvailableTrampolineIndex].tracer = onEntry;
 #else
     dataPageLayout->onEntry = onEntry;
     dataPageLayout->onExit = onExit;
