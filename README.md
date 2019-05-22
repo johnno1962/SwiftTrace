@@ -10,7 +10,7 @@ following line to it's Podfile:
 
 This project has been updated to Swift 5 from Xocde 10.2.:
 
-    pod 'SwiftTrace', '5.0.0'
+    pod 'SwiftTrace', '5.0.1'
 
 Once the project has rebuilt import SwiftTrace into the application's AppDelegate and add something like
 the following to the beginning of it's didFinishLaunchingWithOptions method:
