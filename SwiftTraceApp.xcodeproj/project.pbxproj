@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BB76EA14229540B700E454F0 /* SwiftTrace.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F81D0A445D00520F38 /* SwiftTrace.swift */; };
+		BB76EA15229540BD00E454F0 /* SwiftTrace.mm in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F61D0A442F00520F38 /* SwiftTrace.mm */; };
+		BB76EA16229540C200E454F0 /* xt_forwarding_trampoline_x64.s in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F11D0A43E800520F38 /* xt_forwarding_trampoline_x64.s */; };
+		BB76EA17229544B400E454F0 /* SwiftTrace.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F81D0A445D00520F38 /* SwiftTrace.swift */; };
+		BB76EA18229544B900E454F0 /* SwiftTrace.mm in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F61D0A442F00520F38 /* SwiftTrace.mm */; };
+		BB76EA19229544BD00E454F0 /* xt_forwarding_trampoline_x64.s in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F11D0A43E800520F38 /* xt_forwarding_trampoline_x64.s */; };
 		BBC3D1CB1D0A438800520F38 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1CA1D0A438800520F38 /* AppDelegate.swift */; };
 		BBC3D1CD1D0A438800520F38 /* MasterViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1CC1D0A438800520F38 /* MasterViewController.swift */; };
 		BBC3D1CF1D0A438800520F38 /* DetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1CE1D0A438800520F38 /* DetailViewController.swift */; };
@@ -26,20 +32,10 @@
 		BBCDA3771D0E60C7007222D3 /* SwiftTraceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCDA3761D0E60C7007222D3 /* SwiftTraceTests.swift */; };
 		BBCDA3791D0E60C7007222D3 /* SwiftTrace.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BBC3D1E31D0A43B200520F38 /* SwiftTrace.framework */; };
 		BBCDA3861D0E64AC007222D3 /* SwiftTraceXTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCDA3851D0E64AC007222D3 /* SwiftTraceXTests.swift */; };
-		BBCDA3881D0E64AC007222D3 /* SwiftTraceX.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BBF6EC821D0E56A400C5A202 /* SwiftTraceX.framework */; };
 		BBF6EC621D0C174900C5A202 /* xt_forwarding_trampoline_arm7.s in Sources */ = {isa = PBXBuildFile; fileRef = BBF6EC611D0C174900C5A202 /* xt_forwarding_trampoline_arm7.s */; };
 		BBF6EC6E1D0E54F100C5A202 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBF6EC6D1D0E54F100C5A202 /* AppDelegate.swift */; };
 		BBF6EC701D0E54F100C5A202 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BBF6EC6F1D0E54F100C5A202 /* Assets.xcassets */; };
 		BBF6EC731D0E54F100C5A202 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = BBF6EC711D0E54F100C5A202 /* MainMenu.xib */; };
-		BBF6EC851D0E56A400C5A202 /* SwiftTraceX.h in Headers */ = {isa = PBXBuildFile; fileRef = BBF6EC841D0E56A400C5A202 /* SwiftTraceX.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		BBF6EC891D0E56A400C5A202 /* SwiftTraceX.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BBF6EC821D0E56A400C5A202 /* SwiftTraceX.framework */; };
-		BBF6EC8A1D0E56A400C5A202 /* SwiftTraceX.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BBF6EC821D0E56A400C5A202 /* SwiftTraceX.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		BBF6EC901D0E56D700C5A202 /* SwiftTrace.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F81D0A445D00520F38 /* SwiftTrace.swift */; };
-		BBF6EC911D0E56D700C5A202 /* SwiftTrace.mm in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F61D0A442F00520F38 /* SwiftTrace.mm */; };
-		BBF6EC921D0E56D700C5A202 /* xt_forwarding_trampoline_x86.s in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F21D0A43E800520F38 /* xt_forwarding_trampoline_x86.s */; };
-		BBF6EC931D0E56D700C5A202 /* xt_forwarding_trampoline_x64.s in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F11D0A43E800520F38 /* xt_forwarding_trampoline_x64.s */; };
-		BBF6EC941D0E56D700C5A202 /* xt_forwarding_trampoline_arm7.s in Sources */ = {isa = PBXBuildFile; fileRef = BBF6EC611D0C174900C5A202 /* xt_forwarding_trampoline_arm7.s */; };
-		BBF6EC951D0E56D700C5A202 /* xt_forwarding_trampoline_arm64.s in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F01D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,20 +52,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = BBC3D1E21D0A43B200520F38;
 			remoteInfo = SwiftTrace;
-		};
-		BBCDA3891D0E64AC007222D3 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = BBC3D1BF1D0A438800520F38 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = BBF6EC811D0E56A400C5A202;
-			remoteInfo = SwiftTraceX;
-		};
-		BBF6EC871D0E56A400C5A202 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = BBC3D1BF1D0A438800520F38 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = BBF6EC811D0E56A400C5A202;
-			remoteInfo = SwiftTraceX;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -91,7 +73,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				BBF6EC8A1D0E56A400C5A202 /* SwiftTraceX.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -99,7 +80,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		BBC3D1C71D0A438800520F38 /* SwiftTraceApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftTraceApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB76EA1122953F9B00E454F0 /* SwiftTwaceOSX-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SwiftTwaceOSX-Bridging-Header.h"; sourceTree = "<group>"; };
+		BBC3D1C71D0A438800520F38 /* SwiftTwaceApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftTwaceApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBC3D1CA1D0A438800520F38 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BBC3D1CC1D0A438800520F38 /* MasterViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterViewController.swift; sourceTree = "<group>"; };
 		BBC3D1CE1D0A438800520F38 /* DetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailViewController.swift; sourceTree = "<group>"; };
@@ -118,19 +100,18 @@
 		BBC3D1FC1D0A85E800520F38 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		BBC3D1FE1D0A928000520F38 /* SwiftTrace.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SwiftTrace.podspec; sourceTree = "<group>"; };
 		BBC3D2001D0A941900520F38 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
-		BBCDA3741D0E60C7007222D3 /* SwiftTraceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftTraceTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BBCDA3741D0E60C7007222D3 /* SwiftTwaceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftTwaceTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBCDA3761D0E60C7007222D3 /* SwiftTraceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftTraceTests.swift; sourceTree = "<group>"; };
 		BBCDA3781D0E60C7007222D3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BBCDA3831D0E64AC007222D3 /* SwiftTraceXTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftTraceXTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBCDA3851D0E64AC007222D3 /* SwiftTraceXTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftTraceXTests.swift; sourceTree = "<group>"; };
 		BBCDA3871D0E64AC007222D3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BBF6EC611D0C174900C5A202 /* xt_forwarding_trampoline_arm7.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = xt_forwarding_trampoline_arm7.s; sourceTree = "<group>"; };
-		BBF6EC6B1D0E54F100C5A202 /* SwiftTraceOSX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftTraceOSX.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BBF6EC6B1D0E54F100C5A202 /* SwiftTwaceOSX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftTwaceOSX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBF6EC6D1D0E54F100C5A202 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BBF6EC6F1D0E54F100C5A202 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BBF6EC721D0E54F100C5A202 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		BBF6EC741D0E54F100C5A202 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		BBF6EC821D0E56A400C5A202 /* SwiftTraceX.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftTraceX.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBF6EC841D0E56A400C5A202 /* SwiftTraceX.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftTraceX.h; sourceTree = "<group>"; };
 		BBF6EC861D0E56A400C5A202 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -163,19 +144,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BBCDA3881D0E64AC007222D3 /* SwiftTraceX.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		BBF6EC681D0E54F100C5A202 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				BBF6EC891D0E56A400C5A202 /* SwiftTraceX.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		BBF6EC7E1D0E56A400C5A202 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -204,11 +176,10 @@
 		BBC3D1C81D0A438800520F38 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				BBC3D1C71D0A438800520F38 /* SwiftTraceApp.app */,
+				BBC3D1C71D0A438800520F38 /* SwiftTwaceApp.app */,
 				BBC3D1E31D0A43B200520F38 /* SwiftTrace.framework */,
-				BBF6EC6B1D0E54F100C5A202 /* SwiftTraceOSX.app */,
-				BBF6EC821D0E56A400C5A202 /* SwiftTraceX.framework */,
-				BBCDA3741D0E60C7007222D3 /* SwiftTraceTests.xctest */,
+				BBF6EC6B1D0E54F100C5A202 /* SwiftTwaceOSX.app */,
+				BBCDA3741D0E60C7007222D3 /* SwiftTwaceTests.xctest */,
 				BBCDA3831D0E64AC007222D3 /* SwiftTraceXTests.xctest */,
 			);
 			name = Products;
@@ -265,6 +236,7 @@
 			isa = PBXGroup;
 			children = (
 				BBF6EC6D1D0E54F100C5A202 /* AppDelegate.swift */,
+				BB76EA1122953F9B00E454F0 /* SwiftTwaceOSX-Bridging-Header.h */,
 				BBF6EC6F1D0E54F100C5A202 /* Assets.xcassets */,
 				BBF6EC711D0E54F100C5A202 /* MainMenu.xib */,
 				BBF6EC741D0E54F100C5A202 /* Info.plist */,
@@ -292,20 +264,12 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		BBF6EC7F1D0E56A400C5A202 /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				BBF6EC851D0E56A400C5A202 /* SwiftTraceX.h in Headers */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		BBC3D1C61D0A438800520F38 /* SwiftTraceApp */ = {
+		BBC3D1C61D0A438800520F38 /* SwiftTwaceApp */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BBC3D1DB1D0A438800520F38 /* Build configuration list for PBXNativeTarget "SwiftTraceApp" */;
+			buildConfigurationList = BBC3D1DB1D0A438800520F38 /* Build configuration list for PBXNativeTarget "SwiftTwaceApp" */;
 			buildPhases = (
 				BBC3D1C31D0A438800520F38 /* Sources */,
 				BBC3D1C41D0A438800520F38 /* Frameworks */,
@@ -317,9 +281,9 @@
 			dependencies = (
 				BBC3D1E91D0A43B300520F38 /* PBXTargetDependency */,
 			);
-			name = SwiftTraceApp;
+			name = SwiftTwaceApp;
 			productName = SwiftTraceApp;
-			productReference = BBC3D1C71D0A438800520F38 /* SwiftTraceApp.app */;
+			productReference = BBC3D1C71D0A438800520F38 /* SwiftTwaceApp.app */;
 			productType = "com.apple.product-type.application";
 		};
 		BBC3D1E21D0A43B200520F38 /* SwiftTrace */ = {
@@ -340,9 +304,9 @@
 			productReference = BBC3D1E31D0A43B200520F38 /* SwiftTrace.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		BBCDA3731D0E60C7007222D3 /* SwiftTraceTests */ = {
+		BBCDA3731D0E60C7007222D3 /* SwiftTwaceTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BBCDA37C1D0E60C7007222D3 /* Build configuration list for PBXNativeTarget "SwiftTraceTests" */;
+			buildConfigurationList = BBCDA37C1D0E60C7007222D3 /* Build configuration list for PBXNativeTarget "SwiftTwaceTests" */;
 			buildPhases = (
 				BBCDA3701D0E60C7007222D3 /* Sources */,
 				BBCDA3711D0E60C7007222D3 /* Frameworks */,
@@ -353,9 +317,9 @@
 			dependencies = (
 				BBCDA37B1D0E60C7007222D3 /* PBXTargetDependency */,
 			);
-			name = SwiftTraceTests;
+			name = SwiftTwaceTests;
 			productName = SwiftTraceTests;
-			productReference = BBCDA3741D0E60C7007222D3 /* SwiftTraceTests.xctest */;
+			productReference = BBCDA3741D0E60C7007222D3 /* SwiftTwaceTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		BBCDA3821D0E64AC007222D3 /* SwiftTraceXTests */ = {
@@ -369,16 +333,15 @@
 			buildRules = (
 			);
 			dependencies = (
-				BBCDA38A1D0E64AC007222D3 /* PBXTargetDependency */,
 			);
 			name = SwiftTraceXTests;
 			productName = SwiftTraceXTests;
 			productReference = BBCDA3831D0E64AC007222D3 /* SwiftTraceXTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		BBF6EC6A1D0E54F100C5A202 /* SwiftTraceOSX */ = {
+		BBF6EC6A1D0E54F100C5A202 /* SwiftTwaceOSX */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BBF6EC771D0E54F600C5A202 /* Build configuration list for PBXNativeTarget "SwiftTraceOSX" */;
+			buildConfigurationList = BBF6EC771D0E54F600C5A202 /* Build configuration list for PBXNativeTarget "SwiftTwaceOSX" */;
 			buildPhases = (
 				BBF6EC671D0E54F100C5A202 /* Sources */,
 				BBF6EC681D0E54F100C5A202 /* Frameworks */,
@@ -388,30 +351,11 @@
 			buildRules = (
 			);
 			dependencies = (
-				BBF6EC881D0E56A400C5A202 /* PBXTargetDependency */,
 			);
-			name = SwiftTraceOSX;
+			name = SwiftTwaceOSX;
 			productName = SwiftTraceOSX;
-			productReference = BBF6EC6B1D0E54F100C5A202 /* SwiftTraceOSX.app */;
+			productReference = BBF6EC6B1D0E54F100C5A202 /* SwiftTwaceOSX.app */;
 			productType = "com.apple.product-type.application";
-		};
-		BBF6EC811D0E56A400C5A202 /* SwiftTraceX */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = BBF6EC8B1D0E56A400C5A202 /* Build configuration list for PBXNativeTarget "SwiftTraceX" */;
-			buildPhases = (
-				BBF6EC7D1D0E56A400C5A202 /* Sources */,
-				BBF6EC7E1D0E56A400C5A202 /* Frameworks */,
-				BBF6EC7F1D0E56A400C5A202 /* Headers */,
-				BBF6EC801D0E56A400C5A202 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = SwiftTraceX;
-			productName = SwiftTraceX;
-			productReference = BBF6EC821D0E56A400C5A202 /* SwiftTraceX.framework */;
-			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
 
@@ -426,7 +370,7 @@
 					BBC3D1C61D0A438800520F38 = {
 						CreatedOnToolsVersion = 7.3.1;
 						DevelopmentTeam = 9V5A8WE85E;
-						LastSwiftMigration = 0910;
+						LastSwiftMigration = 1020;
 					};
 					BBC3D1E21D0A43B200520F38 = {
 						CreatedOnToolsVersion = 7.3.1;
@@ -440,10 +384,6 @@
 						CreatedOnToolsVersion = 7.3.1;
 					};
 					BBF6EC6A1D0E54F100C5A202 = {
-						CreatedOnToolsVersion = 7.3.1;
-						LastSwiftMigration = 0910;
-					};
-					BBF6EC811D0E56A400C5A202 = {
 						CreatedOnToolsVersion = 7.3.1;
 						LastSwiftMigration = 0910;
 					};
@@ -462,11 +402,10 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				BBC3D1C61D0A438800520F38 /* SwiftTraceApp */,
-				BBF6EC6A1D0E54F100C5A202 /* SwiftTraceOSX */,
+				BBC3D1C61D0A438800520F38 /* SwiftTwaceApp */,
+				BBF6EC6A1D0E54F100C5A202 /* SwiftTwaceOSX */,
 				BBC3D1E21D0A43B200520F38 /* SwiftTrace */,
-				BBF6EC811D0E56A400C5A202 /* SwiftTraceX */,
-				BBCDA3731D0E60C7007222D3 /* SwiftTraceTests */,
+				BBCDA3731D0E60C7007222D3 /* SwiftTwaceTests */,
 				BBCDA3821D0E64AC007222D3 /* SwiftTraceXTests */,
 			);
 		};
@@ -515,13 +454,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		BBF6EC801D0E56A400C5A202 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -560,7 +492,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB76EA19229544BD00E454F0 /* xt_forwarding_trampoline_x64.s in Sources */,
+				BB76EA18229544B900E454F0 /* SwiftTrace.mm in Sources */,
 				BBCDA3861D0E64AC007222D3 /* SwiftTraceXTests.swift in Sources */,
+				BB76EA17229544B400E454F0 /* SwiftTrace.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -568,20 +503,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB76EA16229540C200E454F0 /* xt_forwarding_trampoline_x64.s in Sources */,
+				BB76EA15229540BD00E454F0 /* SwiftTrace.mm in Sources */,
 				BBF6EC6E1D0E54F100C5A202 /* AppDelegate.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		BBF6EC7D1D0E56A400C5A202 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				BBF6EC901D0E56D700C5A202 /* SwiftTrace.swift in Sources */,
-				BBF6EC911D0E56D700C5A202 /* SwiftTrace.mm in Sources */,
-				BBF6EC921D0E56D700C5A202 /* xt_forwarding_trampoline_x86.s in Sources */,
-				BBF6EC931D0E56D700C5A202 /* xt_forwarding_trampoline_x64.s in Sources */,
-				BBF6EC941D0E56D700C5A202 /* xt_forwarding_trampoline_arm7.s in Sources */,
-				BBF6EC951D0E56D700C5A202 /* xt_forwarding_trampoline_arm64.s in Sources */,
+				BB76EA14229540B700E454F0 /* SwiftTrace.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -597,16 +522,6 @@
 			isa = PBXTargetDependency;
 			target = BBC3D1E21D0A43B200520F38 /* SwiftTrace */;
 			targetProxy = BBCDA37A1D0E60C7007222D3 /* PBXContainerItemProxy */;
-		};
-		BBCDA38A1D0E64AC007222D3 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = BBF6EC811D0E56A400C5A202 /* SwiftTraceX */;
-			targetProxy = BBCDA3891D0E64AC007222D3 /* PBXContainerItemProxy */;
-		};
-		BBF6EC881D0E56A400C5A202 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = BBF6EC811D0E56A400C5A202 /* SwiftTraceX */;
-			targetProxy = BBF6EC871D0E56A400C5A202 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -753,11 +668,13 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				DEVELOPMENT_TEAM = 9V5A8WE85E;
 				INFOPLIST_FILE = SwiftTraceApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.johnholdsworth.SwiftTraceApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
@@ -766,6 +683,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				DEVELOPMENT_TEAM = 9V5A8WE85E;
 				INFOPLIST_FILE = SwiftTraceApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -851,7 +769,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.johnholdsworth.SwiftTraceXTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				SWIFT_VERSION = 3.0;
+				SWIFT_OBJC_BRIDGING_HEADER = "SwiftTraceOSX/SwiftTwaceOSX-Bridging-Header.h";
 			};
 			name = Debug;
 		};
@@ -866,7 +784,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.johnholdsworth.SwiftTraceXTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				SWIFT_VERSION = 3.0;
+				SWIFT_OBJC_BRIDGING_HEADER = "SwiftTraceOSX/SwiftTwaceOSX-Bridging-Header.h";
 			};
 			name = Release;
 		};
@@ -883,7 +801,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.johnholdsworth.SwiftTraceOSX;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				SWIFT_VERSION = 4.0;
+				SWIFT_OBJC_BRIDGING_HEADER = "SwiftTraceOSX/SwiftTwaceOSX-Bridging-Header.h";
 			};
 			name = Debug;
 		};
@@ -900,57 +818,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.johnholdsworth.SwiftTraceOSX;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				SWIFT_VERSION = 4.0;
-			};
-			name = Release;
-		};
-		BBF6EC8C1D0E56A400C5A202 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_IDENTITY = "-";
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				FRAMEWORK_VERSION = A;
-				INFOPLIST_FILE = SwiftTraceX/Info.plist;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				PRODUCT_BUNDLE_IDENTIFIER = com.johnholdsworth.SwiftTraceX;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 4.0;
-				VERSIONING_SYSTEM = "apple-generic";
-				VERSION_INFO_PREFIX = "";
-			};
-			name = Debug;
-		};
-		BBF6EC8D1D0E56A400C5A202 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_IDENTITY = "-";
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				FRAMEWORK_VERSION = A;
-				INFOPLIST_FILE = SwiftTraceX/Info.plist;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				PRODUCT_BUNDLE_IDENTIFIER = com.johnholdsworth.SwiftTraceX;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 4.0;
-				VERSIONING_SYSTEM = "apple-generic";
-				VERSION_INFO_PREFIX = "";
+				SWIFT_OBJC_BRIDGING_HEADER = "SwiftTraceOSX/SwiftTwaceOSX-Bridging-Header.h";
 			};
 			name = Release;
 		};
@@ -966,7 +834,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BBC3D1DB1D0A438800520F38 /* Build configuration list for PBXNativeTarget "SwiftTraceApp" */ = {
+		BBC3D1DB1D0A438800520F38 /* Build configuration list for PBXNativeTarget "SwiftTwaceApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BBC3D1DC1D0A438800520F38 /* Debug */,
@@ -984,7 +852,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BBCDA37C1D0E60C7007222D3 /* Build configuration list for PBXNativeTarget "SwiftTraceTests" */ = {
+		BBCDA37C1D0E60C7007222D3 /* Build configuration list for PBXNativeTarget "SwiftTwaceTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BBCDA37D1D0E60C7007222D3 /* Debug */,
@@ -1002,20 +870,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BBF6EC771D0E54F600C5A202 /* Build configuration list for PBXNativeTarget "SwiftTraceOSX" */ = {
+		BBF6EC771D0E54F600C5A202 /* Build configuration list for PBXNativeTarget "SwiftTwaceOSX" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BBF6EC751D0E54F200C5A202 /* Debug */,
 				BBF6EC761D0E54F200C5A202 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		BBF6EC8B1D0E56A400C5A202 /* Build configuration list for PBXNativeTarget "SwiftTraceX" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				BBF6EC8C1D0E56A400C5A202 /* Debug */,
-				BBF6EC8D1D0E56A400C5A202 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

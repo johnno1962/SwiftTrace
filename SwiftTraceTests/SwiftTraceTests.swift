@@ -31,8 +31,9 @@ protocol P {
 }
 
 var got = ""
+var args = ""
 
-class SwiftTraceTests: XCTestCase {
+class SwiftTwaceTests: XCTestCase {
 
     class TestClass: P {
 
@@ -47,14 +48,20 @@ class SwiftTraceTests: XCTestCase {
             return -222.0
         }
 
-        func z( d: Int, f: Double, g: Float, h: Double, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int ) {
+        func z(d: Int, f: Double, g: Float, h: Double, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int) {
             got = "\(i) \(d) \(e) \(f) \(g) \(h) \(f1) \(g1) \(h1) \(f2) \(g2) \(h2)"
         }
 
-        func s( a: TestStruct ) -> TestStruct {
+        func s(a: TestStruct) -> TestStruct {
             return a
         }
+    }
 
+    class TestInvoke: SwiftTrace.Invocation {
+
+        override func onEntry() {
+            args = "\(theStack[1]) \(Unmanaged<TestClass>.fromOpaque(swiftSelf).takeUnretainedValue().i) \(Double(bitPattern: theStack[-1]))"
+        }
     }
 
     let p: P = TestClass()
@@ -62,7 +69,8 @@ class SwiftTraceTests: XCTestCase {
     override func setUp() {
         super.setUp()
         // Put setup code here. This method is called before the invocation of each test method in the class.
-        SwiftTrace.trace( TestClass.self )
+        SwiftTrace.invocationFactory = TestInvoke.self
+        SwiftTrace.trace(aClass: TestClass.self)
     }
 
     override func tearDown() {
@@ -75,15 +83,16 @@ class SwiftTraceTests: XCTestCase {
         // Use XCTAssert and related functions to verify your tests produce the correct results.
 
         p.x()
-        XCTAssertEqual( got, "111" )
+        XCTAssertEqual(got, "111")
 
-        XCTAssertEqual( p.y(), -222.0 )
-        XCTAssertEqual( got, "111" )
+        XCTAssertEqual(p.y(), -222.0)
+        XCTAssertEqual(got, "111")
 
         p.z( d: 88, f: 66, g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
-        XCTAssertEqual( got, "111 88 77 66.0 55.0 44.0 66.0 55.0 44.0 66.0 55.0 44.0" )
+        XCTAssertEqual(got, "111 88 77 66.0 55.0 44.0 66.0 55.0 44.0 66.0 55.0 44.0" )
+        XCTAssertEqual(args, "88 111 66.0")
 
-        XCTAssertEqual( p.s( a: TestStruct() ), TestStruct() )
+        XCTAssertEqual(p.s( a: TestStruct() ), TestStruct())
     }
 
     func testPerformanceExample() {

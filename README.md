@@ -10,17 +10,17 @@ following line to it's Podfile:
 
 This project has been updated to Swift 3 from the Xocde 8 beta. If you want to use the [Swift2 branch](https://github.com/johnno1962/SwiftTrace/tree/swift2-branch):
 
-    pod 'SwiftTrace', '2.1'
+    pod 'SwiftTrace', '2.2'
 
 Once the project has rebuilt import SwiftTrace into the application's AppDelegate and add something like
 the following to the beginning of it's didFinishLaunchingWithOptions method:
 
-    SwiftTrace.traceBundleContaining( aClass: self.dynamicType )
+SwiftTrace.traceBundleContaining( theClass: type(of: self) )
 
 This traces all classes defined in the main application bundle.
 To trace, for example, all classes in the RxSwift framework add the following
 
-    SwiftTrace.traceBundleContaining( aClass: RxSwift.DisposeBase.self )
+    SwiftTrace.traceBundleContaining( theClass: RxSwift.DisposeBase.self )
 
 This gives output in the Xcode debug console something like:
 
