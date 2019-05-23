@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#16 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#18 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -127,10 +127,10 @@ static SPLForwardingTrampolinePage *SPLForwardingTrampolinePageAlloc()
     return (SPLForwardingTrampolinePage *)newTrampolinePage;
 }
 
+static NSMutableArray *normalTrampolinePages = nil;
+
 static SPLForwardingTrampolinePage *nextTrampolinePage()
 {
-    static NSMutableArray *normalTrampolinePages = nil;
-
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         normalTrampolinePages = [NSMutableArray array];
@@ -170,6 +170,21 @@ IMP imp_implementationForwardingToTracer(void *info, IMP onEntry, IMP onExit)
     OSSpinLockUnlock(&lock);
     
     return implementation;
+}
+
+id unwrapTrampoline(IMP currentImplementation) {
+    const char *functionPointer = (const char *)currentImplementation;
+    for (NSValue *page in normalTrampolinePages) {
+        const char *start = (const char *)page.pointerValue;
+        if (functionPointer >= start + PAGE_SIZE &&
+            functionPointer < start + PAGE_SIZE * 2) {
+            XtraceTrampolineDataBlock *block =
+                (XtraceTrampolineDataBlock *)(functionPointer - PAGE_SIZE);
+            return (__bridge id)block->info;
+        }
+    }
+
+    return NULL;
 }
 
 // https://stackoverflow.com/questions/20481058/find-pathname-from-dlopen-handle-on-osx

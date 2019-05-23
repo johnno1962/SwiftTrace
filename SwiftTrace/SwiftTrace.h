@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#3 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#5 $
 //
 
 #import <Foundation/Foundation.h>
@@ -24,6 +24,7 @@ extern "C" {
 #endif
     IMP imp_implementationForwardingToTracer(void *info, IMP onEntry, IMP onExit);
     void findSwiftClasses(const char *path, void (^callback)(void *symbol));
+    id unwrapTrampoline(IMP currentImplementation);
 #ifdef __cplusplus
 }
 #endif

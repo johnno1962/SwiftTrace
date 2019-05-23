@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#27 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#31 $
 //
 
 import Foundation
@@ -284,16 +284,30 @@ open class SwiftTrace: NSObject {
             tClass = class_getSuperclass(tClass)
         } while tClass != nil
 
-        trace(ObjcClass: object_getClass(aClass)!, which: "+")
-        trace(ObjcClass: aClass, which: "-")
+        trace(objcClass: object_getClass(aClass)!, which: "+")
+        trace(objcClass: aClass, which: "-")
 
+        iterateMethods(ofClass: aClass) {
+            (name, iptr, stop) in
+            if included(name),
+                let method = SwiftTrace.methodFactory.init(name: name,
+                         implementation: unsafeBitCast(iptr.pointee, to: IMP.self)) {
+                iptr.pointee = unsafeBitCast(method.forwardingImplementation(), to: SIMP.self)
+            }
+        }
+    }
+
+    @discardableResult
+    open class func iterateMethods(ofClass aClass: AnyClass,
+           callback: (_ name: String, _ iptr: UnsafeMutablePointer<SIMP>, _ stop: inout Bool) -> Void) -> Bool {
         let swiftMeta = unsafeBitCast(aClass, to: UnsafeMutablePointer<TargetClassMetadata>.self)
 
-        if (swiftMeta.pointee.Data & 0x3) == 0 {
+        guard (swiftMeta.pointee.Data & 0x3) != 0 else {
             //print("Object is not instance of Swift class")
-            return
+            return false
         }
 
+        var stop = false
         withUnsafeMutablePointer(to: &swiftMeta.pointee.IVarDestroyer) {
             (sym_start) in
             swiftMeta.withMemoryRebound(to: Int8.self, capacity: 1) {
@@ -303,20 +317,105 @@ open class SwiftTrace: NSObject {
 
                     var info = Dl_info()
                     for i in 0..<(sym_end - sym_start) {
-                        if let fptr = sym_start[i] {
-                            let vptr = unsafeBitCast(fptr, to: UnsafeRawPointer.self)
+                        if var fptr = sym_start[i] {
+                            while true {
+                                if let existing = unwrapTrampoline(unsafeBitCast(fptr, to: IMP.self)) {
+                                    fptr = unsafeBitCast((existing as! Method)
+                                        .implementation, to: SIMP.self)
+                                }
+                                else {
+                                    break
+                                }
+                            }
+                            let vptr = unsafeBitCast(fptr, to: UnsafeMutableRawPointer.self)
                             if dladdr(vptr, &info) != 0 && info.dli_sname != nil {
                                 let demangled = _stdlib_demangleName(String(cString: info.dli_sname))
-                                if included(demangled),
-                                    let info = SwiftTrace.methodFactory.init(name: demangled,
-                                                                  implementation: unsafeBitCast(fptr, to: IMP.self)) {
-                                    sym_start[i] = unsafeBitCast(info.forwardingImplementation(), to: SIMP.self)
+                                callback(demangled, &sym_start[i]!, &stop)
+                                if stop {
+                                    break
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+
+        return stop
+    }
+
+    open class func methodNames(ofClass: AnyClass) -> [String] {
+        var names = [String]()
+        iterateMethods(ofClass: ofClass) {
+            (name, iptr, stop) in
+            names.append(name)
+        }
+        return names
+    }
+
+    @discardableResult
+    open class func addAspect(methodName: String,
+          preAspect: @escaping () -> Void, postAspect: @escaping () -> Void) -> Bool {
+        var nc: UInt32 = 0
+
+        var stopped = false
+        if let classes = objc_copyClassList(&nc) {
+            for aClass in (0..<Int(nc)).map({ classes[$0] }) {
+                stopped = addAspect(toClass: aClass, methodName: methodName,
+                                    preAspect: preAspect, postAspect: postAspect)
+                if stopped {
+                    break
+                }
+            }
+            free(UnsafeMutableRawPointer(classes))
+        }
+
+        return stopped
+    }
+
+    @discardableResult
+    open class func addAspect(toClass aClass: AnyClass, methodName: String,
+          preAspect: @escaping () -> Void, postAspect: @escaping () -> Void) -> Bool {
+        return iterateMethods(ofClass: aClass) {
+            (name, iptr, stop) in
+            if name == methodName, let method = Aspect(name: name,
+                       implementation: unsafeBitCast(iptr.pointee, to: IMP.self),
+                       preAspect: preAspect, postAspect: postAspect) {
+                iptr.pointee = unsafeBitCast(method.forwardingImplementation(), to: SIMP.self)
+                stop = true
+            }
+        }
+    }
+
+    open class Aspect: Method {
+
+        let preAspect: () -> Void
+        let postAspect: () -> Void
+
+        public required init?(name: String, implementation: IMP) {
+            fatalError()
+        }
+
+        public required init?(name: String, implementation: IMP,
+              preAspect: @escaping () -> Void, postAspect: @escaping () -> Void) {
+            self.preAspect = preAspect
+            self.postAspect = postAspect
+            super.init(name: name, implementation: implementation)
+        }
+
+        open override var invocationFactory: SwiftTrace.Invocation.Type {
+            return SwiftTrace.AspectApply.self
+        }
+    }
+
+    open class AspectApply: Invocation {
+
+        open override func onEntry() {
+            (method as! Aspect).preAspect()
+        }
+
+        open override func onExit() {
+            (method as! Aspect).postAspect()
         }
     }
 
@@ -325,7 +424,7 @@ open class SwiftTrace: NSObject {
         - parameter aClass: meta-class or class to be swizzled
         - parameter which: "+" for class methods, "-" for instance methods
      */
-    class func trace(ObjcClass aClass: AnyClass, which: String) {
+    class func trace(objcClass aClass: AnyClass, which: String) {
         var mc: UInt32 = 0
         if let methods = class_copyMethodList(aClass, &mc) {
             for method in (0..<Int(mc)).map({ methods[$0] }) {
@@ -372,12 +471,12 @@ open class SwiftTrace: NSObject {
     }
 
     /** pointer to a function implementing a Swift method */
-    private typealias SIMP = @convention(c) (_: AnyObject) -> Void
+    public typealias SIMP = @convention(c) (_: AnyObject) -> Void
     
     /**
      Layout of a class instance. Needs to be kept in sync with ~swift/include/swift/Runtime/Metadata.h
      */
-    private struct TargetClassMetadata {
+    public struct TargetClassMetadata {
         
         let MetaClass: uintptr_t = 0, SuperClass: uintptr_t = 0
         let CacheData1: uintptr_t = 0, CacheData2: uintptr_t = 0

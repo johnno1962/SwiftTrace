@@ -75,11 +75,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
         // any inclusions or exlusions need to come before trace enabled
         //SwiftTrace.include( "Swift.Optiona|TestClass" )
-
         SwiftTrace.invocationFactory = MyTracer.self
 
         type(of: self).traceBundle()
         SwiftTrace.trace(aClass: type(of: self))
+
+        print(SwiftTrace.methodNames(ofClass: TestClass.self))
+
+        print(SwiftTrace.addAspect(toClass: TestClass.self, methodName: "SwiftTwaceApp.TestClass.x() -> ()", preAspect: { print("ONE") }, postAspect: { print("TWO") }))
+        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.y() -> Swift.Float", preAspect: { print("ONE!") }, postAspect: { print("TWO!") }))
 
         let a: P = TestClass()
         a.x()
