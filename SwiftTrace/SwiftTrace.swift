@@ -6,11 +6,14 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#31 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#43 $
 //
 
 import Foundation
 
+/**
+    NSObject convenience methods
+ */
 extension NSObject {
 
     /**
@@ -30,16 +33,19 @@ extension NSObject {
 }
 
 /**
-    default pattern of symbols to be excluded from tracing
- */
-public let swiftTraceDefaultExclusions = "\\.getter|retain]|release]|_tryRetain]|.cxx_destruct]|initWithCoder|_isDeallocating]|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[UIView |UIButton _defaultBackgroundImageForType:andState:|RxSwift.ScheduledDisposable.dispose"
-
-/**
     Base class for SwiftTrace api through it's public class methods
  */
 open class SwiftTrace: NSObject {
 
+    /**
+        Class used to create "Method" instances representing a member function
+     */
     public static var methodFactory = Method.self
+
+    /**
+        Class used to create "Invocation" instances representing a
+        specific call to a member function on the "ThreadLocal" stack.
+     */
     public static var invocationFactory = Invocation.self
 
     /**
@@ -55,8 +61,8 @@ open class SwiftTrace: NSObject {
 
         /**
          designated initialiser
-         - parameter symbol: string representing method being traced
-         - parameter original: pointer to function implementing method
+         - parameter name: string representing method being traced
+         - parameter implementation: pointer to function implementing method
          */
         public required init?(name: String, implementation: IMP) {
             self.name = name
@@ -64,80 +70,109 @@ open class SwiftTrace: NSObject {
         }
 
         /**
-         Take a unmanaged, retained potinter to this instance for storing in trampoline
+         Take a unmanaged, retained potinter to this instance for storing
+         as the "info pointer in a trampoline
          */
         func retainedPointer() -> UnsafeMutableRawPointer {
             return Unmanaged.passRetained(self).toOpaque()
         }
 
         /**
-         Return a unique pointer to a function that will callback the trace() method in this class
+            Return a unique pointer to a function that will callback the oneEntry()
+            and onExit() method in this class
          */
         func forwardingImplementation() -> IMP {
-            let tracerp: @convention(c) (_ method: Method, _ returnAddress: IMP,
-                _ swiftSelf: UnsafeMutableRawPointer, _ theStack: UnsafeMutablePointer<UInt64>) -> IMP = {
-                (method: SwiftTrace.Method, returnAddress: IMP,
-                    swiftSelf: UnsafeMutableRawPointer, theStack: UnsafeMutablePointer<UInt64>) -> IMP in
+            let onEntry: @convention(c) (_ method: Method, _ returnAddress: UnsafeRawPointer,
+                _ swiftSelf: UnsafeMutableRawPointer, _ framePointer: UnsafeMutablePointer<UInt64>) -> IMP = {
+                (method, returnAddress, swiftSelf, framePointer) -> IMP in
                 let local = SwiftTrace.ThreadLocal.threadLocal()
-                let invoke = method.invocationFactory.init(depth: local.stack.count, method: method,
-                     returnAddress: returnAddress, swiftSelf: swiftSelf, theStack : theStack )
-                invoke.onEntry()
+                let invoke = method.invocationFactory.init(stackDepth: local.stack.count, method: method,
+                     returnAddress: returnAddress, swiftSelf: swiftSelf, framePointer : framePointer )
                 local.stack.append(invoke)
+                invoke.onEntry()
                 return method.implementation
             }
 
-            let exiterp: @convention(c) () -> IMP? = {
-                () -> IMP? in
+            let onExit: @convention(c) () -> UnsafeRawPointer = {
                 let local = SwiftTrace.ThreadLocal.threadLocal()
                 let invoke = local.stack.removeLast()
                 invoke.onExit()
                 return invoke.returnAddress
             }
 
-            return imp_implementationForwardingToTracer(retainedPointer(), unsafeBitCast(tracerp, to: IMP.self), unsafeBitCast(exiterp, to: IMP.self))
+            /* create trampoline */
+            return imp_implementationForwardingToTracer(retainedPointer(), unsafeBitCast(onEntry, to: IMP.self), unsafeBitCast(onExit, to: IMP.self))
         }
 
+        /**
+           Class used to create a specific "Invocation" of the "Method"
+         */
         open var invocationFactory: Invocation.Type {
             return SwiftTrace.invocationFactory
         }
     }
 
+    /**
+        Represents a specific call to a member function on the "ThreadLocal" stack
+     */
     open class Invocation {
 
-        public let depth: Int
+        public let stackDepth: Int
         public let method: Method
-        public let returnAddress: IMP
+        public let returnAddress: UnsafeRawPointer
         public let swiftSelf: UnsafeMutableRawPointer
-        public let theStack: UnsafeMutablePointer<UInt64>
+        public let framePointer: UnsafeMutablePointer<UInt64>
         public let timeEntered: Double
 
-        static func ftime() -> Double {
+        /**
+            micro-second precision time.
+         */
+        static public func ftime() -> Double {
             var tv = timeval()
             gettimeofday(&tv, nil)
             return Double(tv.tv_sec) + Double(tv.tv_usec)/1_000_000.0
         }
 
-        required public init(depth: Int, method: Method, returnAddress: IMP,
+        /**
+            designated initialiser
+         */
+        required public init(stackDepth: Int, method: Method, returnAddress: UnsafeRawPointer,
                              swiftSelf: UnsafeMutableRawPointer,
-                             theStack: UnsafeMutablePointer<UInt64>) {
-            self.depth = depth
+                             framePointer: UnsafeMutablePointer<UInt64>) {
+            self.stackDepth = stackDepth
             self.method = method
             self.returnAddress = returnAddress
             self.swiftSelf = swiftSelf
-            self.theStack = theStack
+            self.framePointer = framePointer
             timeEntered = Invocation.ftime()
         }
 
+        /**
+            method called before trampoline enters the target "Method"
+         */
         open func onEntry() {
         }
 
+        /**
+            method called after trampoline exists the target "Method"
+         */
         open func onExit() {
-            print("\(String(repeating: "  ", count: depth))\(method.name) \(String(format: "%.1f", (Invocation.ftime()-timeEntered)*1000.0))ms")
+            let elapsed = Invocation.ftime() - timeEntered
+            print("\(String(repeating: "  ", count: stackDepth))\(method.name) \(String(format: "%.1fms", elapsed * 1000.0))")
         }
 
+        /**
+            The inner invocation instance on the current thread.
+         */
+        open class var current: Invocation? {
+            return ThreadLocal.threadLocal().stack.last
+        }
     }
 
-    private class ThreadLocal {
+    /**
+        Class implementing thread local storage to arrange a call stack
+     */
+    public class ThreadLocal {
 
         private static var keyVar: pthread_key_t = 0
 
@@ -155,9 +190,15 @@ open class SwiftTrace: NSObject {
             return keyVar
         }()
 
-        var stack = [Invocation]()
+        /**
+            The stack of Invocations logged on this thread
+         */
+        public var stack = [Invocation]()
 
-        static func threadLocal() -> ThreadLocal {
+        /**
+            Returns an instance of ThreadLocal specific to the current thread
+         */
+        static public func threadLocal() -> ThreadLocal {
             let keyVar = ThreadLocal.pthreadKey
             if let existing = pthread_getspecific(keyVar) {
                 return Unmanaged<ThreadLocal>.fromOpaque(existing).takeUnretainedValue()
@@ -174,8 +215,10 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-     A SwiftTraceInfo subclass, the "trace()" method of which will be called before each traced method
+     default pattern of symbols to be excluded from tracing
      */
+    static public let swiftTraceDefaultExclusions = "\\.getter|retain]|release]|_tryRetain]|.cxx_destruct]|initWithCoder|_isDeallocating]|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[UIView |UIButton _defaultBackgroundImageForType:andState:|RxSwift.ScheduledDisposable.dispose"
+
 
     static var inclusionRegexp: NSRegularExpression?
     static var exclusionRegexp: NSRegularExpression? = NSRegularExpression(pattern: swiftTraceDefaultExclusions)
@@ -201,7 +244,7 @@ open class SwiftTrace: NSObject {
      in order to be traced, symbol must be included and not excluded
      - parameter symbol: String representation of method
      */
-    class func included(_ symbol: String) -> Bool {
+    class func included(symbol: String) -> Bool {
         return
             (inclusionRegexp == nil ||  inclusionRegexp!.matches(symbol)) &&
             (exclusionRegexp == nil || !exclusionRegexp!.matches(symbol))
@@ -215,6 +258,9 @@ open class SwiftTrace: NSObject {
         trace(bundlePath: class_getImageName(theClass))
     }
 
+    /**
+        Trace all user developed classes in the main bundle of an app
+     */
     @objc open class func traceMainBundle() {
         let main = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "main")
         var info = Dl_info()
@@ -226,23 +272,57 @@ open class SwiftTrace: NSObject {
         }
     }
 
-    @objc class func trace(bundlePath: UnsafePointer<Int8>?) {
+    /**
+        Iterate over all known classes in the app
+     */
+    @discardableResult
+    open class func forAllClasses( callback: (_ aClass: AnyClass,
+                                              _ stop: inout Bool) -> Void ) -> Bool {
+        var stopped = false
         var nc: UInt32 = 0
-        var registered = Set<UnsafeRawPointer>()
+
         if let classes = objc_copyClassList(&nc) {
             for aClass in (0..<Int(nc)).map({ classes[$0] }) {
-                if class_getImageName(aClass) == bundlePath {
-                    trace(aClass: aClass)
-                    registered.insert(unsafeBitCast(aClass, to: UnsafeRawPointer.self))
+                callback(aClass, &stopped)
+                if stopped {
+                    break
                 }
             }
             free(UnsafeMutableRawPointer(classes))
         }
-        findSwiftClasses(bundlePath, { aClass in
+
+        return stopped
+    }
+
+    /**
+        Trace a classes defined in a specific bundlePath (executable image)
+     */
+    @objc class func trace(bundlePath: UnsafePointer<Int8>?) {
+        var registered = Set<UnsafeRawPointer>()
+        forAllClasses {
+            (aClass, stop) in
+            if class_getImageName(aClass) == bundlePath {
+                trace(aClass: aClass)
+                registered.insert(unsafeBitCast(aClass, to: UnsafeRawPointer.self))
+            }
+        }
+        /* This should pick up and Pure Swift classes */
+        findPureSwiftClasses(bundlePath, { aClass in
             if !registered.contains(aClass!) {
                 trace(aClass: unsafeBitCast(aClass, to: AnyClass.self))
             }
         })
+    }
+
+    /**
+        Lists Swift classes in an app or framework.
+     */
+    open class func swiftClassList(bundlePath: UnsafePointer<Int8>) -> [AnyClass] {
+        var classes = [AnyClass]()
+        findPureSwiftClasses(bundlePath, { aClass in
+            classes.append(unsafeBitCast(aClass, to: AnyClass.self))
+        })
+        return classes
     }
 
     /**
@@ -251,16 +331,12 @@ open class SwiftTrace: NSObject {
      */
     @objc open class func traceClassesMatching(pattern: String) {
         if let regexp = NSRegularExpression(pattern: pattern) {
-            var nc: UInt32 = 0
-            if let classes = objc_copyClassList(&nc) {
-                for i in 0..<Int(nc) {
-                    let aClass: AnyClass = classes[i]
-                    let className = NSStringFromClass(aClass) as NSString
-                    if regexp.firstMatch(in: String(describing: className) as String, range: NSMakeRange(0, className.length)) != nil {
-                        trace(aClass: aClass)
-                    }
+            forAllClasses {
+                (aClass, stop) in
+                let className = NSStringFromClass(aClass) as NSString
+                if regexp.firstMatch(in: String(describing: className) as String, range: NSMakeRange(0, className.length)) != nil {
+                    trace(aClass: aClass)
                 }
-                free(UnsafeMutableRawPointer(classes))
             }
         }
     }
@@ -277,29 +353,33 @@ open class SwiftTrace: NSObject {
         }
 
         var tClass: AnyClass? = aClass
-        repeat {
+        while tClass != nil {
             if NSStringFromClass(tClass!).contains("SwiftTrace") {
                 return
             }
             tClass = class_getSuperclass(tClass)
-        } while tClass != nil
+        }
 
         trace(objcClass: object_getClass(aClass)!, which: "+")
         trace(objcClass: aClass, which: "-")
 
         iterateMethods(ofClass: aClass) {
-            (name, iptr, stop) in
-            if included(name),
+            (name, impPtr, stop) in
+            if included(symbol: name),
                 let method = SwiftTrace.methodFactory.init(name: name,
-                         implementation: unsafeBitCast(iptr.pointee, to: IMP.self)) {
-                iptr.pointee = unsafeBitCast(method.forwardingImplementation(), to: SIMP.self)
+                         implementation: unsafeBitCast(impPtr.pointee, to: IMP.self)) {
+                impPtr.pointee = unsafeBitCast(method.forwardingImplementation(), to: SIMP.self)
             }
         }
     }
 
+    /**
+        Iterate over all methods in the vtable that follows the class information
+        of a Swift class (TargetClassMetadata)
+     */
     @discardableResult
     open class func iterateMethods(ofClass aClass: AnyClass,
-           callback: (_ name: String, _ iptr: UnsafeMutablePointer<SIMP>, _ stop: inout Bool) -> Void) -> Bool {
+           callback: (_ name: String, _ impPtr: UnsafeMutablePointer<SIMP>, _ stop: inout Bool) -> Void) -> Bool {
         let swiftMeta = unsafeBitCast(aClass, to: UnsafeMutablePointer<TargetClassMetadata>.self)
 
         guard (swiftMeta.pointee.Data & 0x3) != 0 else {
@@ -309,28 +389,28 @@ open class SwiftTrace: NSObject {
 
         var stop = false
         withUnsafeMutablePointer(to: &swiftMeta.pointee.IVarDestroyer) {
-            (sym_start) in
+            (vtableStart) in
             swiftMeta.withMemoryRebound(to: Int8.self, capacity: 1) {
-                let ptr = ($0 + -Int(swiftMeta.pointee.ClassAddressPoint) + Int(swiftMeta.pointee.ClassSize))
-                ptr.withMemoryRebound(to: Optional<SIMP>.self, capacity: 1) {
-                    (sym_end) in
+                let endClass = ($0 + -Int(swiftMeta.pointee.ClassAddressPoint) + Int(swiftMeta.pointee.ClassSize))
+                endClass.withMemoryRebound(to: Optional<SIMP>.self, capacity: 1) {
+                    (vtableEnd) in
 
                     var info = Dl_info()
-                    for i in 0..<(sym_end - sym_start) {
-                        if var fptr = sym_start[i] {
+                    for i in 0..<(vtableEnd - vtableStart) {
+                        if var impPtr = vtableStart[i] {
                             while true {
-                                if let existing = unwrapTrampoline(unsafeBitCast(fptr, to: IMP.self)) {
-                                    fptr = unsafeBitCast((existing as! Method)
+                                if let info = reverseTrampoline(unsafeBitCast(impPtr, to: IMP.self)) {
+                                    impPtr = unsafeBitCast((info as! Method)
                                         .implementation, to: SIMP.self)
                                 }
                                 else {
                                     break
                                 }
                             }
-                            let vptr = unsafeBitCast(fptr, to: UnsafeMutableRawPointer.self)
-                            if dladdr(vptr, &info) != 0 && info.dli_sname != nil {
-                                let demangled = _stdlib_demangleName(String(cString: info.dli_sname))
-                                callback(demangled, &sym_start[i]!, &stop)
+                            let voidPtr = unsafeBitCast(impPtr, to: UnsafeMutableRawPointer.self)
+                            if dladdr(voidPtr, &info) != 0 && info.dli_sname != nil,
+                                let demangled = demangle(symbol: info.dli_sname) {
+                                callback(demangled, &vtableStart[i]!, &stop)
                                 if stop {
                                     break
                                 }
@@ -344,49 +424,61 @@ open class SwiftTrace: NSObject {
         return stop
     }
 
+    /**
+        Returns a list of all Swift methods as demangled symbols of a class
+        - parameter ofClass: - class to be dumped
+     */
     open class func methodNames(ofClass: AnyClass) -> [String] {
         var names = [String]()
         iterateMethods(ofClass: ofClass) {
-            (name, iptr, stop) in
+            (name, impPtr, stop) in
             names.append(name)
         }
         return names
     }
 
+    /**
+        Add a closure aspect to be called before or after a "Method" is called
+        - parameter methodName: - unmangled name of Method for aspect
+        - parameter preAspect: - closure to be called before "Method" is called
+        - parameter postAspect: - closure to be called after "Method" returns
+     */
     @discardableResult
     open class func addAspect(methodName: String,
-          preAspect: @escaping () -> Void, postAspect: @escaping () -> Void) -> Bool {
-        var nc: UInt32 = 0
-
-        var stopped = false
-        if let classes = objc_copyClassList(&nc) {
-            for aClass in (0..<Int(nc)).map({ classes[$0] }) {
-                stopped = addAspect(toClass: aClass, methodName: methodName,
-                                    preAspect: preAspect, postAspect: postAspect)
-                if stopped {
-                    break
-                }
-            }
-            free(UnsafeMutableRawPointer(classes))
+                              preAspect: @escaping () -> Void = {},
+                              postAspect: @escaping () -> Void = {}) -> Bool {
+        return forAllClasses {
+            (aClass, stop) in
+            stop = addAspect(toClass: aClass, methodName: methodName,
+                             preAspect: preAspect, postAspect: postAspect)
         }
-
-        return stopped
     }
 
+    /**
+        Add a closure aspect to be called before or after a "Method" is called
+        - parameter toClass: - specifying the class to add aspect is more efficient
+        - parameter methodName: - unmangled name of Method for aspect
+        - parameter preAspect: - closure to be called before "Method" is called
+        - parameter postAspect: - closure to be called after "Method" returns
+     */
     @discardableResult
     open class func addAspect(toClass aClass: AnyClass, methodName: String,
-          preAspect: @escaping () -> Void, postAspect: @escaping () -> Void) -> Bool {
+                              preAspect: @escaping () -> Void = {},
+                              postAspect: @escaping () -> Void = {}) -> Bool {
         return iterateMethods(ofClass: aClass) {
-            (name, iptr, stop) in
+            (name, impPtr, stop) in
             if name == methodName, let method = Aspect(name: name,
-                       implementation: unsafeBitCast(iptr.pointee, to: IMP.self),
+                       implementation: unsafeBitCast(impPtr.pointee, to: IMP.self),
                        preAspect: preAspect, postAspect: postAspect) {
-                iptr.pointee = unsafeBitCast(method.forwardingImplementation(), to: SIMP.self)
+                impPtr.pointee = unsafeBitCast(method.forwardingImplementation(), to: SIMP.self)
                 stop = true
             }
         }
     }
 
+    /**
+        Internal class used in the implementation of aspects
+     */
     open class Aspect: Method {
 
         let preAspect: () -> Void
@@ -397,25 +489,32 @@ open class SwiftTrace: NSObject {
         }
 
         public required init?(name: String, implementation: IMP,
-              preAspect: @escaping () -> Void, postAspect: @escaping () -> Void) {
+                              preAspect: @escaping () -> Void,
+                              postAspect: @escaping () -> Void) {
             self.preAspect = preAspect
             self.postAspect = postAspect
             super.init(name: name, implementation: implementation)
         }
 
-        open override var invocationFactory: SwiftTrace.Invocation.Type {
-            return SwiftTrace.AspectApply.self
-        }
-    }
-
-    open class AspectApply: Invocation {
-
-        open override func onEntry() {
-            (method as! Aspect).preAspect()
+        /**
+            returns Class used to create Invokations to call the aspects
+         */
+        open override var invocationFactory: Invocation.Type {
+            return Applier.self
         }
 
-        open override func onExit() {
-            (method as! Aspect).postAspect()
+        /**
+            Class used to create Invokations to call the aspects
+         */
+        open class Applier: Invocation {
+
+            open override func onEntry() {
+                (method as! Aspect).preAspect()
+            }
+
+            open override func onExit() {
+                (method as! Aspect).postAspect()
+            }
         }
     }
 
@@ -433,7 +532,7 @@ open class SwiftTrace: NSObject {
                 let type = method_getTypeEncoding(method)
                 let name = "\(which)[\(aClass) \(selName)] -> \(String(cString: type!))"
 
-                if !included(name) || (which == "+" ?
+                if !included(symbol: name) || (which == "+" ?
                         selName.hasPrefix("shared") :
                         dontSwizzleProperty(aClass, sel:sel)) {
                     continue
@@ -525,9 +624,26 @@ open class SwiftTrace: NSObject {
         //   - "tabulated" virtual methods
         
     }
-    
+
+    /**
+        Convert a executable symbol name "mangled" according to Swift's
+        conventions into a human readable Swift language form
+     */
+    @objc open class func demangle(symbol: UnsafePointer<Int8>) -> String? {
+        if let demangledNamePtr = _stdlib_demangleImpl(
+            symbol, mangledNameLength: UInt(strlen(symbol)),
+            outputBuffer: nil, outputBufferSize: nil, flags: 0) {
+            let demangledName = String(cString: demangledNamePtr)
+            free(demangledNamePtr)
+            return demangledName
+        }
+        return nil
+    }
 }
 
+/**
+    Convenience extension to trap regex errors and report them
+ */
 private extension NSRegularExpression {
 
     convenience init?(pattern: String) {
@@ -546,10 +662,10 @@ private extension NSRegularExpression {
 
 }
 
-// not public in Swift3
+// Taken from stdlib, not public Swift3+
 
 @_silgen_name("swift_demangle")
-public
+private
 func _stdlib_demangleImpl(
     _ mangledName: UnsafePointer<CChar>?,
     mangledNameLength: UInt,
@@ -557,24 +673,3 @@ func _stdlib_demangleImpl(
     outputBufferSize: UnsafeMutablePointer<UInt>?,
     flags: UInt32
     ) -> UnsafeMutablePointer<CChar>?
-
-
-func _stdlib_demangleName(_ mangledName: String) -> String {
-    return mangledName.utf8CString.withUnsafeBufferPointer {
-        (mangledNameUTF8) in
-
-        let demangledNamePtr = _stdlib_demangleImpl(
-            mangledNameUTF8.baseAddress,
-            mangledNameLength: UInt(mangledNameUTF8.count - 1),
-            outputBuffer: nil,
-            outputBufferSize: nil,
-            flags: 0)
-
-        if let demangledNamePtr = demangledNamePtr {
-            let demangledName = String(cString: demangledNamePtr)
-            free(demangledNamePtr)
-            return demangledName
-        }
-        return mangledName
-    }
-}

@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#18 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#22 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -172,19 +172,29 @@ IMP imp_implementationForwardingToTracer(void *info, IMP onEntry, IMP onExit)
     return implementation;
 }
 
-id unwrapTrampoline(IMP currentImplementation) {
+// From here on added to the original code for use by "SwiftTrace".
+
+id reverseTrampoline(IMP currentImplementation) {
     const char *functionPointer = (const char *)currentImplementation;
+    XtraceTrampolineDataBlock *block =
+        (XtraceTrampolineDataBlock *)(functionPointer - PAGE_SIZE);
+
+    static const char *lastPage;
+    if (functionPointer >= lastPage + PAGE_SIZE &&
+        functionPointer < lastPage + PAGE_SIZE * 2) {
+        return (__bridge id)block->info;
+    }
+
     for (NSValue *page in normalTrampolinePages) {
-        const char *start = (const char *)page.pointerValue;
-        if (functionPointer >= start + PAGE_SIZE &&
-            functionPointer < start + PAGE_SIZE * 2) {
-            XtraceTrampolineDataBlock *block =
-                (XtraceTrampolineDataBlock *)(functionPointer - PAGE_SIZE);
+        const char *trampolines = (const char *)page.pointerValue;
+        if (functionPointer >= trampolines + PAGE_SIZE &&
+            functionPointer < trampolines + PAGE_SIZE * 2) {
+            lastPage = trampolines;
             return (__bridge id)block->info;
         }
     }
 
-    return NULL;
+    return nil;
 }
 
 // https://stackoverflow.com/questions/20481058/find-pathname-from-dlopen-handle-on-osx
@@ -205,7 +215,7 @@ typedef struct segment_command segment_command_t;
 typedef struct nlist nlist_t;
 #endif
 
-void findSwiftClasses(const char *path, void (^callback)(void *aClass)) {
+void findPureSwiftClasses(const char *path, void (^callback)(void *aClass)) {
     void *handle = dlopen(path, RTLD_LAZY);
     for (int32_t i = _dyld_image_count(); i >= 0 ; i--)
     {

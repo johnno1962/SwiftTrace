@@ -83,7 +83,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print(SwiftTrace.methodNames(ofClass: TestClass.self))
 
         print(SwiftTrace.addAspect(toClass: TestClass.self, methodName: "SwiftTwaceApp.TestClass.x() -> ()", preAspect: { print("ONE") }, postAspect: { print("TWO") }))
-        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.y() -> Swift.Float", preAspect: { print("ONE!") }, postAspect: { print("TWO!") }))
+        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.y() -> Swift.Float", postAspect: { print("TWO!") }))
 
         let a: P = TestClass()
         a.x()

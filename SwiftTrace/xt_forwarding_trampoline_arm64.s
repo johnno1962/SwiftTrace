@@ -1,5 +1,5 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_arm64.s#7 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_arm64.s#8 $
 
 #if defined(__arm64__)
 .text
@@ -52,8 +52,9 @@ _xt_forwarding_trampoline:
     ldp	x2, x3, [sp], #48
     ldp	x0, x1, [sp], #32
     ldp	x29, x30, [sp], #16
-    adrp lr, returning@PAGE
-    add lr, lr, returning@PAGEOFF
+    bl getpc
+getpc:
+    add lr, lr, #8
     br x16          // continue onto original implemntation
 
 returning:
