@@ -56,7 +56,7 @@ public class TestClass: P {
 class MyTracer: SwiftTrace.Invocation {
 
     override func onEntry() {
-        print( ">> "+method.name )
+        print( ">> "+patch.name )
     }
 
 }
@@ -75,23 +75,28 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
         // any inclusions or exlusions need to come before trace enabled
         //SwiftTrace.include( "Swift.Optiona|TestClass" )
-        SwiftTrace.invocationFactory = MyTracer.self
+        SwiftTrace.defaultInvocationFactory = MyTracer.self
 
         type(of: self).traceBundle()
         SwiftTrace.trace(aClass: type(of: self))
 
         print(SwiftTrace.methodNames(ofClass: TestClass.self))
 
-        print(SwiftTrace.addAspect(toClass: TestClass.self, methodName: "SwiftTwaceApp.TestClass.x() -> ()", preAspect: { print("ONE") }, postAspect: { print("TWO") }))
-        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.y() -> Swift.Float", postAspect: { print("TWO!") }))
+        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.x() -> ()", ofClass: TestClass.self, onEntry: { print("ONE") }, onExit: { print("TWO") }))
+        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.y() -> Swift.Float", onExit: { print("TWO!") }))
 
         let a: P = TestClass()
         a.x()
+
         print( a.y() )
+        print(SwiftTrace.removeAspect(fromClass: TestClass.self, methodName: "SwiftTwaceApp.TestClass.y() -> Swift.Float"))
+        print( a.y() )
+
         a.x()
         a.z( 88, f: 66, g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
         _ = a.ssssss( a: TestStruct() )
 
+        SwiftTrace.removeAllPatches()
         return true
     }
 

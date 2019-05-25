@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#22 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#24 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -127,10 +127,9 @@ static SPLForwardingTrampolinePage *SPLForwardingTrampolinePageAlloc()
     return (SPLForwardingTrampolinePage *)newTrampolinePage;
 }
 
-static NSMutableArray *normalTrampolinePages = nil;
-
 static SPLForwardingTrampolinePage *nextTrampolinePage()
 {
+    static NSMutableArray *normalTrampolinePages = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         normalTrampolinePages = [NSMutableArray array];
@@ -174,29 +173,6 @@ IMP imp_implementationForwardingToTracer(void *info, IMP onEntry, IMP onExit)
 
 // From here on added to the original code for use by "SwiftTrace".
 
-id reverseTrampoline(IMP currentImplementation) {
-    const char *functionPointer = (const char *)currentImplementation;
-    XtraceTrampolineDataBlock *block =
-        (XtraceTrampolineDataBlock *)(functionPointer - PAGE_SIZE);
-
-    static const char *lastPage;
-    if (functionPointer >= lastPage + PAGE_SIZE &&
-        functionPointer < lastPage + PAGE_SIZE * 2) {
-        return (__bridge id)block->info;
-    }
-
-    for (NSValue *page in normalTrampolinePages) {
-        const char *trampolines = (const char *)page.pointerValue;
-        if (functionPointer >= trampolines + PAGE_SIZE &&
-            functionPointer < trampolines + PAGE_SIZE * 2) {
-            lastPage = trampolines;
-            return (__bridge id)block->info;
-        }
-    }
-
-    return nil;
-}
-
 // https://stackoverflow.com/questions/20481058/find-pathname-from-dlopen-handle-on-osx
 
 #import <dlfcn.h>
@@ -221,7 +197,7 @@ void findPureSwiftClasses(const char *path, void (^callback)(void *aClass)) {
     {
         const mach_header_t *header = (const mach_header_t *)_dyld_get_image_header(i);
         Dl_info info;
-        if (dladdr(header, &info) && path == info.dli_fname) {
+        if (dladdr(header, &info) && (path == info.dli_fname || strcmp(path, info.dli_fname) == 0)) {
             segment_command_t *seg_linkedit = NULL;
             segment_command_t *seg_text = NULL;
             struct symtab_command *symtab = NULL;

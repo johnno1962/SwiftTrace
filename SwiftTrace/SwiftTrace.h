@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#7 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#8 $
 //
 
 #import <Foundation/Foundation.h>
@@ -22,9 +22,8 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
 #ifdef __cplusplus
 extern "C" {
 #endif
-    IMP imp_implementationForwardingToTracer(void *info, IMP onEntry, IMP onExit);
-    void findPureSwiftClasses(const char *path, void (^callback)(void *symbol));
-    id reverseTrampoline(IMP currentImplementation);
+    IMP _Nonnull imp_implementationForwardingToTracer(void * _Nonnull info, IMP _Nonnull onEntry, IMP _Nonnull onExit);
+    void findPureSwiftClasses(const char * _Nullable path, void (^ _Nonnull callback)(void * _Nonnull symbol));
 #ifdef __cplusplus
 }
 #endif

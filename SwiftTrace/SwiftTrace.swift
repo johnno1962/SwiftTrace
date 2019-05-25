@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#43 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#59 $
 //
 
 import Foundation
@@ -38,77 +38,125 @@ extension NSObject {
 open class SwiftTrace: NSObject {
 
     /**
-        Class used to create "Method" instances representing a member function
+        Class used to create "Patch" instances representing a member function
      */
-    public static var methodFactory = Method.self
+    public static var patchFactory = Patch.self
 
     /**
         Class used to create "Invocation" instances representing a
         specific call to a member function on the "ThreadLocal" stack.
      */
-    public static var invocationFactory = Invocation.self
+    public static var defaultInvocationFactory = Invocation.self
 
     /**
-     Strace "info" instance used to store information about a method
+     Strace "info" instance used to store information about a patch on a method
      */
-    open class Method: NSObject {
+    open class Patch: NSObject {
 
-        /** string representing Swift or Objective-C method to user */
+        /** Dictionary of patch objects created by trampoline */
+        static var active = [IMP: Patch]()
+
+        /** follow chain of Patches through to find original patch */
+        open class func originalPatch(for implementation: IMP) -> Patch? {
+            var implementation = implementation
+            var patch: Patch?
+            while active[implementation] != nil {
+                patch = active[implementation]
+                implementation = patch!.implementation
+            }
+            return patch
+        }
+
+       /** string representing Swift or Objective-C method to user */
         public let name: String
 
         /** pointer to original function implementing method */
         let implementation: IMP
 
+        /** vtable slot patched for unpatching */
+        let vtableSlot: UnsafeMutablePointer<SIMP>?
+
+        /** Original objc method swizzled */
+        let objcMethod: Method?
+
         /**
          designated initialiser
          - parameter name: string representing method being traced
-         - parameter implementation: pointer to function implementing method
+         - parameter vtableSlot: pointer to vtable slot patched
          */
-        public required init?(name: String, implementation: IMP) {
+        public required init?(name: String, vtableSlot: UnsafeMutablePointer<SIMP>) {
             self.name = name
-            self.implementation = implementation
+            self.vtableSlot = vtableSlot
+            implementation = vtableSlot
+                .withMemoryRebound(to: IMP.self, capacity: 1, { $0 }).pointee
+            objcMethod = nil
         }
 
         /**
-         Take a unmanaged, retained potinter to this instance for storing
-         as the "info pointer in a trampoline
+         designated initialiser
+         - parameter name: string representing method being traced
+         - parameter objcMethod: pointer to original Method patched
          */
-        func retainedPointer() -> UnsafeMutableRawPointer {
-            return Unmanaged.passRetained(self).toOpaque()
+        public required init?(name: String, objcMethod: Method) {
+            self.name = name
+            self.objcMethod = objcMethod
+            implementation = method_getImplementation(objcMethod)
+            vtableSlot = nil
         }
 
         /**
             Return a unique pointer to a function that will callback the oneEntry()
             and onExit() method in this class
          */
-        func forwardingImplementation() -> IMP {
-            let onEntry: @convention(c) (_ method: Method, _ returnAddress: UnsafeRawPointer,
+        func forwardingImplementation() -> SIMP {
+            let onEntry: @convention(c) (_ patch: Patch, _ returnAddress: UnsafeRawPointer,
                 _ swiftSelf: UnsafeMutableRawPointer, _ framePointer: UnsafeMutablePointer<UInt64>) -> IMP = {
-                (method, returnAddress, swiftSelf, framePointer) -> IMP in
-                let local = SwiftTrace.ThreadLocal.threadLocal()
-                let invoke = method.invocationFactory.init(stackDepth: local.stack.count, method: method,
+                (patch, returnAddress, swiftSelf, framePointer) -> IMP in
+                let local = ThreadLocal.threadLocal()
+                let invoke = patch.invocationFactory.init(stackDepth: local.stack.count, patch: patch,
                      returnAddress: returnAddress, swiftSelf: swiftSelf, framePointer : framePointer )
                 local.stack.append(invoke)
                 invoke.onEntry()
-                return method.implementation
+                return patch.implementation
             }
 
             let onExit: @convention(c) () -> UnsafeRawPointer = {
-                let local = SwiftTrace.ThreadLocal.threadLocal()
-                let invoke = local.stack.removeLast()
-                invoke.onExit()
-                return invoke.returnAddress
+                let local = ThreadLocal.threadLocal()
+                local.stack.last!.onExit()
+                return local.stack.removeLast().returnAddress
             }
 
             /* create trampoline */
-            return imp_implementationForwardingToTracer(retainedPointer(), unsafeBitCast(onEntry, to: IMP.self), unsafeBitCast(onExit, to: IMP.self))
+            let impl = imp_implementationForwardingToTracer(unsafeBitCast(self, to: UnsafeMutableRawPointer.self),
+                                unsafeBitCast(onEntry, to: IMP.self), unsafeBitCast(onExit, to: IMP.self))
+            Patch.active[impl] = self
+            return unsafeBitCast(impl, to: SIMP.self)
         }
 
         /**
-           Class used to create a specific "Invocation" of the "Method"
+           Class used to create a specific "Invocation" of the "Patch"
          */
         open var invocationFactory: Invocation.Type {
-            return SwiftTrace.invocationFactory
+            return defaultInvocationFactory
+        }
+
+        /**
+            Remove this patch
+         */
+        open func remove() {
+            if let vtableSlot = vtableSlot {
+                vtableSlot.pointee = unsafeBitCast(implementation, to: SIMP.self)
+            }
+            else if let objcMethod = objcMethod {
+                method_setImplementation(objcMethod, implementation)
+            }
+        }
+
+        /**
+            Remove all patches recursively
+         */
+        open func removeAll() {
+            (Patch.originalPatch(for: implementation) ?? self).remove()
         }
     }
 
@@ -117,11 +165,17 @@ open class SwiftTrace: NSObject {
      */
     open class Invocation {
 
+        /** Number of calls above this on the stack of the current thread */
         public let stackDepth: Int
-        public let method: Method
+        /** "Patch" related to this call */
+        public let patch: Patch
+        /** Original return address of call to trampoline */
         public let returnAddress: UnsafeRawPointer
+        /** "self" for method invokations */
         public let swiftSelf: UnsafeMutableRawPointer
+        /** Architecture depenent place on stack where arguments stored */
         public let framePointer: UnsafeMutablePointer<UInt64>
+        /** Time call was started */
         public let timeEntered: Double
 
         /**
@@ -136,11 +190,11 @@ open class SwiftTrace: NSObject {
         /**
             designated initialiser
          */
-        required public init(stackDepth: Int, method: Method, returnAddress: UnsafeRawPointer,
+        required public init(stackDepth: Int, patch: Patch, returnAddress: UnsafeRawPointer,
                              swiftSelf: UnsafeMutableRawPointer,
                              framePointer: UnsafeMutablePointer<UInt64>) {
             self.stackDepth = stackDepth
-            self.method = method
+            self.patch = patch
             self.returnAddress = returnAddress
             self.swiftSelf = swiftSelf
             self.framePointer = framePointer
@@ -148,17 +202,17 @@ open class SwiftTrace: NSObject {
         }
 
         /**
-            method called before trampoline enters the target "Method"
+            method called before trampoline enters the target "Patch"
          */
         open func onEntry() {
         }
 
         /**
-            method called after trampoline exists the target "Method"
+            method called after trampoline exists the target "Patch"
          */
         open func onExit() {
             let elapsed = Invocation.ftime() - timeEntered
-            print("\(String(repeating: "  ", count: stackDepth))\(method.name) \(String(format: "%.1fms", elapsed * 1000.0))")
+            print("\(String(repeating: "  ", count: stackDepth))\(patch.name) \(String(format: "%.1fms", elapsed * 1000.0))")
         }
 
         /**
@@ -308,7 +362,7 @@ open class SwiftTrace: NSObject {
         }
         /* This should pick up and Pure Swift classes */
         findPureSwiftClasses(bundlePath, { aClass in
-            if !registered.contains(aClass!) {
+            if !registered.contains(aClass) {
                 trace(aClass: unsafeBitCast(aClass, to: AnyClass.self))
             }
         })
@@ -366,9 +420,8 @@ open class SwiftTrace: NSObject {
         iterateMethods(ofClass: aClass) {
             (name, impPtr, stop) in
             if included(symbol: name),
-                let method = SwiftTrace.methodFactory.init(name: name,
-                         implementation: unsafeBitCast(impPtr.pointee, to: IMP.self)) {
-                impPtr.pointee = unsafeBitCast(method.forwardingImplementation(), to: SIMP.self)
+                let patch = patchFactory.init(name: name, vtableSlot: impPtr) {
+                impPtr.pointee = patch.forwardingImplementation()
             }
         }
     }
@@ -391,23 +444,17 @@ open class SwiftTrace: NSObject {
         withUnsafeMutablePointer(to: &swiftMeta.pointee.IVarDestroyer) {
             (vtableStart) in
             swiftMeta.withMemoryRebound(to: Int8.self, capacity: 1) {
-                let endClass = ($0 + -Int(swiftMeta.pointee.ClassAddressPoint) + Int(swiftMeta.pointee.ClassSize))
-                endClass.withMemoryRebound(to: Optional<SIMP>.self, capacity: 1) {
+                let endMeta = ($0 - Int(swiftMeta.pointee.ClassAddressPoint) + Int(swiftMeta.pointee.ClassSize))
+                endMeta.withMemoryRebound(to: Optional<SIMP>.self, capacity: 1) {
                     (vtableEnd) in
 
                     var info = Dl_info()
                     for i in 0..<(vtableEnd - vtableStart) {
-                        if var impPtr = vtableStart[i] {
-                            while true {
-                                if let info = reverseTrampoline(unsafeBitCast(impPtr, to: IMP.self)) {
-                                    impPtr = unsafeBitCast((info as! Method)
-                                        .implementation, to: SIMP.self)
-                                }
-                                else {
-                                    break
-                                }
+                        if var impl = unsafeBitCast(vtableStart[i], to: IMP?.self) {
+                            if let patch = Patch.originalPatch(for: impl) {
+                                impl = patch.implementation
                             }
-                            let voidPtr = unsafeBitCast(impPtr, to: UnsafeMutableRawPointer.self)
+                            let voidPtr = unsafeBitCast(impl, to: UnsafeMutableRawPointer.self)
                             if dladdr(voidPtr, &info) != 0 && info.dli_sname != nil,
                                 let demangled = demangle(symbol: info.dli_sname) {
                                 callback(demangled, &vtableStart[i]!, &stop)
@@ -438,39 +485,69 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Add a closure aspect to be called before or after a "Method" is called
+        Add a closure aspect to be called before or after a "Patch" is called
         - parameter methodName: - unmangled name of Method for aspect
-        - parameter preAspect: - closure to be called before "Method" is called
-        - parameter postAspect: - closure to be called after "Method" returns
+        - parameter onEntry: - closure to be called before "Patch" is called
+        - parameter onExit: - closure to be called after "Patch" returns
      */
     @discardableResult
     open class func addAspect(methodName: String,
-                              preAspect: @escaping () -> Void = {},
-                              postAspect: @escaping () -> Void = {}) -> Bool {
+                              patchClass: Aspect.Type = Aspect.self,
+                              onEntry: @escaping () -> Void = {},
+                              onExit: @escaping () -> Void = {}) -> Bool {
         return forAllClasses {
             (aClass, stop) in
-            stop = addAspect(toClass: aClass, methodName: methodName,
-                             preAspect: preAspect, postAspect: postAspect)
+            stop = addAspect(methodName: methodName, ofClass: aClass, 
+                             onEntry: onEntry, onExit: onExit)
         }
     }
 
     /**
-        Add a closure aspect to be called before or after a "Method" is called
+        Add a closure aspect to be called before or after a "Patch" is called
         - parameter toClass: - specifying the class to add aspect is more efficient
         - parameter methodName: - unmangled name of Method for aspect
-        - parameter preAspect: - closure to be called before "Method" is called
-        - parameter postAspect: - closure to be called after "Method" returns
+        - parameter onEntry: - closure to be called before "Patch" is called
+        - parameter onExit: - closure to be called after "Patch" returns
      */
     @discardableResult
-    open class func addAspect(toClass aClass: AnyClass, methodName: String,
-                              preAspect: @escaping () -> Void = {},
-                              postAspect: @escaping () -> Void = {}) -> Bool {
+    open class func addAspect(methodName: String, ofClass aClass: AnyClass,
+                              patchClass: Aspect.Type = Aspect.self,
+                              onEntry: @escaping () -> Void = {},
+                              onExit: @escaping () -> Void = {}) -> Bool {
         return iterateMethods(ofClass: aClass) {
             (name, impPtr, stop) in
-            if name == methodName, let method = Aspect(name: name,
-                       implementation: unsafeBitCast(impPtr.pointee, to: IMP.self),
-                       preAspect: preAspect, postAspect: postAspect) {
-                impPtr.pointee = unsafeBitCast(method.forwardingImplementation(), to: SIMP.self)
+            if name == methodName, let method = patchClass.init(name: name,
+                vtableSlot: impPtr, onEntry: onEntry, onExit: onExit) {
+                impPtr.pointee = method.forwardingImplementation()
+                stop = true
+            }
+        }
+    }
+
+    /**
+        Add a closure aspect to be called before or after a "Patch" is called
+        - parameter methodName: - unmangled name of Method for aspect
+     */
+    @discardableResult
+    open class func removeAspect(methodName: String) -> Bool {
+        return forAllClasses {
+            (aClass, stop) in
+            stop = removeAspect(fromClass: aClass, methodName: methodName)
+        }
+    }
+
+    /**
+        Add a closure aspect to be called before or after a "Patch" is called
+        - parameter toClass: - specifying the class to add aspect is more efficient
+        - parameter methodName: - unmangled name of Method for aspect
+     */
+    @discardableResult
+    open class func removeAspect(fromClass aClass: AnyClass, methodName: String) -> Bool {
+        return iterateMethods(ofClass: aClass) {
+            (name, impPtr, stop) in
+            if name == methodName,
+                let patch = Patch.active[unsafeBitCast(impPtr.pointee, to: IMP.self)] {
+                patch.remove()
                 stop = true
             }
         }
@@ -479,21 +556,25 @@ open class SwiftTrace: NSObject {
     /**
         Internal class used in the implementation of aspects
      */
-    open class Aspect: Method {
+    open class Aspect: Patch {
 
-        let preAspect: () -> Void
-        let postAspect: () -> Void
+        let onEntry: () -> Void
+        let onExit: () -> Void
 
-        public required init?(name: String, implementation: IMP) {
+        public required init?(name: String, vtableSlot: UnsafeMutablePointer<SIMP>) {
             fatalError()
         }
 
-        public required init?(name: String, implementation: IMP,
-                              preAspect: @escaping () -> Void,
-                              postAspect: @escaping () -> Void) {
-            self.preAspect = preAspect
-            self.postAspect = postAspect
-            super.init(name: name, implementation: implementation)
+        public required init?(name: String, objcMethod: Method) {
+            fatalError()
+        }
+
+        public required init?(name: String, vtableSlot: UnsafeMutablePointer<SIMP>,
+                              onEntry: @escaping () -> Void,
+                              onExit: @escaping () -> Void) {
+            self.onEntry = onEntry
+            self.onExit = onExit
+            super.init(name: name, vtableSlot: vtableSlot)
         }
 
         /**
@@ -509,12 +590,21 @@ open class SwiftTrace: NSObject {
         open class Applier: Invocation {
 
             open override func onEntry() {
-                (method as! Aspect).preAspect()
+                (patch as! Aspect).onEntry()
             }
 
             open override func onExit() {
-                (method as! Aspect).postAspect()
+                (patch as! Aspect).onExit()
             }
+        }
+    }
+
+    /**
+        Remove all patches applied until now
+     */
+    @objc open class func removeAllPatches() {
+        for (_, patch) in Patch.active {
+            patch.removeAll()
         }
     }
 
@@ -538,9 +628,9 @@ open class SwiftTrace: NSObject {
                     continue
                 }
 
-                if let info = SwiftTrace.methodFactory.init(name: name,
-                             implementation: method_getImplementation(method)) {
-                    method_setImplementation(method, info.forwardingImplementation())
+                if let info = patchFactory.init(name: name, objcMethod: method) {
+                    method_setImplementation(method,
+                        unsafeBitCast(info.forwardingImplementation(), to: IMP.self))
                 }
             }
             free(methods)
