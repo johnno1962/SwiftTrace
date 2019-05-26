@@ -48,15 +48,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // any inclusions or exlusiona need to come before trace enabled
         //SwiftTrace.include( "Swift.Optiona|TestClass" )
 
-        class MyTracer: SwiftTrace.Invocation {
+        class MyTracer: SwiftTrace.Patch {
 
             override func onEntry() {
-                print( ">> "+method.name )
+                print( ">> "+name )
             }
 
         }
 
-        SwiftTrace.invocationFactory = MyTracer.self
+        SwiftTrace.patchFactory = MyTracer.self
 
         type(of: self).traceBundle()
 

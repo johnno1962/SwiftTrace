@@ -27,6 +27,7 @@ public protocol P {
     func y() -> Float
     func z( _ d: Int, f: Double, g: Float, h: Double, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int )
     func ssssss( a: TestStruct ) -> TestStruct
+    func str() -> NSString
 
 }
 
@@ -39,7 +40,7 @@ public class TestClass: P {
     }
 
     public func y() -> Float {
-        print( "HERE2" )
+       print( "HERE2" )
         return -9.0
     }
 
@@ -51,12 +52,17 @@ public class TestClass: P {
         return a
     }
 
+    static var c = 0
+
+    public func str() -> NSString {
+        return "NO" as NSString
+    }
 }
 
-class MyTracer: SwiftTrace.Invocation {
+class MyTracer: SwiftTrace.Patch {
 
     override func onEntry() {
-        print( ">> "+patch.name )
+        print( ">> "+name )
     }
 
 }
@@ -74,16 +80,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         splitViewController.delegate = self
 
         // any inclusions or exlusions need to come before trace enabled
-        //SwiftTrace.include( "Swift.Optiona|TestClass" )
-        SwiftTrace.defaultInvocationFactory = MyTracer.self
+        SwiftTrace.patchFactory = MyTracer.self
 
         type(of: self).traceBundle()
         SwiftTrace.trace(aClass: type(of: self))
 
+        print(SwiftTrace.swiftClassList(bundlePath: Bundle.main.executablePath!))
         print(SwiftTrace.methodNames(ofClass: TestClass.self))
 
         print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.x() -> ()", ofClass: TestClass.self, onEntry: { print("ONE") }, onExit: { print("TWO") }))
         print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.y() -> Swift.Float", onExit: { print("TWO!") }))
+        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.str() -> __C.NSString", justReturn: {
+            TestClass.c += 1
+            return "YES #\(TestClass.c)" as NSString
+        }))
 
         let a: P = TestClass()
         a.x()
@@ -96,7 +106,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         a.z( 88, f: 66, g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
         _ = a.ssssss( a: TestStruct() )
 
-        SwiftTrace.removeAllPatches()
+        print(">>>> AH \(a.str())")
+        print(">>>> AH \(a.str())")
+        print(">>>> AH \(a.str())")
+
+//        SwiftTrace.removeAllPatches()
         return true
     }
 
