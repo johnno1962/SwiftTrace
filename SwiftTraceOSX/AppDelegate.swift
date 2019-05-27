@@ -50,10 +50,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         class MyTracer: SwiftTrace.Patch {
 
-            override func onEntry() {
+            override func onEntry(stack: UnsafeMutablePointer<EntryStack>) {
                 print( ">> "+name )
             }
-
         }
 
         SwiftTrace.patchFactory = MyTracer.self

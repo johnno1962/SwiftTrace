@@ -22,13 +22,12 @@ public func ==(lhs: TestStruct, rhs: TestStruct) -> Bool {
 }
 
 public protocol P {
-
     func x()
     func y() -> Float
-    func z( _ d: Int, f: Double, g: Float, h: Double, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int )
+    @discardableResult
+    func zzz( _ d: Int, f: Double, g: Float, h: String, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int, ff: Int ) -> Double
     func ssssss( a: TestStruct ) -> TestStruct
     func str() -> NSString
-
 }
 
 public class TestClass: P {
@@ -44,8 +43,10 @@ public class TestClass: P {
         return -9.0
     }
 
-    public func z( _ d: Int, f: Double, g: Float, h: Double, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int ) {
+    @discardableResult
+    public func zzz( _ d: Int, f: Double, g: Float, h: String, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int, ff: Int ) -> Double {
         print( "HERE \(i) \(d) \(e) \(f) \(g) \(h) \(f1) \(g1) \(h1) \(f2) \(g2) \(h2)" )
+        return 444
     }
 
     public func ssssss( a: TestStruct ) -> TestStruct {
@@ -57,14 +58,29 @@ public class TestClass: P {
     public func str() -> NSString {
         return "NO" as NSString
     }
+
 }
 
 class MyTracer: SwiftTrace.Patch {
 
-    override func onEntry() {
-        print( ">> "+name )
+    override func onEntry(stack: UnsafeMutablePointer<EntryStack>) {
+        print(stack.pointee)
+        if name == "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int) -> Swift.Double" {
+            print("\(arguments.pointee.intArg1) \(argument(&arguments.pointee.intArg2, as: String.self).pointee) \(arguments.pointee.floatArg1) \(argument(&arguments.pointee.floatArg5, as: Float.self).pointee) \((getSelf() as TestClass).i)")
+        }
     }
 
+    override func onExit(stack: UnsafeMutablePointer<ExitStack>) {
+        print(stack.pointee)
+        print("\(getSelf() as AnyObject)")
+        if name == "SwiftTwaceApp.TestClass.ssssss(a: SwiftTwaceApp.TestStruct) -> SwiftTwaceApp.TestStruct" {
+            print(structReturn().pointee as TestStruct)
+        }
+    }
+
+    func jjjjj(a: TestClass) {
+        a.zzz( 88, f: 66, g: 55, h: "44", f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77, ff: 11 )
+    }
 }
 
 @UIApplicationMain
@@ -88,9 +104,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print(SwiftTrace.swiftClassList(bundlePath: Bundle.main.executablePath!))
         print(SwiftTrace.methodNames(ofClass: TestClass.self))
 
-        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.x() -> ()", ofClass: TestClass.self, onEntry: { print("ONE") }, onExit: { print("TWO") }))
-        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.y() -> Swift.Float", onExit: { print("TWO!") }))
-        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.str() -> __C.NSString", justReturn: {
+        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.x() -> ()", ofClass: TestClass.self, onEntry: { (_, _) in print("ONE") }, onExit: { (_, _) in print("TWO") }))
+        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.y() -> Swift.Float", onExit: { (_, _) in print("TWO!") }))
+        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.str() -> __C.NSString", justReturn: { _ in
             TestClass.c += 1
             return "YES #\(TestClass.c)" as NSString
         }))
@@ -103,8 +119,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print( a.y() )
 
         a.x()
-        a.z( 88, f: 66, g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
-        _ = a.ssssss( a: TestStruct() )
+        a.zzz( 123, f: 66, g: 55, h: "4-4", f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77, ff: 11 )
+        print(a.ssssss( a: TestStruct() ))
 
         print(">>>> AH \(a.str())")
         print(">>>> AH \(a.str())")

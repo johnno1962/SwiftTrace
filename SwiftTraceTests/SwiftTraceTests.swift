@@ -58,8 +58,8 @@ class SwiftTwaceTests: XCTestCase {
 
         class TestPatch: SwiftTrace.Patch {
 
-            override func onEntry() {
-                args = "\(invocation!.framePointer[1]) \(Unmanaged<TestClass>.fromOpaque(invocation!.swiftSelf).takeUnretainedValue().i) \(Double(bitPattern: invocation!.framePointer[-1]))"
+            override func onEntry(stack: UnsafeMutablePointer<EntryStack>) {
+                args = "\(arguments.pointee.intArg1) \((getSelf() as TestClass).i) \(arguments.pointee.floatArg1)"
             }
         }
     }

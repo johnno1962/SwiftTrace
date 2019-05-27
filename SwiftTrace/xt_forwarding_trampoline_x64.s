@@ -1,5 +1,5 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_x64.s#16 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_x64.s#20 $
 
 //  https://en.wikipedia.org/wiki/X86_calling_conventions
 
@@ -48,8 +48,7 @@ _xt_forwarding_trampoline:
     subq    $4096+5, %r11   // find trampoline info relative to return address
     movq    (%r11), %rdi    // first argument is pointer to forwarding info
     movq    120(%rbp), %rsi // recover original return address
-    movq    %r13, %rdx      // pass through Swift self
-    movq    %rbp, %rcx      // pass through stack (bewteen int and float args)
+    movq    %rsp, %rdx      // pass through stack
     leaq    onEntry(%rip), %r11
     callq   *(%r11)          // call tracing entry routine (saves return address)
     leaq    returning(%rip), %r11
@@ -82,19 +81,19 @@ _xt_forwarding_trampoline:
     jmpq    *%r11   // forward onto original implementation
 
 returning:
-    pushq   %rbx    // push all registers used as paremters
-    pushq   %rax    // pointer for return of struct
-    pushq   %r15
-    pushq   %r14
-    pushq   %r13    // Swift "call context" register for self
-    pushq   %r12
-    pushq   %r10
-    pushq   %r9
-    pushq   %r8
-    pushq   %rcx
-    pushq   %rdx
-    pushq   %rsi
     pushq   %rdi
+    pushq   %rsi
+    pushq   %rdx
+    pushq   %rcx
+    pushq   %r8
+    pushq   %r9
+    pushq   %r10
+    pushq   %r12
+    pushq   %r13    // Swift "call context" register for self
+    pushq   %r14
+    pushq   %r15
+    pushq   %rax    // pointer for return of struct
+    pushq   %rbx
     pushq   %rbp
     movq    %rsp, %rbp
     subq    $64, %rsp   // make space for floating point regeisters and save
@@ -119,22 +118,25 @@ returning:
     movsd   -8(%rbp), %xmm0
     addq    $64, %rsp
     popq    %rbp
-    popq    %rdi
-    popq    %rsi
-    popq    %rdx
-    popq    %rcx
-    popq    %r8
-    popq    %r9
-    popq    %r10
-    popq    %r12
-    popq    %r13
-    popq    %r14
-    popq    %r15
-    popq    %rax
     popq    %rbx
+    popq    %rax
+    popq    %r15
+    popq    %r14
+    popq    %r13
+    popq    %r12
+    popq    %r10
+    popq    %r9
+    popq    %r8
+    popq    %rcx
+    popq    %rdx
+    popq    %rsi
+    popq    %rdi
     pushq   %r11
     ret     // return to original caller
 
+    nop
+    nop
+    nop
     nop
     nop
     nop

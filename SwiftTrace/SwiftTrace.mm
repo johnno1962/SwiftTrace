@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#30 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#31 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -257,7 +257,6 @@ static bool operator < (Symbol s1, Symbol s2) {
 
 class Dylib {
     const mach_header_t *header;
-    struct load_command *cmd;
     segment_command_t *seg_linkedit = NULL;
     segment_command_t *seg_text = NULL;
     struct symtab_command *symtab = NULL;
@@ -270,7 +269,7 @@ public:
     Dylib(int imageIndex) {
         imageName = _dyld_get_image_name(imageIndex);
         header = (const mach_header_t *)_dyld_get_image_header(imageIndex);
-        cmd = (struct load_command *)((intptr_t)header + sizeof(mach_header_t));
+        struct load_command *cmd = (struct load_command *)((intptr_t)header + sizeof(mach_header_t));
         assert(header);
 
         for (uint32_t i = 0; i < header->ncmds; i++, cmd = (struct load_command *)((intptr_t)cmd + cmd->cmdsize))
@@ -339,12 +338,12 @@ public:
     }
 };
 
-static bool operator < (DylibPtr s1, DylibPtr s2) {
+bool operator < (DylibPtr s1, DylibPtr s2) {
     return s1.start < s2.start;
 }
 
 int fast_dladdr(const void *ptr, Dl_info *info) {
-#if TRY_TO_OPTIMISE_DLADDR
+#if !TRY_TO_OPTIMISE_DLADDR
     return dladdr(ptr, info);
 #else
     static vector<DylibPtr> dylibs;
