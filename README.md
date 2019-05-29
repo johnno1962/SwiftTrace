@@ -1,18 +1,20 @@
 # SwiftTrace
 
 Trace Swift and Objective-C method invocations of non-final classes in an app bundle or framework.
-Think [Xtrace](https://github.com/johnno1962/Xtrace) but for Swift and Objective-C.
+Think [Xtrace](https://github.com/johnno1962/Xtrace) but for Swift and Objective-C. You can also 
+add "aspects" to member functions of non-final Swift classes to have a closure called before or after
+a function implementation executes which in turn can modify incoming arguments or the return value!
 
 SwiftTrace is most easily used as a CocoaPod and can be added to your project by temporarily adding the
 following line to it's Podfile:
 
     pod 'SwiftTrace'
 
-This project has been updated to Swift 5 from Xocde 10.2.:
+This project has been updated to Swift 5 from Xcode 10.2.:
 
-    pod 'SwiftTrace', '5.2.0'
+    pod 'SwiftTrace', '5.3.0'
 
-Once the project has rebuilt import SwiftTrace into the application's AppDelegate and add something like
+Once the project has rebuilt, import SwiftTrace into the application's AppDelegate and add something like
 the following to the beginning of it's didFinishLaunchingWithOptions method:
 
     SwiftTrace.traceBundleContaining( theClass: type(of: self) )
@@ -40,13 +42,11 @@ This gives output in the Xcode debug console something like:
       Unwrap.LearnViewController.startStudying(title: Swift.String) -> () 36.6ms
     -[LearnDataSource tableView:didSelectRowAtIndexPath:] -> v32@0:8@16@24 36.7ms
 
-The line beginning "-[RxSwift" is where the old Objective-C dynamic dispatch is being used.
-
 To trace a system framework such as UIKit you can trace classes using a pattern:
 
     SwiftTrace.traceClassesMatching( pattern:"^UI" )
 
-Individual classes can be traced using the underlying:
+Individual classes can be traced using the underlying api:
 
     SwiftTrace.trace( aClass: MyClass.self )
 
@@ -55,24 +55,78 @@ Output can be filtered using inclusion and exclusion regexps.
     SwiftTrace.include( pattern: "TestClass" )
     SwiftTrace.exclude( pattern: "\\.getter" )
 
-These methods must be called before you start the trace as they are applied during the "Swizzle".
+These methods must be called before you start the trace as they are applied during the "Swizzle" phase.
 There is a default set of exclusions setup as a result of testing, tracing UIKit.
                       
     public let swiftTraceDefaultExclusions = "\\.getter|retain]|_tryRetain]|_isDeallocating]|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[UIView |UIButton _defaultBackgroundImageForType:andState:|RxSwift.ScheduledDisposable.dispose"
 
 If you want to further process output you can define a custom tracing class:
 
-    class MyTracer: SwiftTraceInfo {
+    class MyTracer: SwiftTrace.Patch {
 
-        override func trace() -> IMP {
+        override func onEntry(stack: UnsafeMutablePointer<SwiftTrace.EntryStack>) {
             print( ">> "+symbol )
-            return original /// must return implmentation to call
         }
-        
     }
     
-    SwiftTrace.tracerClass = MyTracer.self
-                      
+    SwiftTrace.patchFactory = MyTracer.self
+    
+#### Aspects
+
+You can add an aspect to a particular method using the method's de-mangled name:
+
+    print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.x() -> ()",
+    	ofClass: TestClass.self,
+    	onEntry: { (_, _) in print("ONE") },
+    	onExit: { (_, _) in print("TWO") }))
+
+This will print "ONE" when method "x" of TextClass is called and "TWO when it has exited. The
+two arguments are the patch which is an object representing the "Swizzle" and the entry or 
+exit stack. The full signature for the entry closure is:
+
+    onEntry: { (patch: SwiftTrace.Patch, stack: UnsafeMutablePointer<SwiftTrace.EntryStack>) in print("ONE") }
+
+If you understand how registers are allocated to arguments it is possible to poke into the
+stack to modify the incoming arguments and, for the exit aspect closure you can replace
+the return value and on a good day prevent (and log) an error being thrown.
+
+Replacing an input argument in the closure is relatively simple:
+
+    stack.pointee.intArg1 = 99
+    stack.pointee.floatArg3 = 77.3
+    
+Other types a little more involved. They must be cast and String takes up two integer registers.
+
+    patch.cast(&stack.pointee.intArg2, as: String.self).pointee = "Grief"
+    patch.cast(&stack.pointee.intArg4, as: TestClass.self).pointee = TestClass()
+    
+In an exit aspect closure, setting the return type is easier as it is generic:
+
+    stack.pointee.setReturn(value: "Phew")
+
+When a function throws you can access NSError objects
+
+    print(cast(&stack.pointee.thrownError, as: NSError.self).pointee)
+    
+It is possible to set `stack.pointee.thrownError` to zero to cancel the throw but you will need to set
+the return value. This does not work for String return values in the simulator but does work on a device.
+
+#### Invocation interface
+
+Now we have a trampoline infrastructure, it is possible to implement an invocation api for Swift:
+
+    print("Result: "+SwiftTrace.invoke(self: b,
+        methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String",
+        args: 777, 101.0, Float(102.0), "2-2", 103.0, Float(104.0), 105.0, 106.0, Float(107.0), 108.0, 888, 999, TestClass()))
+
+In order to determine the mangled name of a method you can get the list for a class 
+using this function:
+
+    print(SwiftTrace.methodNames(ofClass: TestClass.self))
+
+There are limitations to this abbreviated interface in that it only supports Double, Float,
+String, Int and Object arguments.
+
 #### How it works
                       
 A Swift `AnyClass` instance has a layout similar to an Objective-C class with some

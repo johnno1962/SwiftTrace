@@ -1,5 +1,5 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_arm64.s#12 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_arm64.s#13 $
 
 #if defined(__arm64__)
 .text
@@ -27,11 +27,11 @@ _xt_forwarding_trampoline:
     stp	x4, x5, [sp, #-16]!
     stp	x2, x3, [sp, #-16]!
     stp	x0, x1, [sp, #-16]!
-    stp d1, d0, [sp, #-16]!
-    stp d3, d2, [sp, #-16]!
-    stp d5, d4, [sp, #-16]!
-    stp d7, d6, [sp, #-16]!
-    stp	x20, x8, [sp, #-16]! // r8 is pointer for return of structs
+    stp d6, d7, [sp, #-16]!
+    stp d4, d5, [sp, #-16]!
+    stp d2, d3, [sp, #-16]!
+    stp d0, d1, [sp, #-16]!
+    stp	x20, x8, [sp, #-16]! // x20 "context" (self), r8 for return of structs
     mov	fp, sp
     ldr x0, [x16]   // first argument is trace info structure
     mov x1, lr      // second argument is return address
@@ -41,10 +41,10 @@ _xt_forwarding_trampoline:
     mov x16, x0     // original implementation to call is returned
     mov	sp, fp     // restore registers
     ldp	x20, x8, [sp], #16
-    ldp	d7, d6, [sp], #16
-    ldp	d5, d4, [sp], #16
-    ldp	d3, d2, [sp], #16
-    ldp	d1, d0, [sp], #16
+    ldp	d0, d1, [sp], #16
+    ldp	d2, d3, [sp], #16
+    ldp	d4, d5, [sp], #16
+    ldp	d6, d7, [sp], #16
     ldp	x0, x1, [sp], #16
     ldp	x2, x3, [sp], #16
     ldp	x4, x5, [sp], #16
@@ -56,31 +56,31 @@ getpc:
     br x16          // continue onto original implemntation
 
 returning:
-    stp	lr, fp, [sp, #-16]! // save frame pointer and link register
-    stp	x1, x0, [sp, #-16]! // save all regs used in parameter passing
-    stp	x3, x2, [sp, #-16]!
-    stp	x5, x4, [sp, #-16]!
-    stp	x7, x6, [sp, #-16]!
-    stp d1, d0, [sp, #-16]!
-    stp d3, d2, [sp, #-16]!
-    stp d5, d4, [sp, #-16]!
-    stp d7, d6, [sp, #-16]!
-    stp	x20, x8, [sp, #-16]! // r8 is pointer for return of structs
+    stp	x21, fp, [sp, #-16]! // save frame pointer and link register
+    stp	x6, x7, [sp, #-16]! // save all regs used in parameter passing
+    stp	x4, x5, [sp, #-16]!
+    stp	x2, x3, [sp, #-16]!
+    stp	x0, x1, [sp, #-16]!
+    stp d6, d7, [sp, #-16]!
+    stp d4, d5, [sp, #-16]!
+    stp d2, d3, [sp, #-16]!
+    stp d0, d1, [sp, #-16]!
+    stp	x20, x8, [sp, #-16]!
     mov	fp, sp
     ldr x16, onExit
     blr x16         // call tracer routine
     mov x17, x0     // returns return address
     mov	sp, fp      // restore registers
     ldp	x20, x8, [sp], #16
-    ldp	d7, d6, [sp], #16
-    ldp	d5, d4, [sp], #16
-    ldp	d3, d2, [sp], #16
-    ldp	d1, d0, [sp], #16
-    ldp	x7, x6, [sp], #16
-    ldp	x5, x4, [sp], #16
-    ldp	x3, x2, [sp], #16
-    ldp	x1, x0, [sp], #16
-    ldp	lr, fp, [sp], #16
+    ldp	d0, d1, [sp], #16
+    ldp	d2, d3, [sp], #16
+    ldp	d4, d5, [sp], #16
+    ldp	d6, d7, [sp], #16
+    ldp	x0, x1, [sp], #16
+    ldp	x2, x3, [sp], #16
+    ldp	x4, x5, [sp], #16
+    ldp	x6, x7, [sp], #16
+    ldp	x21, fp, [sp], #16
     mov lr, x17
     ret          // return to caller
     nop

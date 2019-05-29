@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#88 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#105 $
 //
 
 import Foundation
@@ -76,15 +76,15 @@ open class SwiftTrace: NSObject {
         public let name: String
 
         /** pointer to original function implementing method */
-        let implementation: IMP
+        var implementation: IMP
 
         /** vtable slot patched for unpatching */
-        let vtableSlot: UnsafeMutablePointer<SIMP>?
+        var vtableSlot: UnsafeMutablePointer<SIMP>?
 
         /** Original objc method swizzled */
         let objcMethod: Method?
 
-        /** Closure to call to replace return value */
+        /** Closure to call instead of original implementation */
         public let nullImplmentation: nullImplementationType?
 
         /**
@@ -92,6 +92,7 @@ open class SwiftTrace: NSObject {
          - parameter name: string representing method being traced
          - parameter vtableSlot: pointer to vtable slot patched
          - parameter objcMethod: pointer to original Method patched
+         - parameter justReturn: implementation to replace that of class
          */
         public required init?(name: String,
                               vtableSlot: UnsafeMutablePointer<SIMP>? = nil, objcMethod: Method? = nil,
@@ -109,7 +110,7 @@ open class SwiftTrace: NSObject {
             nullImplmentation = justReturn
         }
 
-        /** Called on enrty to Patched method */
+        /** Called from assembly code on entry to Patched method */
         static var onEntry: @convention(c) (_ patch: Patch, _ returnAddress: UnsafeRawPointer,
             _ stackPointer: UnsafeMutablePointer<UInt64>) -> IMP? = {
                 (patch, returnAddress, stackPointer) -> IMP? in
@@ -122,7 +123,7 @@ open class SwiftTrace: NSObject {
                     unsafeBitCast(patch.nullImplmentation, to: IMP.self) : patch.implementation
         }
 
-        /** Called when Patched method returns */
+        /** Called from assembly code when Patched method returns */
         static var onExit: @convention(c) () -> UnsafeRawPointer = {
             let invocation = Invocation.current!
             invocation.patch.onExit(stack: invocation.exitStack)
@@ -131,7 +132,7 @@ open class SwiftTrace: NSObject {
         }
 
         /**
-            Return a unique pointer to a function that will callback the oneEntry()
+            Return a unique pointer to a trampoline that will callback the oneEntry()
             and onExit() method in this class
          */
         func forwardingImplementation() -> SIMP {
@@ -144,7 +145,6 @@ open class SwiftTrace: NSObject {
 
         /**
          method called before trampoline enters the target "Patch"
-         Returns true to execute original implemention.
          */
         open func onEntry(stack: UnsafeMutablePointer<EntryStack>) {
         }
@@ -154,20 +154,20 @@ open class SwiftTrace: NSObject {
          */
         open func onExit(stack: UnsafeMutablePointer<ExitStack>) {
             if let invocation = Invocation.current {
-                let elapsed = Invocation.ftime() - invocation.timeEntered
+                let elapsed = Date.timeIntervalSinceReferenceDate - invocation.timeEntered
                 print("\(String(repeating: "  ", count: invocation.stackDepth))\(name) \(String(format: "%.1fms", elapsed * 1000.0))")
             }
         }
 
         /**
-         Class used to create a specific "Invocation" of the "Patch"
+         Class used to create a specific "Invocation" of the "Patch" on entry
          */
         open var invocationFactory: Invocation.Type {
             return defaultInvocationFactory
         }
 
         /**
-         The inner invocation instance on the current thread.
+         The inner invocation instance on the stack of the current thread.
          */
         open func invocation() -> Invocation! {
             return Invocation.current
@@ -208,135 +208,19 @@ open class SwiftTrace: NSObject {
         }
 
         /** convert arguments (return results) as a specifi type */
-        open func argument<IN,OUT>(_ arg: UnsafeMutablePointer<IN>, as: OUT.Type) -> UnsafeMutablePointer<OUT> {
+        open func cast<IN,OUT>(_ arg: UnsafeMutablePointer<IN>, as: OUT.Type) -> UnsafeMutablePointer<OUT> {
             return arg.withMemoryRebound(to: OUT.self, capacity: 1) { $0 }
         }
 
         /** pointer to memory for return of struct */
-        open func structReturn<T>() -> UnsafeMutablePointer<T>! {
-            return UnsafeMutablePointer<T>(bitPattern: returns.pointee.structReturn)
+        open func structReturn<T>() -> UnsafeMutablePointer<T> {
+            return invocation().structReturn!.assumingMemoryBound(to: T.self)
         }
-
-        #if arch(arm64)
-        // Stack layout from xt_forwarding_trampoline_arm64.s
-        public struct EntryStack {
-            public var swiftSelf: intptr_t = 0 // x20
-            public var structReturn: intptr_t = 0 // x8
-            public var floatArg8: Double = 0.0
-            public var floatArg7: Double = 0.0
-            public var floatArg6: Double = 0.0
-            public var floatArg5: Double = 0.0
-            public var floatArg4: Double = 0.0
-            public var floatArg3: Double = 0.0
-            public var floatArg2: Double = 0.0
-            public var floatArg1: Double = 0.0
-            public var intArg1: intptr_t = 0
-            public var intArg2: intptr_t = 0
-            public var intArg3: intptr_t = 0
-            public var intArg4: intptr_t = 0
-            public var intArg5: intptr_t = 0
-            public var intArg6: intptr_t = 0
-            public var intArg7: intptr_t = 0
-            public var intArg8: intptr_t = 0
-            public var framePointer: intptr_t = 0
-            public var linkRegister: intptr_t = 0
-            public var invocation: Invocation! {
-                return Invocation.current
-            }
-        }
-
-        public struct ExitStack {
-            public var swiftSelf: intptr_t = 0 // x20
-            public var structReturn: intptr_t = 0 // x8
-            public var d7: Double = 0.0
-            public var d6: Double = 0.0
-            public var d5: Double = 0.0
-            public var d4: Double = 0.0
-            public var d3: Double = 0.0
-            public var d2: Double = 0.0
-            public var floatReturn2: Double = 0.0
-            public var floatReturn1: Double = 0.0
-            public var x7: intptr_t = 0
-            public var x6: intptr_t = 0
-            public var x5: intptr_t = 0
-            public var x4: intptr_t = 0
-            public var x3: intptr_t = 0
-            public var x2: intptr_t = 0
-            public var intReturn2: intptr_t = 0
-            public var intReturn1: intptr_t = 0
-            public var framePointer: intptr_t = 0
-            public var linkRegister: intptr_t = 0
-            public var invocation: Invocation! {
-                return Invocation.current
-            }
-        }
-        #else // x86_64
-        // Stack layout from xt_forwarding_trampoline_x64.s
-        public struct EntryStack {
-            public var floatArg8: Double = 0.0
-            public var floatArg7: Double = 0.0
-            public var floatArg6: Double = 0.0
-            public var floatArg5: Double = 0.0
-            public var floatArg4: Double = 0.0
-            public var floatArg3: Double = 0.0
-            public var floatArg2: Double = 0.0
-            public var floatArg1: Double = 0.0
-            public var framePointer: intptr_t = 0
-            public var intArg1: intptr_t = 0    // rdi
-            public var intArg2: intptr_t = 0    // rsi
-            public var intArg3: intptr_t = 0    // rcx
-            public var intArg4: intptr_t = 0    // rdx
-            public var intArg5: intptr_t = 0    // r8
-            public var intArg6: intptr_t = 0    // r9
-            public var r10: intptr_t = 0
-            public var r12: intptr_t = 0
-            public var swiftSelf: intptr_t = 0  // r13
-            public var r14: intptr_t = 0
-            public var r15: intptr_t = 0
-            public var structReturn: intptr_t = 0 // rax
-            public var rbx: intptr_t = 0
-            public var invocation: Invocation! {
-                return Invocation.current
-            }
-        }
-
-        public struct ExitStack {
-            public var stackShift1: intptr_t = 0
-            public var stackShift2: intptr_t = 0
-            public var xmm7: Double = 0.0
-            public var xmm6: Double = 0.0
-            public var xmm5: Double = 0.0
-            public var xmm4: Double = 0.0
-            public var xmm3: Double = 0.0
-            public var xmm2: Double = 0.0
-            public var floatReturn2: Double = 0.0 // xmm1
-            public var floatReturn1: Double = 0.0 // xmm0
-            public var framePointer: intptr_t = 0
-            public var intReturn2: intptr_t = 0 // rbx
-            public var intReturn1: intptr_t = 0 // rax (also struct Return)
-            public var structReturn: intptr_t { return intReturn1 }
-            public var r15: intptr_t = 0
-            public var r14: intptr_t = 0
-            public var swiftSelf: intptr_t = 0  // r13
-            public var r12: intptr_t = 0
-            public var r10: intptr_t = 0
-            public var r9: intptr_t = 0
-            public var r8: intptr_t = 0
-            public var rdx: intptr_t = 0
-            public var rcx: intptr_t = 0
-            public var rsi: intptr_t = 0
-            public var rdi: intptr_t = 0
-            public var invocation: Invocation! {
-                return Invocation.current
-            }
-        }
-        #endif
-
 
         /**
          Represents a specific call to a member function on the "ThreadLocal" stack
          */
-        public struct Invocation {
+        public class Invocation {
 
             /** Time call was started */
             public let timeEntered: Double
@@ -353,6 +237,8 @@ open class SwiftTrace: NSObject {
             /** Architecture depenent place on stack where arguments stored */
             public let entryStack: UnsafeMutablePointer<EntryStack>
 
+            public var structReturn: UnsafeMutableRawPointer? = nil
+            
             public var exitStack: UnsafeMutablePointer<ExitStack> {
                 return entryStack.withMemoryRebound(to: ExitStack.self, capacity: 1) { $0 }
             }
@@ -360,30 +246,26 @@ open class SwiftTrace: NSObject {
             /** "self" for method invocations */
             public let swiftSelf: intptr_t
 
-            /** slot for use data carried from entry to exit */
-            public var userData: AnyObject?
-
-            /**
-             micro-second precision time.
-             */
-            static public func ftime() -> Double {
-                var tv = timeval()
-                gettimeofday(&tv, nil)
-                return Double(tv.tv_sec) + Double(tv.tv_usec)/1_000_000.0
-            }
+            /** for use relaying data from entry to exit */
+            public var userInfo: AnyObject?
 
             /**
              designated initialiser
+             - parameter stackDepth: number of calls that have been made on the stack
+             - parameter patch: associated Patch instance
+             - parameter returnAddress: adress in process trampoline was called from
+             - parameter stackPointer: stack pointer of thread with saved registers
              */
-            public init(stackDepth: Int, patch: Patch, returnAddress: UnsafeRawPointer,
-                        stackPointer: UnsafeMutablePointer<UInt64>) {
-                timeEntered = Invocation.ftime()
+            public required init(stackDepth: Int, patch: Patch, returnAddress: UnsafeRawPointer,
+                                 stackPointer: UnsafeMutablePointer<UInt64>) {
+                timeEntered = Date.timeIntervalSinceReferenceDate
                 self.stackDepth = stackDepth
                 self.patch = patch
                 self.returnAddress = returnAddress
-                self.entryStack = patch.argument(stackPointer, as: EntryStack.self)
+                self.entryStack = patch.cast(stackPointer, as: EntryStack.self)
                 self.swiftSelf = patch.objcMethod != nil ?
                     self.entryStack.pointee.intArg1 : self.entryStack.pointee.swiftSelf
+                self.structReturn = UnsafeMutableRawPointer(bitPattern: self.entryStack.pointee.structReturn)
             }
 
             /**
@@ -439,6 +321,184 @@ open class SwiftTrace: NSObject {
             }
         }
     }
+
+    #if arch(arm64)
+    /**
+        Stack layout on entry from xt_forwarding_trampoline_arm64.s
+     */
+    public struct EntryStack {
+        static let maxFloatArgs = 8
+        static let maxIntArgs = 8
+        public var swiftSelf: intptr_t = 0 // x20
+        public var structReturn: intptr_t = 0 // x8
+        public var floatArg1: Double = 0.0
+        public var floatArg2: Double = 0.0
+        public var floatArg3: Double = 0.0
+        public var floatArg4: Double = 0.0
+        public var floatArg5: Double = 0.0
+        public var floatArg6: Double = 0.0
+        public var floatArg7: Double = 0.0
+        public var floatArg8: Double = 0.0
+        public var intArg1: intptr_t = 0
+        public var intArg2: intptr_t = 0
+        public var intArg3: intptr_t = 0
+        public var intArg4: intptr_t = 0
+        public var intArg5: intptr_t = 0
+        public var intArg6: intptr_t = 0
+        public var intArg7: intptr_t = 0
+        public var intArg8: intptr_t = 0
+        public var framePointer: intptr_t = 0
+        public var linkRegister: intptr_t = 0
+        public var invocation: Patch.Invocation! {
+            return Patch.Invocation.current
+        }
+    }
+
+    /**
+        Stack layout on entry from xt_forwarding_trampoline_arm64.s
+     */
+    public struct ExitStack {
+        public var swiftSelf: intptr_t = 0 // x20
+        public var structReturn: intptr_t = 0 // x8
+        public var floatReturn1: Double = 0.0
+        public var floatReturn2: Double = 0.0
+        public var d2: Double = 0.0
+        public var d3: Double = 0.0
+        public var d4: Double = 0.0
+        public var d5: Double = 0.0
+        public var d6: Double = 0.0
+        public var d7: Double = 0.0
+        public var intReturn1: intptr_t = 0
+        public var intReturn2: intptr_t = 0
+        public var x2: intptr_t = 0
+        public var x3: intptr_t = 0
+        public var x4: intptr_t = 0
+        public var x5: intptr_t = 0
+        public var x6: intptr_t = 0
+        public var x7: intptr_t = 0
+        public var thrownError: intptr_t = 0
+        public var framePointer: intptr_t = 0
+        public var invocation: Patch.Invocation! {
+            return Patch.Invocation.current
+        }
+        mutating func genericReturn<T>(patch: Patch? = nil) -> UnsafeMutablePointer<T> {
+            if MemoryLayout<T>.size > MemoryLayout<intptr_t>.size * 2 {
+                structReturn = unsafeBitCast(invocation.structReturn, to: Int.self)
+                return invocation.structReturn!.assumingMemoryBound(to: T.self)
+            }
+            else {
+                return (patch ?? invocation!.patch).cast(&intReturn1, as: T.self)
+            }
+        }
+        mutating public func getReturn<T>() -> T {
+            return genericReturn().pointee
+        }
+        mutating public func setReturn<T>(value: T) {
+            intReturn1 = 0
+            intReturn2 = 0
+            return genericReturn().pointee = value
+        }
+        mutating public func stringReturn() -> String {
+            print(self)
+            return getReturn()
+        }
+        mutating public func setReturn(string: String) {
+            setReturn(value: string)
+        }
+    }
+    #else // x86_64
+    /**
+        Stack layout on entry from xt_forwarding_trampoline_x64.s
+     */
+    public struct EntryStack {
+        static let maxFloatArgs = 8
+        static let maxIntArgs = 6
+        public var floatArg1: Double = 0.0
+        public var floatArg2: Double = 0.0
+        public var floatArg3: Double = 0.0
+        public var floatArg4: Double = 0.0
+        public var floatArg5: Double = 0.0
+        public var floatArg6: Double = 0.0
+        public var floatArg7: Double = 0.0
+        public var floatArg8: Double = 0.0
+        public var framePointer: intptr_t = 0
+        public var intArg1: intptr_t = 0    // rdi
+        public var intArg2: intptr_t = 0    // rsi
+        public var intArg3: intptr_t = 0    // rcx
+        public var intArg4: intptr_t = 0    // rdx
+        public var intArg5: intptr_t = 0    // r8
+        public var intArg6: intptr_t = 0    // r9
+        public var r10: intptr_t = 0
+        public var r12: intptr_t = 0
+        public var swiftSelf: intptr_t = 0  // r13
+        public var r14: intptr_t = 0
+        public var r15: intptr_t = 0
+        public var structReturn: intptr_t = 0 // rax
+        public var rbx: intptr_t = 0
+        public var invocation: Patch.Invocation! {
+            return Patch.Invocation.current
+        }
+    }
+
+    /**
+        Stack layout on exit from xt_forwarding_trampoline_x64.s
+     */
+    public struct ExitStack {
+        public var stackShift1: intptr_t = 0
+        public var stackShift2: intptr_t = 0
+        public var floatReturn1: Double = 0.0 // xmm0
+        public var floatReturn2: Double = 0.0 // xmm1
+        public var xmm2: Double = 0.0
+        public var xmm3: Double = 0.0
+        public var xmm4: Double = 0.0
+        public var xmm5: Double = 0.0
+        public var xmm6: Double = 0.0
+        public var xmm7: Double = 0.0
+        public var framePointer: intptr_t = 0
+        public var rdi: intptr_t = 0
+        public var rsi: intptr_t = 0
+        public var rcx: intptr_t = 0
+        public var rdx: intptr_t = 0
+        public var r8: intptr_t = 0
+        public var r9: intptr_t = 0
+        public var r10: intptr_t = 0
+        public var thrownError: intptr_t = 0 // r12
+        public var swiftSelf: intptr_t = 0  // r13
+        public var r14: intptr_t = 0
+        public var r15: intptr_t = 0
+        public var structReturn: UnsafeMutableRawPointer? {
+            return UnsafeMutableRawPointer(bitPattern: intReturn1)!
+        }
+        public var intReturn1: intptr_t = 0 // rax (also struct Return)
+        public var intReturn2: intptr_t = 0 // rbx
+        public var invocation: Patch.Invocation! {
+            return Patch.Invocation.current
+        }
+        mutating func genericReturn<T>(patch: Patch? = nil) -> UnsafeMutablePointer<T> {
+            if MemoryLayout<T>.size > MemoryLayout<intptr_t>.size * 2 {
+                intReturn1 = unsafeBitCast(invocation.structReturn, to: Int.self)
+                return invocation.structReturn!.assumingMemoryBound(to: T.self)
+            }
+            else {
+                return (patch ?? invocation!.patch).cast(&intReturn1, as: T.self)
+            }
+        }
+        mutating public func getReturn<T>() -> T {
+            return genericReturn().pointee
+        }
+        mutating public func setReturn<T>(value: T) {
+            intReturn1 = 0
+            intReturn2 = 0
+            return genericReturn().pointee = value
+        }
+        mutating public func stringReturn() -> String {
+            return getReturn()
+        }
+        mutating public func setReturn(string: String) {
+            setReturn(value: string)
+        }
+    }
+    #endif
 
     /**
      default pattern of symbols to be excluded from tracing
@@ -656,8 +716,8 @@ open class SwiftTrace: NSObject {
         return names
     }
 
-    public typealias EntryAspect = (_ patch: Patch, UnsafeMutablePointer<Patch.EntryStack>) -> Void
-    public typealias ExitAspect = (_ patch: Patch, UnsafeMutablePointer<Patch.ExitStack>) -> Void
+    public typealias EntryAspect = (_ patch: Patch, UnsafeMutablePointer<EntryStack>) -> Void
+    public typealias ExitAspect = (_ patch: Patch, UnsafeMutablePointer<ExitStack>) -> Void
 
     /**
         Add a closure aspect to be called before or after a "Patch" is called
@@ -736,29 +796,139 @@ open class SwiftTrace: NSObject {
      */
     open class Aspect: Patch {
 
-        let onEntryAspect: EntryAspect
-        let onExitAspect: ExitAspect
-
-        public required init?(name: String, vtableSlot: UnsafeMutablePointer<SIMP>?,
-                              objcMethod: Method?, justReturn: nullImplementationType?) {
-            fatalError()
-        }
+        let entryAspect: EntryAspect?
+        let exitAspect: ExitAspect?
 
         public required init?(name: String, vtableSlot: UnsafeMutablePointer<SIMP>,
                               onEntry: EntryAspect? = nil, onExit: ExitAspect? = nil,
                               justReturn: nullImplementationType? = nil) {
-            self.onEntryAspect = onEntry ?? { (_, _) in }
-            self.onExitAspect = onExit ?? { (_, _) in }
+            self.entryAspect = onEntry
+            self.exitAspect = onExit
             super.init(name: name, vtableSlot: vtableSlot, justReturn: justReturn)
         }
 
-        open override func onEntry(stack: UnsafeMutablePointer<Patch.EntryStack>) {
-            onEntryAspect(self, stack)
+        public required init?(name: String, vtableSlot: UnsafeMutablePointer<SIMP>? = nil, objcMethod: Method? = nil, justReturn: nullImplementationType? = nil) {
+            fatalError("Aspect.init(name:vtableSlot:objcMethod:justReturn:) should not be used")
         }
 
-        open override func onExit(stack: UnsafeMutablePointer<Patch.ExitStack>) {
-            onExitAspect(self, stack)
+        open override func onEntry(stack: UnsafeMutablePointer<EntryStack>) {
+            entryAspect?(self, stack)
         }
+
+        open override func onExit(stack: UnsafeMutablePointer<ExitStack>) {
+            exitAspect?(self, stack)
+        }
+    }
+
+    /**
+        Implementation of invocatoin api
+     */
+    public class Call: Patch {
+
+        public var input = EntryStack()
+        public var output = ExitStack()
+        let target: AnyObject
+        var caller: IMP? = nil
+
+        public init?(`self` anObject: AnyObject, methodName: String) {
+            target = anObject
+            var sigh: SIMP = { _ in }
+            super.init(name: methodName, vtableSlot: &sigh)
+
+            guard iterateMethods(ofClass: type(of: anObject), callback: {
+                (name, vtableSlot, stop) in
+                if name == methodName {
+                    self.vtableSlot = vtableSlot
+                    implementation = vtableSlot
+                        .withMemoryRebound(to: IMP.self, capacity: 1, { $0 }).pointee
+                    stop = true
+                }
+            })
+            else {
+                return nil
+            }
+
+            input.swiftSelf = unsafeBitCast(anObject, to: Int.self)
+
+            caller = imp_implementationForwardingToTracer(unsafeBitCast(self, to: UnsafeMutableRawPointer.self),
+                          unsafeBitCast(Patch.onEntry, to: IMP.self), unsafeBitCast(Patch.onExit, to: IMP.self))
+        }
+
+        public required init?(name: String, vtableSlot: UnsafeMutablePointer<SIMP>? = nil, objcMethod: Method? = nil, justReturn: nullImplementationType? = nil) {
+            fatalError("Call.init(name:vtableSlot:objcMethod:justReturn:) should not be used")
+        }
+
+        var intArgNumber = 0
+        var floatArgNumber = 0
+
+        public func add<T>(arg: T) {
+            if arg is Double || arg is Float {
+                if floatArgNumber + 1 > EntryStack.maxFloatArgs {
+                    fatalError("Too many float args")
+                }
+                cast(&input.floatArg1, as: Double.self).advanced(by: floatArgNumber)
+                    .withMemoryRebound(to: T.self, capacity: 1) { $0 }.pointee = arg
+                floatArgNumber += 1
+            }
+            else {
+                let registers = MemoryLayout<T>.size / MemoryLayout<intptr_t>.size
+                if intArgNumber + registers > EntryStack.maxIntArgs {
+                    fatalError("Too many int args")
+                }
+                cast(&input.intArg1, as: intptr_t.self).advanced(by: intArgNumber)
+                    .withMemoryRebound(to: T.self, capacity: 1) { $0 }.pointee = arg
+                intArgNumber += registers
+            }
+        }
+
+        public func invoke() {
+            unsafeBitCast(caller!, to: (@convention (c) () -> ()).self)()
+        }
+
+        public override func onEntry(stack: UnsafeMutablePointer<EntryStack>) {
+            input.framePointer = stack.pointee.framePointer
+            stack.pointee = input
+        }
+
+        public override func onExit(stack: UnsafeMutablePointer<ExitStack>) {
+            output = stack.pointee
+        }
+
+        public func getReturn<T>() -> T {
+            return output.genericReturn(patch: self).pointee
+        }
+    }
+
+    /**
+        Basic Swift method invocation api
+         - parameter self: instance to message
+         - parameter methodName: de-mangled method name to invoke
+         - parameter args: list of values to use as arguments
+     */
+    open class func invoke<T>(`self` anObject: AnyObject, methodName: String, args: Any...) -> T {
+        guard let call = Call(self: anObject, methodName: methodName) else {
+            fatalError("Unknown mehod \(methodName) on class \(anObject)")
+        }
+
+        for arg in args {
+            if let arg = arg as? Double {
+                call.add(arg: arg)
+            }
+            else if let arg = arg as? Float {
+                call.add(arg: arg)
+            }
+            else if let arg = arg as? String {
+                call.add(arg: arg)
+            }
+            else {
+                var arg = arg
+                call.add(arg: call.cast(&arg, as: Int.self).pointee)
+            }
+        }
+
+        call.invoke()
+
+        return call.getReturn()
     }
 
     /**
@@ -800,7 +970,7 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Code intended to prevent property accessors from being traced
+        Legacy code intended to prevent property accessors from being traced
         - parameter aClass: class of method
         - parameter sel: selector of method being checked
      */
