@@ -50,7 +50,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         class MyTracer: SwiftTrace.Patch {
 
-            override func onEntry(stack: UnsafeMutablePointer<EntryStack>) {
+            override func onEntry(stack: inout SwiftTrace.EntryStack) {
                 print( ">> "+name )
             }
         }

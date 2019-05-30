@@ -73,29 +73,29 @@ public class TestClass: P {
 
 class MyTracer: SwiftTrace.Patch {
 
-    override func onEntry(stack: UnsafeMutablePointer<SwiftTrace.EntryStack>) {
-        print(stack.pointee)
+    override func onEntry(stack: inout SwiftTrace.EntryStack) {
+        print(stack)
         if name == "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String" {
-            print("\(stack.pointee.intArg1) \(cast(&stack.pointee.intArg2, as: String.self).pointee) \(stack.pointee.floatArg1) \(cast(&stack.pointee.floatArg5, as: Float.self).pointee) \((getSelf() as TestClass).i)")
+            print("\(stack.intArg1) \(cast(&stack.intArg2, as: String.self).pointee) \(stack.floatArg1) \(cast(&stack.floatArg5, as: Float.self).pointee) \((getSelf() as TestClass).i)")
         }
     }
 
-    override func onExit(stack: UnsafeMutablePointer<SwiftTrace.ExitStack>) {
-        print(stack.pointee)
+    override func onExit(stack: inout SwiftTrace.ExitStack) {
+        print(stack)
         print("\(getSelf() as AnyObject)")
         if name == "SwiftTwaceApp.TestClass.ssssss(a: SwiftTwaceApp.TestStruct) -> SwiftTwaceApp.TestStruct" {
             print(structReturn().pointee as TestStruct)
         }
         if name == "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String" {
-            if stack.pointee.thrownError != 0 {
-                print(cast(&stack.pointee.thrownError, as: NSError.self).pointee)
+            if stack.thrownError != 0 {
+                print(cast(&stack.thrownError, as: NSError.self).pointee)
             }
-            stack.pointee.thrownError = 0
+            stack.thrownError = 0
 //            stack.invocation.patch.argument(&intReturn1, as: String.self) = "5-5-5"
-            stack.pointee.setReturn(value: "5-5-5")
+            stack.setReturn(value: "5-5-5")
         }
         if name == "SwiftTwaceApp.TestClass.y() -> __C.CGRect" {
-            cast(&stack.pointee.floatReturn1, as: CGRect.self).pointee = CGRect(x: 11.0, y: 22.0, width: 33.0, height: 44.0)
+            cast(&stack.floatReturn1, as: CGRect.self).pointee = CGRect(x: 11.0, y: 22.0, width: 33.0, height: 44.0)
         }
     }
 
@@ -106,6 +106,11 @@ class MyTracer: SwiftTrace.Patch {
         catch {
             print(error)
         }
+    }
+}
+
+class Benchmark  {
+    func x() {
     }
 }
 
@@ -130,11 +135,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print(SwiftTrace.swiftClassList(bundlePath: Bundle.main.executablePath!))
         print(SwiftTrace.methodNames(ofClass: TestClass.self))
 
-        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.x() -> ()", ofClass: TestClass.self,
-           onEntry: { (patch: SwiftTrace.Patch, stack: UnsafeMutablePointer<SwiftTrace.EntryStack>) in
+        print(SwiftTrace.addAspect(aClass: TestClass.self, methodName: "SwiftTwaceApp.TestClass.x() -> ()",
+           onEntry: { (patch: SwiftTrace.Patch, stack: inout SwiftTrace.EntryStack) in
 //            patch.argument(&stack.pointee.intArg2, as: String.self).pointee = "Grief"
             print("ONE") },
-           onExit: { (patch: SwiftTrace.Patch, stack: UnsafeMutablePointer<SwiftTrace.ExitStack>) in
+           onExit: { (patch: SwiftTrace.Patch, stack: inout SwiftTrace.ExitStack) in
 //            stack.pointee.setReturn(value: "Phew")
             print("TWO") }))
         print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.y() -> Swift.Float", onExit: { (_, _) in print("TWO!") }))
@@ -147,7 +152,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         a.x()
 
         print( a.y() )
-        print(SwiftTrace.removeAspect(fromClass: TestClass.self, methodName: "SwiftTwaceApp.TestClass.y() -> Swift.Float"))
+        print(SwiftTrace.removeAspect(aClass: TestClass.self, methodName: "SwiftTwaceApp.TestClass.y() -> Swift.Float"))
         print( a.y() )
 
         a.x()
@@ -158,35 +163,55 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print(">>>> AH \(a.str())")
         print(">>>> AH \(a.str())")
 
-
         let b = TestClass()
 
+        for _ in 0..<10 {
+            let call = SwiftTrace.Call(self: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String")!
+
+            call.add(arg: 777)
+            call.add(arg: 101.0)
+            call.add(arg: Float(102.0))
+            call.add(arg: "2-2")
+            call.add(arg: 103.0)
+            call.add(arg: Float(104.0))
+            call.add(arg: 105.0)
+            call.add(arg: 106.0)
+            call.add(arg: Float(107.0))
+            call.add(arg: 108.0)
+            call.add(arg: 888)
+            call.add(arg: 999)
+            call.add(arg: b)
+
+            call.invoke()
+
+            print("!!!!!! "+call.getReturn())
+        }
+
         print("!!!!!!!!!!!! "+SwiftTrace.invoke(self: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String", args: 777, 101.0, Float(102.0), "2-2", 103.0, Float(104.0), 105.0, 106.0, Float(107.0), 108.0, 888, 999, b))
         print("!!!!!!!!!!!! "+SwiftTrace.invoke(self: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String", args: 777, 101.0, Float(102.0), "2-2", 103.0, Float(104.0), 105.0, 106.0, Float(107.0), 108.0, 888, 999, b))
 
-//        for _ in 0..<10 {
-//            let call = SwiftTrace.Call(self: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String")!
-//
-//            call.add(arg: 777)
-//            call.add(arg: 101.0)
-//            call.add(arg: Float(102.0))
-//            call.add(arg: "2-2")
-//            call.add(arg: 103.0)
-//            call.add(arg: Float(104.0))
-//            call.add(arg: 105.0)
-//            call.add(arg: 106.0)
-//            call.add(arg: Float(107.0))
-//            call.add(arg: 108.0)
-//            call.add(arg: 888)
-//            call.add(arg: 999)
-//            call.add(arg: b)
-//
-//            call.invoke()
-//
-//            print("!!!!!! "+call.getReturn())
-//        }
+        SwiftTrace.removeAllPatches()
 
-//        SwiftTrace.removeAllPatches()
+        let x = Benchmark()
+
+        print(SwiftTrace.methodNames(ofClass: Benchmark.self))
+
+        let start1 = Date.timeIntervalSinceReferenceDate
+        for _ in 0..<10_000 {
+            x.x(); x.x(); x.x(); x.x(); x.x()
+            x.x(); x.x(); x.x(); x.x(); x.x()
+        }
+        print(Date.timeIntervalSinceReferenceDate - start1)
+
+        print(SwiftTrace.addAspect(aClass: Benchmark.self, methodName: "SwiftTwaceApp.Benchmark.x() -> ()", onEntry: { (_, _) in}))
+
+        let start2 = Date.timeIntervalSinceReferenceDate
+        for _ in 0..<10_000 {
+            x.x(); x.x(); x.x(); x.x(); x.x()
+            x.x(); x.x(); x.x(); x.x(); x.x()
+        }
+        print(Date.timeIntervalSinceReferenceDate - start2)
+
         return true
     }
 

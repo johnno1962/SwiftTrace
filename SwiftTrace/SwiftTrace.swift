@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#108 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#110 $
 //
 
 import Foundation
@@ -118,7 +118,7 @@ open class SwiftTrace: NSObject {
                 let invocation = patch.invocationFactory.init(stackDepth: local.stack.count, patch: patch,
                                               returnAddress: returnAddress, stackPointer: stackPointer )
                 local.stack.append(invocation)
-                patch.onEntry(stack: invocation.entryStack)
+                patch.onEntry(stack: &invocation.entryStack.pointee)
                 return patch.nullImplmentation != nil ?
                     unsafeBitCast(patch.nullImplmentation, to: IMP.self) : patch.implementation
         }
@@ -126,7 +126,7 @@ open class SwiftTrace: NSObject {
         /** Called from assembly code when Patched method returns */
         static var onExit: @convention(c) () -> UnsafeRawPointer = {
             let invocation = Invocation.current!
-            invocation.patch.onExit(stack: invocation.exitStack)
+            invocation.patch.onExit(stack: &invocation.exitStack.pointee)
             ThreadStack.threadLocal().stack.removeLast()
             return invocation.returnAddress
         }
@@ -146,13 +146,13 @@ open class SwiftTrace: NSObject {
         /**
          method called before trampoline enters the target "Patch"
          */
-        open func onEntry(stack: UnsafeMutablePointer<EntryStack>) {
+        open func onEntry(stack: inout EntryStack) {
         }
 
         /**
          method called after trampoline exists the target "Patch"
          */
-        open func onExit(stack: UnsafeMutablePointer<ExitStack>) {
+        open func onExit(stack: inout ExitStack) {
             if let invocation = Invocation.current {
                 let elapsed = Date.timeIntervalSinceReferenceDate - invocation.timeEntered
                 print("\(String(repeating: "  ", count: invocation.stackDepth))\(name) \(String(format: "%.1fms", elapsed * 1000.0))")
@@ -726,8 +726,8 @@ open class SwiftTrace: NSObject {
         return names
     }
 
-    public typealias EntryAspect = (_ patch: Patch, UnsafeMutablePointer<EntryStack>) -> Void
-    public typealias ExitAspect = (_ patch: Patch, UnsafeMutablePointer<ExitStack>) -> Void
+    public typealias EntryAspect = (_ patch: Patch, _ stack: inout EntryStack) -> Void
+    public typealias ExitAspect = (_ patch: Patch, _ stack: inout ExitStack) -> Void
 
     /**
         Add a closure aspect to be called before or after a "Patch" is called
@@ -743,7 +743,7 @@ open class SwiftTrace: NSObject {
                               justReturn: nullImplementationType? = nil) -> Bool {
         return forAllClasses {
             (aClass, stop) in
-            stop = addAspect(methodName: methodName, ofClass: aClass, 
+            stop = addAspect(aClass: aClass, methodName: methodName,
                              onEntry: onEntry, onExit: onExit, justReturn: justReturn)
         }
     }
@@ -756,7 +756,7 @@ open class SwiftTrace: NSObject {
         - parameter onExit: - closure to be called after "Patch" returns
      */
     @discardableResult
-    open class func addAspect(methodName: String, ofClass aClass: AnyClass,
+    open class func addAspect(aClass: AnyClass, methodName: String,
                               patchClass: Aspect.Type = Aspect.self,
                               onEntry: EntryAspect? = nil,
                               onExit: ExitAspect? = nil,
@@ -764,7 +764,7 @@ open class SwiftTrace: NSObject {
         return iterateMethods(ofClass: aClass) {
             (name, vtableSlot, stop) in
             if name == methodName, let method = patchClass.init(name: name,
-                vtableSlot: vtableSlot, onEntry: onEntry,
+                        vtableSlot: vtableSlot, onEntry: onEntry,
                         onExit: onExit, justReturn: justReturn) {
                 vtableSlot.pointee = method.forwardingImplementation()
                 stop = true
@@ -780,7 +780,7 @@ open class SwiftTrace: NSObject {
     open class func removeAspect(methodName: String) -> Bool {
         return forAllClasses {
             (aClass, stop) in
-            stop = removeAspect(fromClass: aClass, methodName: methodName)
+            stop = removeAspect(aClass: aClass, methodName: methodName)
         }
     }
 
@@ -790,7 +790,7 @@ open class SwiftTrace: NSObject {
         - parameter methodName: - unmangled name of Method for aspect
      */
     @discardableResult
-    open class func removeAspect(fromClass aClass: AnyClass, methodName: String) -> Bool {
+    open class func removeAspect(aClass: AnyClass, methodName: String) -> Bool {
         return iterateMethods(ofClass: aClass) {
             (name, vtableSlot, stop) in
             if name == methodName,
@@ -821,12 +821,12 @@ open class SwiftTrace: NSObject {
             fatalError("Aspect.init(name:vtableSlot:objcMethod:justReturn:) should not be used")
         }
 
-        open override func onEntry(stack: UnsafeMutablePointer<EntryStack>) {
-            entryAspect?(self, stack)
+        open override func onEntry(stack: inout EntryStack) {
+            entryAspect?(self, &stack)
         }
 
-        open override func onExit(stack: UnsafeMutablePointer<ExitStack>) {
-            exitAspect?(self, stack)
+        open override func onExit(stack: inout ExitStack) {
+            exitAspect?(self, &stack)
         }
     }
 
@@ -895,13 +895,13 @@ open class SwiftTrace: NSObject {
             unsafeBitCast(caller!, to: (@convention (c) () -> ()).self)()
         }
 
-        public override func onEntry(stack: UnsafeMutablePointer<EntryStack>) {
-            input.framePointer = stack.pointee.framePointer
-            stack.pointee = input
+        public override func onEntry(stack: inout EntryStack) {
+            input.framePointer = stack.framePointer
+            stack = input
         }
 
-        public override func onExit(stack: UnsafeMutablePointer<ExitStack>) {
-            output = stack.pointee
+        public override func onExit(stack: inout ExitStack) {
+            output = stack
         }
 
         public func getReturn<T>() -> T {

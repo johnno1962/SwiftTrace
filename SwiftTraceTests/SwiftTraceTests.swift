@@ -58,7 +58,7 @@ class SwiftTwaceTests: XCTestCase {
 
         class TestPatch: SwiftTrace.Patch {
 
-            override func onEntry(stack: UnsafeMutablePointer<EntryStack>) {
+            override func onEntry(stack: inout SwiftTrace.EntryStack) {
                 args = "\(arguments.pointee.intArg1) \((getSelf() as TestClass).i) \(arguments.pointee.floatArg1)"
             }
         }

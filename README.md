@@ -5,6 +5,11 @@ Think [Xtrace](https://github.com/johnno1962/Xtrace) but for Swift and Objective
 add "aspects" to member functions of non-final Swift classes to have a closure called before or after
 a function implementation executes which in turn can modify incoming arguments or the return value!
 
+Note: none of these features will work on a class or method that is final or internal in 
+a module compiled with whole module optimisation as the dispatch of the method
+will be "direct" i.e. linked to a symbol at the call site rather than going through the
+class' vtable.
+
 SwiftTrace is most easily used as a CocoaPod and can be added to your project by temporarily adding the
 following line to it's Podfile:
 
@@ -84,7 +89,7 @@ This will print "ONE" when method "x" of TextClass is called and "TWO when it ha
 two arguments are the patch which is an object representing the "Swizzle" and the entry or 
 exit stack. The full signature for the entry closure is:
 
-    onEntry: { (patch: SwiftTrace.Patch, stack: UnsafeMutablePointer<SwiftTrace.EntryStack>) in print("ONE") }
+       onEntry: { (patch: SwiftTrace.Patch, stack: inout SwiftTrace.EntryStack) in
 
 If you understand how registers are allocated to arguments it is possible to poke into the
 stack to modify the incoming arguments and, for the exit aspect closure you can replace
@@ -92,24 +97,24 @@ the return value and on a good day prevent (and log) an error being thrown.
 
 Replacing an input argument in the closure is relatively simple:
 
-    stack.pointee.intArg1 = 99
-    stack.pointee.floatArg3 = 77.3
+    stack.intArg1 = 99
+    stack.floatArg3 = 77.3
     
 Other types a little more involved. They must be cast and String takes up two integer registers.
 
-    patch.cast(&stack.pointee.intArg2, as: String.self).pointee = "Grief"
-    patch.cast(&stack.pointee.intArg4, as: TestClass.self).pointee = TestClass()
+    patch.cast(&stack.intArg2, as: String.self).pointee = "Grief"
+    patch.cast(&stack.intArg4, as: TestClass.self).pointee = TestClass()
     
 In an exit aspect closure, setting the return type is easier as it is generic:
 
-    stack.pointee.setReturn(value: "Phew")
+    stack.setReturn(value: "Phew")
 
 When a function throws you can access NSError objects
 
-    print(cast(&stack.pointee.thrownError, as: NSError.self).pointee)
+    print(cast(&stack.thrownError, as: NSError.self).pointee)
     
-It is possible to set `stack.pointee.thrownError` to zero to cancel the throw but you will need to set
-the return value. This does not work for String return values in the simulator but does work on a device.
+It is possible to set `stack.thrownError` to zero to cancel the throw but you will need to set
+the return value.
 
 #### Invocation interface
 
