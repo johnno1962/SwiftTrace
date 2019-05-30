@@ -5,6 +5,8 @@ Think [Xtrace](https://github.com/johnno1962/Xtrace) but for Swift and Objective
 add "aspects" to member functions of non-final Swift classes to have a closure called before or after
 a function implementation executes which in turn can modify incoming arguments or the return value!
 
+![SwiftTrace Example](SwiftTrace.gif)
+
 Note: none of these features will work on a class or method that is final or internal in 
 a module compiled with whole module optimisation as the dispatch of the method
 will be "direct" i.e. linked to a symbol at the call site rather than going through the
@@ -17,48 +19,32 @@ following line to it's Podfile:
 
 This project has been updated to Swift 5 from Xcode 10.2.:
 
-    pod 'SwiftTrace', '5.3.0'
+    pod 'SwiftTrace', '5.4.0'
 
 Once the project has rebuilt, import SwiftTrace into the application's AppDelegate and add something like
 the following to the beginning of it's didFinishLaunchingWithOptions method:
 
-    SwiftTrace.traceBundleContaining( theClass: type(of: self) )
+    SwiftTrace.traceBundle(containing: type(of: self))
 
 This traces all classes defined in the main application bundle.
-To trace, for example, all classes in the RxSwift framework add the following
+To trace, for example, all classes in the RxSwift Pod add the following
 
-    SwiftTrace.traceBundleContaining( theClass: RxSwift.DisposeBase.self )
+    SwiftTrace.traceBundle(containing: RxSwift.DisposeBase.self)
 
-This gives output in the Xcode debug console something like:
-
-            Unwrap.LearnCoordinator.activeStudyReview.setter : Swift.Optional<Unwrap.StudyReview> 0.0ms
-                  Unwrap.TappableTextView.addCustomizations() -> () 0.6ms
-                -[TappableTextView initWithFrame:textContainer:] -> @56@0:8{CGRect={CGPoint=dd}{CGSize=dd}}16@48 6.8ms
-              -[StudyTextView initWithFrame:textContainer:] -> @56@0:8{CGRect={CGPoint=dd}{CGSize=dd}}16@48 6.8ms
-            -[StudyViewController initWithNibName:bundle:] -> @32@0:8@16@24 7.1ms
-            Unwrap.StudyViewController.chapter.setter : Swift.String 0.0ms
-              Unwrap.StudyViewController.configureNavigation() -> () 0.2ms
-            Unwrap.StudyViewController.coordinator.setter : Swift.Optional<Unwrap.LearnCoordinator> 0.3ms
-          Unwrap.LearnCoordinator.studyViewController(for: Swift.String) -> Unwrap.StudyViewController 15.5ms
-              -[CoordinatedNavigationController initWithNibName:bundle:] -> @32@0:8@16@24 0.1ms
-            -[CoordinatedNavigationController initWithRootViewController:] -> @24@0:8@16 7.6ms
-          Unwrap.LearnCoordinator.startStudying(using: __C.UIViewController) -> () 20.9ms
-        Unwrap.LearnCoordinator.startStudying(title: Swift.String) -> () 36.5ms
-      Unwrap.LearnViewController.startStudying(title: Swift.String) -> () 36.6ms
-    -[LearnDataSource tableView:didSelectRowAtIndexPath:] -> v32@0:8@16@24 36.7ms
+This gives output in the Xcode debug console such as that above.
 
 To trace a system framework such as UIKit you can trace classes using a pattern:
 
-    SwiftTrace.traceClassesMatching( pattern:"^UI" )
+    SwiftTrace.traceClassesMatching(pattern:"^UI")
 
 Individual classes can be traced using the underlying api:
 
-    SwiftTrace.trace( aClass: MyClass.self )
+    SwiftTrace.trace(aClass: MyClass.self)
 
-Output can be filtered using inclusion and exclusion regexps. 
+Output can be filtered using method name inclusion and exclusion regexps. 
 
-    SwiftTrace.include( pattern: "TestClass" )
-    SwiftTrace.exclude( pattern: "\\.getter" )
+    SwiftTrace.include(pattern: "TestClass")
+    SwiftTrace.exclude(pattern: "\\.getter")
 
 These methods must be called before you start the trace as they are applied during the "Swizzle" phase.
 There is a default set of exclusions setup as a result of testing, tracing UIKit.
@@ -80,8 +66,8 @@ If you want to further process output you can define a custom tracing class:
 
 You can add an aspect to a particular method using the method's de-mangled name:
 
-    print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.x() -> ()",
-    	ofClass: TestClass.self,
+    print(SwiftTrace.addAspect(aClass: TestClass.self,
+      methodName: "SwiftTwaceApp.TestClass.x() -> ()",
     	onEntry: { (_, _) in print("ONE") },
     	onExit: { (_, _) in print("TWO") }))
 
@@ -148,6 +134,8 @@ Please file an issue if you encounter a project that doesn't work while tracing.
 be 100% reliable as it uses assembly language trampolines rather than Swizzling like Xtrace.
 Otherwise, the author can be contacted on Twitter [@Injection4Xcode](https://twitter.com/@Injection4Xcode). 
 Thanks to Oliver Letterer for [imp_implementationForwardingToSelector](https://github.com/OliverLetterer/imp_implementationForwardingToSelector)
-used to set up the trampolines.
+used to set up the trampolines. Thanks also  to [@twostraws](https://twitter.com/twostraws)'
+[Unwrap](https://github.com/twostraws/Unwrap) and [@artsy](https://twitter.com/ArtsyOpenSource)'s
+[eidolon](https://github.com/artsy/eidolon) used extensively during testing.
 
 Enjoy!

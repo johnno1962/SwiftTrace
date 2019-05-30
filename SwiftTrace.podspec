@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
     s.name        = "SwiftTrace"
-    s.version     = "5.3.0"
+    s.version     = "5.4.0"
     s.summary     = "Log Swift or Objective-C method invocations"
     s.homepage    = "https://github.com/johnno1962/SwiftTrace"
     s.social_media_url = "https://twitter.com/Injection4Xcode"
