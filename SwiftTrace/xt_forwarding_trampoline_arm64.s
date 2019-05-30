@@ -1,5 +1,5 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_arm64.s#13 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_arm64.s#14 $
 
 #if defined(__arm64__)
 .text
@@ -84,8 +84,6 @@ returning:
     mov lr, x17
     ret          // return to caller
     nop
-    nop
-    nop
 
 _xt_forwarding_trampolines_start:
 # Save lr, which contains the address to where we need to branch back after function returns, then jump to the actual trampoline implementation
@@ -93,6 +91,10 @@ mov x17, lr
 bl _xt_forwarding_trampoline;
 
 _xt_forwarding_trampolines_next:
+# Next trampoline entry point
+mov x17, lr
+bl _xt_forwarding_trampoline;
+
 # Next trampoline entry point
 mov x17, lr
 bl _xt_forwarding_trampoline;

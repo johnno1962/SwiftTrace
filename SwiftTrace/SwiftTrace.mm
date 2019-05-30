@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#31 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#33 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -63,11 +63,11 @@ static const int32_t SPLForwardingTrampolineInstructionCount = 12;
 #undef PAGE_SIZE
 #define PAGE_SIZE (1<<14)
 #elif defined(__arm64__)
-static const int32_t SPLForwardingTrampolineInstructionCount = 64;
+static const int32_t SPLForwardingTrampolineInstructionCount = 62;
 #undef PAGE_SIZE
 #define PAGE_SIZE (1<<14)
 #elif defined(__LP64__)
-static const int32_t SPLForwardingTrampolineInstructionCount = 86;
+static const int32_t SPLForwardingTrampolineInstructionCount = 84;
 #else
 #error SwiftTrace is not supported on this platform
 #endif

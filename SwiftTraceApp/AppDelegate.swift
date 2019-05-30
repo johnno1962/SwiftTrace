@@ -32,7 +32,7 @@ public class RET2: RET {
 
 public protocol P {
     func x()
-    func y() -> Float
+    func y() -> CGRect
     @discardableResult
     func zzz( _ d: Int, f: Double, g: Float, h: String, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int, ff: Int, o: TestClass ) throws -> String
     func ssssss( a: TestStruct ) -> TestStruct
@@ -47,15 +47,15 @@ public class TestClass: P {
         print( "HERE \(i)" )
     }
 
-    public func y() -> Float {
+    public func y() -> CGRect {
        print( "HERE2" )
-        return -9.0
+        return CGRect(x: 1.0, y: 2.0, width: 3.0, height: 4.0)
     }
 
     @discardableResult
     public func zzz( _ d: Int, f: Double, g: Float, h: String, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int, ff: Int, o: TestClass ) throws -> String {
         print( "HERE \(i) \(d) \(e) \(f) \(g) \(h) \(f1) \(g1) \(h1) \(f2) \(g2) \(h2)" )
-        //throw NSError(domain: "HOLLOO", code: 123, userInfo: ["john": "error"])
+        throw NSError(domain: "HOLLOO", code: 123, userInfo: ["john": "error"])
         return "4-4-4"
     }
 
@@ -93,6 +93,9 @@ class MyTracer: SwiftTrace.Patch {
             stack.pointee.thrownError = 0
 //            stack.invocation.patch.argument(&intReturn1, as: String.self) = "5-5-5"
             stack.pointee.setReturn(value: "5-5-5")
+        }
+        if name == "SwiftTwaceApp.TestClass.y() -> __C.CGRect" {
+            cast(&stack.pointee.floatReturn1, as: CGRect.self).pointee = CGRect(x: 11.0, y: 22.0, width: 33.0, height: 44.0)
         }
     }
 
@@ -158,27 +161,30 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
         let b = TestClass()
 
-//        let call = SwiftTrace.Call(self: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String")!
-//
-//        call.add(arg: 777)
-//        call.add(arg: 101.0)
-//        call.add(arg: Float(102.0))
-//        call.add(arg: "2-2")
-//        call.add(arg: 103.0)
-//        call.add(arg: Float(104.0))
-//        call.add(arg: 105.0)
-//        call.add(arg: 106.0)
-//        call.add(arg: Float(107.0))
-//        call.add(arg: 108.0)
-//        call.add(arg: 888)
-//        call.add(arg: 999)
-//        call.add(arg: b)
-//
-//        call.invoke()
-//
-//        print("!!!!!! "+call.getReturn())
-
         print("!!!!!!!!!!!! "+SwiftTrace.invoke(self: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String", args: 777, 101.0, Float(102.0), "2-2", 103.0, Float(104.0), 105.0, 106.0, Float(107.0), 108.0, 888, 999, b))
+        print("!!!!!!!!!!!! "+SwiftTrace.invoke(self: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String", args: 777, 101.0, Float(102.0), "2-2", 103.0, Float(104.0), 105.0, 106.0, Float(107.0), 108.0, 888, 999, b))
+
+//        for _ in 0..<10 {
+//            let call = SwiftTrace.Call(self: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String")!
+//
+//            call.add(arg: 777)
+//            call.add(arg: 101.0)
+//            call.add(arg: Float(102.0))
+//            call.add(arg: "2-2")
+//            call.add(arg: 103.0)
+//            call.add(arg: Float(104.0))
+//            call.add(arg: 105.0)
+//            call.add(arg: 106.0)
+//            call.add(arg: Float(107.0))
+//            call.add(arg: 108.0)
+//            call.add(arg: 888)
+//            call.add(arg: 999)
+//            call.add(arg: b)
+//
+//            call.invoke()
+//
+//            print("!!!!!! "+call.getReturn())
+//        }
 
 //        SwiftTrace.removeAllPatches()
         return true

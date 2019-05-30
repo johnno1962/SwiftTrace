@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#105 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#108 $
 //
 
 import Foundation
@@ -329,6 +329,7 @@ open class SwiftTrace: NSObject {
     public struct EntryStack {
         static let maxFloatArgs = 8
         static let maxIntArgs = 8
+
         public var swiftSelf: intptr_t = 0 // x20
         public var structReturn: intptr_t = 0 // x8
         public var floatArg1: Double = 0.0
@@ -349,40 +350,44 @@ open class SwiftTrace: NSObject {
         public var intArg8: intptr_t = 0
         public var framePointer: intptr_t = 0
         public var linkRegister: intptr_t = 0
+
         public var invocation: Patch.Invocation! {
             return Patch.Invocation.current
         }
     }
 
     /**
-        Stack layout on entry from xt_forwarding_trampoline_arm64.s
+        Stack layout on exit from xt_forwarding_trampoline_arm64.s
      */
     public struct ExitStack {
+        static let returnRegs = 4
+
         public var swiftSelf: intptr_t = 0 // x20
         public var structReturn: intptr_t = 0 // x8
         public var floatReturn1: Double = 0.0
         public var floatReturn2: Double = 0.0
-        public var d2: Double = 0.0
-        public var d3: Double = 0.0
+        public var floatReturn3: Double = 0.0
+        public var floatReturn4: Double = 0.0
         public var d4: Double = 0.0
         public var d5: Double = 0.0
         public var d6: Double = 0.0
         public var d7: Double = 0.0
         public var intReturn1: intptr_t = 0
         public var intReturn2: intptr_t = 0
-        public var x2: intptr_t = 0
-        public var x3: intptr_t = 0
+        public var intReturn3: intptr_t = 0
+        public var intReturn4: intptr_t = 0
         public var x4: intptr_t = 0
         public var x5: intptr_t = 0
         public var x6: intptr_t = 0
         public var x7: intptr_t = 0
         public var thrownError: intptr_t = 0
         public var framePointer: intptr_t = 0
+
         public var invocation: Patch.Invocation! {
             return Patch.Invocation.current
         }
         mutating func genericReturn<T>(patch: Patch? = nil) -> UnsafeMutablePointer<T> {
-            if MemoryLayout<T>.size > MemoryLayout<intptr_t>.size * 2 {
+            if MemoryLayout<T>.size > MemoryLayout<intptr_t>.size * ExitStack.returnRegs {
                 structReturn = unsafeBitCast(invocation.structReturn, to: Int.self)
                 return invocation.structReturn!.assumingMemoryBound(to: T.self)
             }
@@ -413,6 +418,7 @@ open class SwiftTrace: NSObject {
     public struct EntryStack {
         static let maxFloatArgs = 8
         static let maxIntArgs = 6
+
         public var floatArg1: Double = 0.0
         public var floatArg2: Double = 0.0
         public var floatArg3: Double = 0.0
@@ -435,6 +441,7 @@ open class SwiftTrace: NSObject {
         public var r15: intptr_t = 0
         public var structReturn: intptr_t = 0 // rax
         public var rbx: intptr_t = 0
+
         public var invocation: Patch.Invocation! {
             return Patch.Invocation.current
         }
@@ -444,12 +451,14 @@ open class SwiftTrace: NSObject {
         Stack layout on exit from xt_forwarding_trampoline_x64.s
      */
     public struct ExitStack {
+        static let returnRegs = 4
+
         public var stackShift1: intptr_t = 0
         public var stackShift2: intptr_t = 0
         public var floatReturn1: Double = 0.0 // xmm0
         public var floatReturn2: Double = 0.0 // xmm1
-        public var xmm2: Double = 0.0
-        public var xmm3: Double = 0.0
+        public var floatReturn3: Double = 0.0 // xmm2
+        public var floatReturn4: Double = 0.0 // xmm3
         public var xmm4: Double = 0.0
         public var xmm5: Double = 0.0
         public var xmm6: Double = 0.0
@@ -457,25 +466,26 @@ open class SwiftTrace: NSObject {
         public var framePointer: intptr_t = 0
         public var rdi: intptr_t = 0
         public var rsi: intptr_t = 0
-        public var rcx: intptr_t = 0
-        public var rdx: intptr_t = 0
-        public var r8: intptr_t = 0
         public var r9: intptr_t = 0
         public var r10: intptr_t = 0
         public var thrownError: intptr_t = 0 // r12
         public var swiftSelf: intptr_t = 0  // r13
         public var r14: intptr_t = 0
-        public var r15: intptr_t = 0
+        public var r15: intptr_t =  0
+        public var rbx: intptr_t = 0
+
         public var structReturn: UnsafeMutableRawPointer? {
             return UnsafeMutableRawPointer(bitPattern: intReturn1)!
         }
         public var intReturn1: intptr_t = 0 // rax (also struct Return)
-        public var intReturn2: intptr_t = 0 // rbx
+        public var intReturn2: intptr_t = 0 // rdx
+        public var intReturn3: intptr_t = 0 // rcx
+        public var intReturn4: intptr_t = 0 // r8
         public var invocation: Patch.Invocation! {
             return Patch.Invocation.current
         }
         mutating func genericReturn<T>(patch: Patch? = nil) -> UnsafeMutablePointer<T> {
-            if MemoryLayout<T>.size > MemoryLayout<intptr_t>.size * 2 {
+            if MemoryLayout<T>.size > MemoryLayout<intptr_t>.size * ExitStack.returnRegs {
                 intReturn1 = unsafeBitCast(invocation.structReturn, to: Int.self)
                 return invocation.structReturn!.assumingMemoryBound(to: T.self)
             }

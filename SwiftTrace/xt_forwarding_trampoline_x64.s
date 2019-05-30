@@ -1,5 +1,5 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_x64.s#22 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_x64.s#25 $
 
 //  https://en.wikipedia.org/wiki/X86_calling_conventions
 
@@ -77,21 +77,21 @@ _xt_forwarding_trampoline:
     popq    %r15
     popq    %rax
     popq    %rbx
-    addq    $8, %rsp
+    addq    $8, %rsp // remove trampoline return address
     jmpq    *%r11   // forward onto original implementation
 
 returning:
-    pushq   %rbx    // push all registers used as paremters
+    pushq   %r8
+    pushq   %rcx
+    pushq   %rdx
     pushq   %rax    // pointer for return of struct
+    pushq   %rbx    // push all registers used as paremters
     pushq   %r15
     pushq   %r14
     pushq   %r13    // Swift "call context" register for self
     pushq   %r12
     pushq   %r10
     pushq   %r9
-    pushq   %r8
-    pushq   %rcx
-    pushq   %rdx
     pushq   %rsi
     pushq   %rdi
     pushq   %rbp
@@ -120,28 +120,20 @@ returning:
     popq    %rbp
     popq    %rdi
     popq    %rsi
-    popq    %rdx
-    popq    %rcx
-    popq    %r8
     popq    %r9
     popq    %r10
     popq    %r12
     popq    %r13
     popq    %r14
     popq    %r15
-    popq    %rax
     popq    %rbx
+    popq    %rax
+    popq    %rdx
+    popq    %rcx
+    popq    %r8
     pushq   %r11
     ret     // return to original caller
 
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
     nop
     nop
 
@@ -153,6 +145,10 @@ nop
 nop
 nop
 _xt_forwarding_trampolines_next:
+callq _xt_forwarding_trampoline
+nop
+nop
+nop
 callq _xt_forwarding_trampoline
 nop
 nop
