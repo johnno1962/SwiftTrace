@@ -88,8 +88,8 @@ Replacing an input argument in the closure is relatively simple:
     
 Other types a little more involved. They must be cast and String takes up two integer registers.
 
-    patch.cast(&stack.intArg2, as: String.self).pointee = "Grief"
-    patch.cast(&stack.intArg4, as: TestClass.self).pointee = TestClass()
+    patch.cast(&stack.intArg2).pointee = "Grief"
+    patch.cast(&stack.intArg4).pointee = TestClass()
     
 In an exit aspect closure, setting the return type is easier as it is generic:
 
@@ -97,7 +97,7 @@ In an exit aspect closure, setting the return type is easier as it is generic:
 
 When a function throws you can access NSError objects
 
-    print(cast(&stack.thrownError, as: NSError.self).pointee)
+    print(cast(&stack.thrownError, to: NSError.self).pointee)
     
 It is possible to set `stack.thrownError` to zero to cancel the throw but you will need to set
 the return value.
@@ -106,7 +106,7 @@ the return value.
 
 Now we have a trampoline infrastructure, it is possible to implement an invocation api for Swift:
 
-    print("Result: "+SwiftTrace.invoke(self: b,
+    print("Result: "+SwiftTrace.invoke(target: b,
         methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String",
         args: 777, 101.0, Float(102.0), "2-2", 103.0, Float(104.0), 105.0, 106.0, Float(107.0), 108.0, 888, 999, TestClass()))
 
@@ -116,7 +116,9 @@ using this function:
     print(SwiftTrace.methodNames(ofClass: TestClass.self))
 
 There are limitations to this abbreviated interface in that it only supports Double, Float,
-String, Int and Object arguments.
+String, Int, Object and CGRect arguments. For other struct types that do not conatain
+floating point values you can conform them to SwiftTraceArg to be able to pass them
+on the argument list. Return struct values must fit into 32 bytes and not contain floats.
 
 #### How it works
                       

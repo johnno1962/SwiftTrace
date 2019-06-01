@@ -1,5 +1,5 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_x64.s#25 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_x64.s#26 $
 
 //  https://en.wikipedia.org/wiki/X86_calling_conventions
 
@@ -20,19 +20,19 @@ onExit:
 
 _xt_forwarding_trampoline_page:
 _xt_forwarding_trampoline:
-    pushq   %rbx    // push all registers used as paremters
+    pushq   %rbx
     pushq   %rax    // pointer for return of struct
-    pushq   %r15
-    pushq   %r14
-    pushq   %r13    // Swift "call context" register for self
-    pushq   %r12
-    pushq   %r10
-    pushq   %r9
+    pushq   %r9     // push all registers used as paremters
     pushq   %r8
     pushq   %rcx
     pushq   %rdx
     pushq   %rsi
     pushq   %rdi
+    pushq   %r15
+    pushq   %r14
+    pushq   %r13    // Swift "call context" register for self
+    pushq   %r12
+    pushq   %r10
     pushq   %rbp
     movq    %rsp, %rbp
     subq    $64, %rsp   // make space for floating point regeisters and save
@@ -64,36 +64,36 @@ _xt_forwarding_trampoline:
     movsd   -8(%rbp), %xmm7
     addq    $64, %rsp
     popq    %rbp
+    popq    %r10
+    popq    %r12
+    popq    %r13
+    popq    %r14
+    popq    %r15
     popq    %rdi
     popq    %rsi
     popq    %rdx
     popq    %rcx
     popq    %r8
     popq    %r9
-    popq    %r10
-    popq    %r12
-    popq    %r13
-    popq    %r14
-    popq    %r15
     popq    %rax
     popq    %rbx
     addq    $8, %rsp // remove trampoline return address
     jmpq    *%r11   // forward onto original implementation
 
 returning:
-    pushq   %r8
+    pushq   %r8     // push regs used for int returns
     pushq   %rcx
     pushq   %rdx
     pushq   %rax    // pointer for return of struct
-    pushq   %rbx    // push all registers used as paremters
+    pushq   %rbx
+    pushq   %r9
+    pushq   %rsi
+    pushq   %rdi
     pushq   %r15
     pushq   %r14
     pushq   %r13    // Swift "call context" register for self
     pushq   %r12
     pushq   %r10
-    pushq   %r9
-    pushq   %rsi
-    pushq   %rdi
     pushq   %rbp
     movq    %rsp, %rbp
     subq    $64, %rsp   // make space for floating point regeisters and save
@@ -118,14 +118,14 @@ returning:
     movsd   -8(%rbp), %xmm7
     addq    $64, %rsp
     popq    %rbp
-    popq    %rdi
-    popq    %rsi
-    popq    %r9
     popq    %r10
     popq    %r12
     popq    %r13
     popq    %r14
     popq    %r15
+    popq    %rdi
+    popq    %rsi
+    popq    %r9
     popq    %rbx
     popq    %rax
     popq    %rdx

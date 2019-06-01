@@ -6,10 +6,18 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#110 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#131 $
 //
 
 import Foundation
+
+#if os(iOS)
+import UIKit
+typealias OSRect = CGRect
+#elseif os(macOS)
+import AppKit
+typealias OSRect = NSRect
+#endif
 
 /**
     NSObject convenience methods
@@ -154,7 +162,7 @@ open class SwiftTrace: NSObject {
          */
         open func onExit(stack: inout ExitStack) {
             if let invocation = Invocation.current {
-                let elapsed = Date.timeIntervalSinceReferenceDate - invocation.timeEntered
+                let elapsed = Invocation.usecTime() - invocation.timeEntered
                 print("\(String(repeating: "  ", count: invocation.stackDepth))\(name) \(String(format: "%.1fms", elapsed * 1000.0))")
             }
         }
@@ -208,7 +216,7 @@ open class SwiftTrace: NSObject {
         }
 
         /** convert arguments (return results) as a specifi type */
-        open func cast<IN,OUT>(_ arg: UnsafeMutablePointer<IN>, as: OUT.Type) -> UnsafeMutablePointer<OUT> {
+        open func cast<IN,OUT>(_ arg: UnsafeMutablePointer<IN>, to: OUT.Type = OUT.self) -> UnsafeMutablePointer<OUT> {
             return arg.withMemoryRebound(to: OUT.self, capacity: 1) { $0 }
         }
 
@@ -237,17 +245,27 @@ open class SwiftTrace: NSObject {
             /** Architecture depenent place on stack where arguments stored */
             public let entryStack: UnsafeMutablePointer<EntryStack>
 
-            public var structReturn: UnsafeMutableRawPointer? = nil
-            
             public var exitStack: UnsafeMutablePointer<ExitStack> {
-                return entryStack.withMemoryRebound(to: ExitStack.self, capacity: 1) { $0 }
+                return patch.cast(entryStack)
             }
 
+            /** copy of struct return register in case function throws */
+            public var structReturn: UnsafeMutableRawPointer? = nil
+            
             /** "self" for method invocations */
             public let swiftSelf: intptr_t
 
             /** for use relaying data from entry to exit */
             public var userInfo: AnyObject?
+
+            /**
+             micro-second precision time.
+             */
+            static public func usecTime() -> Double {
+                var tv = timeval()
+                gettimeofday(&tv, nil)
+                return Double(tv.tv_sec) + Double(tv.tv_usec)/1_000_000.0
+            }
 
             /**
              designated initialiser
@@ -258,11 +276,11 @@ open class SwiftTrace: NSObject {
              */
             public required init(stackDepth: Int, patch: Patch, returnAddress: UnsafeRawPointer,
                                  stackPointer: UnsafeMutablePointer<UInt64>) {
-                timeEntered = Date.timeIntervalSinceReferenceDate
+                timeEntered = Invocation.usecTime()
                 self.stackDepth = stackDepth
                 self.patch = patch
                 self.returnAddress = returnAddress
-                self.entryStack = patch.cast(stackPointer, as: EntryStack.self)
+                self.entryStack = patch.cast(stackPointer)
                 self.swiftSelf = patch.objcMethod != nil ?
                     self.entryStack.pointee.intArg1 : self.entryStack.pointee.swiftSelf
                 self.structReturn = UnsafeMutableRawPointer(bitPattern: self.entryStack.pointee.structReturn)
@@ -330,8 +348,6 @@ open class SwiftTrace: NSObject {
         static let maxFloatArgs = 8
         static let maxIntArgs = 8
 
-        public var swiftSelf: intptr_t = 0 // x20
-        public var structReturn: intptr_t = 0 // x8
         public var floatArg1: Double = 0.0
         public var floatArg2: Double = 0.0
         public var floatArg3: Double = 0.0
@@ -348,8 +364,10 @@ open class SwiftTrace: NSObject {
         public var intArg6: intptr_t = 0
         public var intArg7: intptr_t = 0
         public var intArg8: intptr_t = 0
+        public var structReturn: intptr_t = 0 // x8
         public var framePointer: intptr_t = 0
-        public var linkRegister: intptr_t = 0
+        public var swiftSelf: intptr_t = 0 // x20
+        public var thrownError: intptr_t = 0 // x21
 
         public var invocation: Patch.Invocation! {
             return Patch.Invocation.current
@@ -362,8 +380,6 @@ open class SwiftTrace: NSObject {
     public struct ExitStack {
         static let returnRegs = 4
 
-        public var swiftSelf: intptr_t = 0 // x20
-        public var structReturn: intptr_t = 0 // x8
         public var floatReturn1: Double = 0.0
         public var floatReturn2: Double = 0.0
         public var floatReturn3: Double = 0.0
@@ -380,19 +396,29 @@ open class SwiftTrace: NSObject {
         public var x5: intptr_t = 0
         public var x6: intptr_t = 0
         public var x7: intptr_t = 0
-        public var thrownError: intptr_t = 0
+        public var structReturn: intptr_t = 0 // x8
         public var framePointer: intptr_t = 0
+        public var swiftSelf: intptr_t = 0 // x20
+        public var thrownError: intptr_t = 0 // x21
 
         public var invocation: Patch.Invocation! {
             return Patch.Invocation.current
         }
         mutating func genericReturn<T>(patch: Patch? = nil) -> UnsafeMutablePointer<T> {
+            #if os(iOS) || os(macOS)
+            if T.self is OSRect.Type {
+                return (patch ?? invocation!.patch).cast(&floatReturn1)
+            }
+            #endif
             if MemoryLayout<T>.size > MemoryLayout<intptr_t>.size * ExitStack.returnRegs {
                 structReturn = unsafeBitCast(invocation.structReturn, to: Int.self)
                 return invocation.structReturn!.assumingMemoryBound(to: T.self)
             }
+            else if T.self is Double.Type || T.self is Float.Type {
+                return (patch ?? invocation!.patch).cast(&floatReturn1)
+            }
             else {
-                return (patch ?? invocation!.patch).cast(&intReturn1, as: T.self)
+                return (patch ?? invocation!.patch).cast(&intReturn1)
             }
         }
         mutating public func getReturn<T>() -> T {
@@ -401,14 +427,12 @@ open class SwiftTrace: NSObject {
         mutating public func setReturn<T>(value: T) {
             intReturn1 = 0
             intReturn2 = 0
+            intReturn3 = 0
+            intReturn4 = 0
             return genericReturn().pointee = value
         }
         mutating public func stringReturn() -> String {
-            print(self)
             return getReturn()
-        }
-        mutating public func setReturn(string: String) {
-            setReturn(value: string)
         }
     }
     #else // x86_64
@@ -428,17 +452,17 @@ open class SwiftTrace: NSObject {
         public var floatArg7: Double = 0.0
         public var floatArg8: Double = 0.0
         public var framePointer: intptr_t = 0
+        public var r10: intptr_t = 0
+        public var r12: intptr_t = 0
+        public var swiftSelf: intptr_t = 0  // r13
+        public var r14: intptr_t = 0
+        public var r15: intptr_t = 0
         public var intArg1: intptr_t = 0    // rdi
         public var intArg2: intptr_t = 0    // rsi
         public var intArg3: intptr_t = 0    // rcx
         public var intArg4: intptr_t = 0    // rdx
         public var intArg5: intptr_t = 0    // r8
         public var intArg6: intptr_t = 0    // r9
-        public var r10: intptr_t = 0
-        public var r12: intptr_t = 0
-        public var swiftSelf: intptr_t = 0  // r13
-        public var r14: intptr_t = 0
-        public var r15: intptr_t = 0
         public var structReturn: intptr_t = 0 // rax
         public var rbx: intptr_t = 0
 
@@ -464,33 +488,41 @@ open class SwiftTrace: NSObject {
         public var xmm6: Double = 0.0
         public var xmm7: Double = 0.0
         public var framePointer: intptr_t = 0
-        public var rdi: intptr_t = 0
-        public var rsi: intptr_t = 0
-        public var r9: intptr_t = 0
         public var r10: intptr_t = 0
         public var thrownError: intptr_t = 0 // r12
         public var swiftSelf: intptr_t = 0  // r13
         public var r14: intptr_t = 0
         public var r15: intptr_t =  0
+        public var rdi: intptr_t = 0
+        public var rsi: intptr_t = 0
+        public var r9: intptr_t = 0
         public var rbx: intptr_t = 0
-
-        public var structReturn: UnsafeMutableRawPointer? {
-            return UnsafeMutableRawPointer(bitPattern: intReturn1)!
-        }
         public var intReturn1: intptr_t = 0 // rax (also struct Return)
         public var intReturn2: intptr_t = 0 // rdx
         public var intReturn3: intptr_t = 0 // rcx
         public var intReturn4: intptr_t = 0 // r8
+        public var structReturn: intptr_t {
+            return intReturn1
+        }
+
         public var invocation: Patch.Invocation! {
             return Patch.Invocation.current
         }
         mutating func genericReturn<T>(patch: Patch? = nil) -> UnsafeMutablePointer<T> {
+            #if os(iOS) || os(macOS)
+            if T.self is OSRect.Type {
+                return (patch ?? invocation!.patch).cast(&floatReturn1)
+            }
+            #endif
             if MemoryLayout<T>.size > MemoryLayout<intptr_t>.size * ExitStack.returnRegs {
                 intReturn1 = unsafeBitCast(invocation.structReturn, to: Int.self)
                 return invocation.structReturn!.assumingMemoryBound(to: T.self)
             }
+            else if T.self is Double.Type || T.self is Float.Type {
+                return (patch ?? invocation!.patch).cast(&floatReturn1)
+            }
             else {
-                return (patch ?? invocation!.patch).cast(&intReturn1, as: T.self)
+                return (patch ?? invocation!.patch).cast(&intReturn1)
             }
         }
         mutating public func getReturn<T>() -> T {
@@ -499,13 +531,12 @@ open class SwiftTrace: NSObject {
         mutating public func setReturn<T>(value: T) {
             intReturn1 = 0
             intReturn2 = 0
+            intReturn3 = 0
+            intReturn4 = 0
             return genericReturn().pointee = value
         }
         mutating public func stringReturn() -> String {
             return getReturn()
-        }
-        mutating public func setReturn(string: String) {
-            setReturn(value: string)
         }
     }
     #endif
@@ -735,7 +766,6 @@ open class SwiftTrace: NSObject {
         - parameter onEntry: - closure to be called before "Patch" is called
         - parameter onExit: - closure to be called after "Patch" returns
      */
-    @discardableResult
     open class func addAspect(methodName: String,
                               patchClass: Aspect.Type = Aspect.self,
                               onEntry: EntryAspect? = nil,
@@ -755,7 +785,6 @@ open class SwiftTrace: NSObject {
         - parameter onEntry: - closure to be called before "Patch" is called
         - parameter onExit: - closure to be called after "Patch" returns
      */
-    @discardableResult
     open class func addAspect(aClass: AnyClass, methodName: String,
                               patchClass: Aspect.Type = Aspect.self,
                               onEntry: EntryAspect? = nil,
@@ -831,21 +860,22 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Implementation of invocatoin api
+        Implementation of invocation api
      */
     public class Call: Patch {
 
         public var input = EntryStack()
         public var output = ExitStack()
+        var backup = EntryStack()
         let target: AnyObject
         var caller: IMP? = nil
 
-        public init?(`self` anObject: AnyObject, methodName: String) {
-            target = anObject
+        public init?(target: AnyObject, methodName: String) {
+            self.target = target
             var sigh: SIMP = { _ in }
             super.init(name: methodName, vtableSlot: &sigh)
 
-            guard iterateMethods(ofClass: type(of: anObject), callback: {
+            guard iterateMethods(ofClass: type(of: target), callback: {
                 (name, vtableSlot, stop) in
                 if name == methodName {
                     self.vtableSlot = vtableSlot
@@ -858,7 +888,7 @@ open class SwiftTrace: NSObject {
                 return nil
             }
 
-            input.swiftSelf = unsafeBitCast(anObject, to: Int.self)
+            input.swiftSelf = unsafeBitCast(target, to: Int.self)
 
             caller = imp_implementationForwardingToTracer(unsafeBitCast(self, to: UnsafeMutableRawPointer.self),
                           unsafeBitCast(Patch.onEntry, to: IMP.self), unsafeBitCast(Patch.onExit, to: IMP.self))
@@ -868,24 +898,37 @@ open class SwiftTrace: NSObject {
             fatalError("Call.init(name:vtableSlot:objcMethod:justReturn:) should not be used")
         }
 
-        var intArgNumber = 0
-        var floatArgNumber = 0
+        public var intArgNumber = 0
+        public var floatArgNumber = 0
+
+        public func resetArgs() {
+            intArgNumber = 0
+            floatArgNumber = 0
+        }
 
         public func add<T>(arg: T) {
+            let registers = MemoryLayout<T>.size / MemoryLayout<intptr_t>.size
+            #if os(iOS) || os(macOS)
+            if arg is OSRect {
+                cast(&input.floatArg1, to: Double.self).advanced(by: floatArgNumber)
+                    .withMemoryRebound(to: T.self, capacity: 1) { $0 }.pointee = arg
+                floatArgNumber += registers
+                return
+            }
+            #endif
             if arg is Double || arg is Float {
                 if floatArgNumber + 1 > EntryStack.maxFloatArgs {
-                    fatalError("Too many float args")
+                    fatalError("Too many float args for SwiftTrace.Call")
                 }
-                cast(&input.floatArg1, as: Double.self).advanced(by: floatArgNumber)
+                cast(&input.floatArg1, to: Double.self).advanced(by: floatArgNumber)
                     .withMemoryRebound(to: T.self, capacity: 1) { $0 }.pointee = arg
                 floatArgNumber += 1
             }
             else {
-                let registers = MemoryLayout<T>.size / MemoryLayout<intptr_t>.size
                 if intArgNumber + registers > EntryStack.maxIntArgs {
-                    fatalError("Too many int args")
+                    fatalError("Too many int args for SwiftTrace.Call")
                 }
-                cast(&input.intArg1, as: intptr_t.self).advanced(by: intArgNumber)
+                cast(&input.intArg1, to: Int.self).advanced(by: intArgNumber)
                     .withMemoryRebound(to: T.self, capacity: 1) { $0 }.pointee = arg
                 intArgNumber += registers
             }
@@ -893,15 +936,19 @@ open class SwiftTrace: NSObject {
 
         public func invoke() {
             unsafeBitCast(caller!, to: (@convention (c) () -> ()).self)()
+            resetArgs()
         }
 
         public override func onEntry(stack: inout EntryStack) {
             input.framePointer = stack.framePointer
+            input.structReturn = stack.structReturn
+            backup = stack
             stack = input
         }
 
         public override func onExit(stack: inout ExitStack) {
             output = stack
+            cast(&stack.floatReturn1).pointee  = backup
         }
 
         public func getReturn<T>() -> T {
@@ -915,24 +962,21 @@ open class SwiftTrace: NSObject {
          - parameter methodName: de-mangled method name to invoke
          - parameter args: list of values to use as arguments
      */
-    open class func invoke<T>(`self` anObject: AnyObject, methodName: String, args: Any...) -> T {
-        guard let call = Call(self: anObject, methodName: methodName) else {
-            fatalError("Unknown mehod \(methodName) on class \(anObject)")
+    open class func invoke<T>(target: AnyObject, methodName: String, args: Any...) -> T {
+        guard let call = Call(target: target, methodName: methodName) else {
+            fatalError("Unknown method \(methodName) on class \(target)")
         }
 
         for arg in args {
-            if let arg = arg as? Double {
-                call.add(arg: arg)
+            if let arg = arg as? SwiftTraceArg {
+                arg.add(toCall: call)
             }
-            else if let arg = arg as? Float {
-                call.add(arg: arg)
-            }
-            else if let arg = arg as? String {
-                call.add(arg: arg)
+            else if arg is Int || type(of: arg) is AnyObject.Type {
+                var arg = arg
+                call.add(arg: call.cast(&arg, to: Int.self).pointee)
             }
             else {
-                var arg = arg
-                call.add(arg: call.cast(&arg, as: Int.self).pointee)
+                fatalError("Unsupported argument type \(type(of: arg))")
             }
         }
 
@@ -1072,6 +1116,24 @@ open class SwiftTrace: NSObject {
         return nil
     }
 }
+
+public protocol SwiftTraceArg {
+    func add(toCall call: SwiftTrace.Call)
+}
+extension SwiftTraceArg {
+    public func add(toCall call: SwiftTrace.Call) {
+        call.add(arg: self)
+    }
+}
+
+extension UnsafeMutablePointer: SwiftTraceArg {}
+extension UnsafePointer: SwiftTraceArg {}
+extension Double: SwiftTraceArg {}
+extension Float: SwiftTraceArg {}
+extension String: SwiftTraceArg {}
+#if os(iOS) || os(macOS)
+extension OSRect: SwiftTraceArg {}
+#endif
 
 /**
     Convenience extension to trap regex errors and report them
