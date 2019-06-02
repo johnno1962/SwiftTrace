@@ -4,6 +4,8 @@ Trace Swift and Objective-C method invocations of non-final classes in an app bu
 Think [Xtrace](https://github.com/johnno1962/Xtrace) but for Swift and Objective-C. You can also 
 add "aspects" to member functions of non-final Swift classes to have a closure called before or after
 a function implementation executes which in turn can modify incoming arguments or the return value!
+Apart from the loggin functionality, with binary distribution of Swift frameworks on the horizon perhaps
+this will be of use in the same way "Swizzling" was in days of yore.
 
 ![SwiftTrace Example](SwiftTrace.gif)
 
@@ -19,7 +21,7 @@ following line to it's Podfile:
 
 This project has been updated to Swift 5 from Xcode 10.2.:
 
-    pod 'SwiftTrace', '5.4.0'
+    pod 'SwiftTrace', '5.5.0'
 
 Once the project has rebuilt, import SwiftTrace into the application's AppDelegate and add something like
 the following to the beginning of it's didFinishLaunchingWithOptions method:
@@ -55,7 +57,7 @@ If you want to further process output you can define a custom tracing class:
 
     class MyTracer: SwiftTrace.Patch {
 
-        override func onEntry(stack: UnsafeMutablePointer<SwiftTrace.EntryStack>) {
+        override func onEntry(stack: inout SwiftTrace.EntryStack) {
             print( ">> "+symbol )
         }
     }
@@ -67,9 +69,9 @@ If you want to further process output you can define a custom tracing class:
 You can add an aspect to a particular method using the method's de-mangled name:
 
     print(SwiftTrace.addAspect(aClass: TestClass.self,
-      methodName: "SwiftTwaceApp.TestClass.x() -> ()",
-    	onEntry: { (_, _) in print("ONE") },
-    	onExit: { (_, _) in print("TWO") }))
+                      methodName: "SwiftTwaceApp.TestClass.x() -> ()",
+                      onEntry: { (_, _) in print("ONE") },
+                      onExit: { (_, _) in print("TWO") }))
 
 This will print "ONE" when method "x" of TextClass is called and "TWO when it has exited. The
 two arguments are the patch which is an object representing the "Swizzle" and the entry or 
@@ -86,18 +88,19 @@ Replacing an input argument in the closure is relatively simple:
     stack.intArg1 = 99
     stack.floatArg3 = 77.3
     
-Other types a little more involved. They must be cast and String takes up two integer registers.
+Other types of argument a little more involved. They must be cast and String
+takes up two integer registers.
 
-    patch.cast(&stack.intArg2).pointee = "Grief"
-    patch.cast(&stack.intArg4).pointee = TestClass()
+    patch.rebind(&stack.intArg2).pointee = "Grief"
+    patch.rebind(&stack.intArg4).pointee = TestClass()
     
 In an exit aspect closure, setting the return type is easier as it is generic:
 
     stack.setReturn(value: "Phew")
 
-When a function throws you can access NSError objects
+When a function throws you can access NSError objects.
 
-    print(cast(&stack.thrownError, to: NSError.self).pointee)
+    print(patch.rebind(&stack.thrownError, to: NSError.self).pointee)
     
 It is possible to set `stack.thrownError` to zero to cancel the throw but you will need to set
 the return value.
@@ -116,9 +119,10 @@ using this function:
     print(SwiftTrace.methodNames(ofClass: TestClass.self))
 
 There are limitations to this abbreviated interface in that it only supports Double, Float,
-String, Int, Object and CGRect arguments. For other struct types that do not conatain
-floating point values you can conform them to SwiftTraceArg to be able to pass them
-on the argument list. Return struct values must fit into 32 bytes and not contain floats.
+String, Int, Object and CGRect arguments. For other struct types that do not contain
+floating point values you can conform them to protocol `SwiftTraceArg` to be able to
+pass them on the argument list. These values and return values must fit into 32 bytes
+and not contain floats.
 
 #### How it works
                       

@@ -1,5 +1,5 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_x64.s#26 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/xt_forwarding_trampoline_x64.s#27 $
 
 //  https://en.wikipedia.org/wiki/X86_calling_conventions
 
@@ -81,12 +81,12 @@ _xt_forwarding_trampoline:
     jmpq    *%r11   // forward onto original implementation
 
 returning:
+    pushq   %rbx
+    pushq   %r9
     pushq   %r8     // push regs used for int returns
     pushq   %rcx
     pushq   %rdx
     pushq   %rax    // pointer for return of struct
-    pushq   %rbx
-    pushq   %r9
     pushq   %rsi
     pushq   %rdi
     pushq   %r15
@@ -125,12 +125,12 @@ returning:
     popq    %r15
     popq    %rdi
     popq    %rsi
-    popq    %r9
-    popq    %rbx
     popq    %rax
     popq    %rdx
     popq    %rcx
     popq    %r8
+    popq    %r9
+    popq    %rbx
     pushq   %r11
     ret     // return to original caller
 

@@ -12,22 +12,12 @@ import SwiftTrace
 public struct TestStruct: Equatable {
 
     let a = 1.0, b = 2.0, c = 3.0
-    let i = 111, j = 222, k = 333
-
+    var i = 111, j = 222, k = "333"
 }
 
 public func ==(lhs: TestStruct, rhs: TestStruct) -> Bool {
 
     return lhs.a == lhs.a && lhs.b == lhs.b && lhs.c == lhs.c && lhs.i == lhs.i && lhs.j == lhs.j && lhs.k == lhs.k
-}
-
-public class RET {
-    deinit {
-        print("!RET")
-    }
-}
-
-public class RET2: RET {
 }
 
 public struct Strings: SwiftTraceArg {
@@ -49,17 +39,17 @@ public class TestClass: P, SwiftTraceArg {
     let i = 999
 
     public func x() {
-        print( "HERE \(i)" )
+        print( "TestClass.x() self.i: \(i)" )
     }
 
     public func y() -> CGRect {
-        print( "HERE2" )
+        print( "TestClass.y()" )
         return CGRect(x: 1.0, y: 2.0, width: 3.0, height: 4.0)
     }
 
     @discardableResult
     public func zzz( _ d: Int, f: Double, g: Float, h: String, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int, ff: Int, o: TestClass ) throws -> String {
-        print( "HERE \(i) \(d) \(e) \(f) \(g) \(h) \(f1) \(g1) \(h1) \(f2) \(g2) \(h2) \(o.i)" )
+        print( "TestClass.zzz(_ d: \(d), f: \(f), g: \(g), h: \(h), f1: \(f1), g1: \(g1), h1: \(h1), f2: \(f2), g2: \(g2), h2: \(h2), e: \(e), ff: \(ff), self.i: \(i), o.i: \(o.i))")
         throw NSError(domain: "HOLLOO", code: 123, userInfo: ["john": "error"])
         //return "4-4-4"
     }
@@ -92,7 +82,7 @@ class MyTracer: SwiftTrace.Patch {
     override func onEntry(stack: inout SwiftTrace.EntryStack) {
         //print(stack)
         if name == "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String" {
-            print("\(stack.intArg1) \(cast(&stack.intArg2, to: String.self).pointee) \(stack.floatArg1) \(cast(&stack.floatArg5, to: Float.self).pointee) \(cast(&stack.intArg6, to: TestClass.self).pointee.i) \((getSelf() as TestClass).i)")
+            print("\(stack.intArg1) \(rebind(&stack.intArg2, to: String.self).pointee) \(stack.floatArg1) \(rebind(&stack.floatArg5, to: Float.self).pointee) \(rebind(&stack.intArg6, to: TestClass.self).pointee.i) \((getSelf() as TestClass).i)")
         }
     }
 
@@ -104,17 +94,17 @@ class MyTracer: SwiftTrace.Patch {
         }
         if name == "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String" {
             if stack.thrownError != 0 {
-                print(cast(&stack.thrownError, to: NSError.self).pointee)
+                print(rebind(&stack.thrownError, to: NSError.self).pointee)
             }
             stack.thrownError = 0
 //            stack.invocation.patch.argument(&intReturn1, as: String.self) = "5-5-5"
             stack.setReturn(value: "5-5-5")
         }
         if name == "SwiftTwaceApp.TestClass.y() -> __C.CGRect" {
-            cast(&stack.floatReturn1).pointee = CGRect(x: 11.0, y: 22.0, width: 33.0, height: 44.0)
+            rebind(&stack.floatReturn1).pointee = CGRect(x: 11.0, y: 22.0, width: 33.0, height: 44.0)
         }
         if name == "SwiftTwaceApp.TestClass.str2(strs: inout SwiftTwaceApp.Strings) -> SwiftTwaceApp.Strings" {
-            cast(&stack.intReturn1, to: Strings.self).pointee.s2 += "!"
+            rebind(&stack.intReturn1, to: Strings.self).pointee.s2 += "!"
         }
     }
 
@@ -156,27 +146,30 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
         print(SwiftTrace.addAspect(aClass: TestClass.self, methodName: "SwiftTwaceApp.TestClass.x() -> ()",
            onEntry: { (patch: SwiftTrace.Patch, stack: inout SwiftTrace.EntryStack) in
-//            patch.argument(&stack.pointee.intArg2, as: String.self).pointee = "Grief"
-            print("ONE") },
+//            patch.rebind(&stack.intArg2).pointee = "Grief"
+            print("SwiftTwaceApp.TestClass.x() enter") },
            onExit: { (patch: SwiftTrace.Patch, stack: inout SwiftTrace.ExitStack) in
-//            stack.pointee.setReturn(value: "Phew")
-            print("TWO") }))
-        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.y() -> __C.CGRect", onExit: { (_, _) in print("TWO!") }))
-        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.str() -> __C.NSString", justReturn: { _ in
+//            stack.setReturn(value: "Phew")
+            print("SwiftTwaceApp.TestClass.x() exit") }))
+        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.y() -> __C.CGRect", onExit: { (_, _) in print("SwiftTwaceApp.TestClass.y() exit!") }))
+        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.str() -> __C.NSString", replaceWith: {
             TestClass.c += 1
             return "YES #\(TestClass.c)" as NSString
+        }))
+        print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.ssssss(a: SwiftTwaceApp.TestStruct) -> SwiftTwaceApp.TestStruct", onExit: { (patch, stack) in
+            patch.structReturn(as: TestStruct.self).pointee.k = "8-8-8"
         }))
 
         let a: P = TestClass()
         a.x()
 
         print( a.y() )
-        print(SwiftTrace.removeAspect(aClass: TestClass.self, methodName: "SwiftTwaceApp.TestClass.y() -> Swift.Float"))
+        print(SwiftTrace.removeAspect(aClass: TestClass.self, methodName: "SwiftTwaceApp.TestClass.y() -> __C.CGRect"))
         print( a.y() )
 
         a.x()
         print(try! a.zzz( 123, f: 66, g: 55, h: "4-4", f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77, ff: 11, o: TestClass()))
-        print(a.ssssss( a: TestStruct() ))
+        print(a.ssssss( a: TestStruct()))
 
         print(a.rect(r: CGRect(x: 111.0, y: 222.0, width: 333.0, height: 444.0)))
 
@@ -214,7 +207,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.rect(r: __C.CGRect) -> __C.CGRect", args: CGRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0)) as CGRect)
 
         var strings = Strings()
-        print(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.str2(strs: inout SwiftTwaceApp.Strings) -> SwiftTwaceApp.Strings", args: call.cast(&strings, to: Strings.self)) as Strings)
+        print(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.str2(strs: inout SwiftTwaceApp.Strings) -> SwiftTwaceApp.Strings", args: call.rebind(&strings, to: Strings.self)) as Strings)
         print(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.str3(strs: SwiftTwaceApp.Strings) -> SwiftTwaceApp.Strings", args: strings) as Strings)
         print(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.x() -> ()", args: strings) as Void)
 

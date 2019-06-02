@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#33 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#37 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -52,7 +52,7 @@ typedef struct {
 #if !defined(__LP64__)
     IMP tracer;
 #endif
-    void *info;
+    void *patch; // Pointer to SwiftTrace.Patch instance retained elsewhere
 } XtraceTrampolineDataBlock;
 
 typedef int32_t SPLForwardingTrampolineEntryPointBlock[2];
@@ -66,7 +66,7 @@ static const int32_t SPLForwardingTrampolineInstructionCount = 12;
 static const int32_t SPLForwardingTrampolineInstructionCount = 62;
 #undef PAGE_SIZE
 #define PAGE_SIZE (1<<14)
-#elif defined(__LP64__)
+#elif defined(__LP64__) // x86_64
 static const int32_t SPLForwardingTrampolineInstructionCount = 84;
 #else
 #error SwiftTrace is not supported on this platform
@@ -147,7 +147,7 @@ static SPLForwardingTrampolinePage *nextTrampolinePage()
     return trampolinePage;
 }
 
-IMP imp_implementationForwardingToTracer(void *info, IMP onEntry, IMP onExit)
+IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 {
     OSSpinLockLock(&lock);
 
@@ -161,7 +161,7 @@ IMP imp_implementationForwardingToTracer(void *info, IMP onEntry, IMP onExit)
     dataPageLayout->onEntry = onEntry;
     dataPageLayout->onExit = onExit;
 #endif
-    dataPageLayout->trampolineData[nextAvailableTrampolineIndex].info = info;
+    dataPageLayout->trampolineData[nextAvailableTrampolineIndex].patch = patch;
     dataPageLayout->nextAvailableTrampolineIndex++;
 
     IMP implementation = (IMP)&dataPageLayout->trampolineEntryPoints[nextAvailableTrampolineIndex];

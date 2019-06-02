@@ -59,7 +59,7 @@ class SwiftTwaceTests: XCTestCase {
         class TestPatch: SwiftTrace.Patch {
 
             override func onEntry(stack: inout SwiftTrace.EntryStack) {
-                args = "\(arguments.pointee.intArg1) \((getSelf() as TestClass).i) \(arguments.pointee.floatArg1)"
+                args = "\(stack.intArg1) \(getSelf(as: TestClass.self).i) \(stack.floatArg1)"
             }
         }
     }
