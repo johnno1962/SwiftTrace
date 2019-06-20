@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#158 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#159 $
 //
 
 import Foundation
@@ -749,7 +749,7 @@ open class SwiftTrace: NSObject {
         return iterateMethods(ofClass: aClass) {
             (name, vtableSlot, stop) in
             if name == methodName,
-                let patch = Patch.active[autoBitCast(vtableSlot.pointee)] {
+                let patch = Patch.active[unsafeBitCast(vtableSlot.pointee, to: IMP.self)] {
                 patch.remove()
                 stop = true
             }
