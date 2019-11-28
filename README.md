@@ -58,7 +58,7 @@ If you want to further process output you can define a custom tracing class:
     class MyTracer: SwiftTrace.Patch {
 
         override func onEntry(stack: inout SwiftTrace.EntryStack) {
-            print( ">> "+symbol )
+            print( ">> "+stack )
         }
     }
     
