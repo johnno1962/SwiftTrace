@@ -79,7 +79,7 @@ exit stack. The full signature for the entry closure is:
 ```swift
        onEntry: { (patch: SwiftTrace.Patch, stack: inout SwiftTrace.EntryStack) in
  ```   
-If you understand how registers are allocated to arguments it is possible to poke into the
+If you understand how [registers are allocated](https://github.com/apple/swift/blob/master/docs/ABI/RegisterUsage.md) to arguments it is possible to poke into the
 stack to modify the incoming arguments and, for the exit aspect closure you can replace
 the return value and on a good day prevent (and log) an error being thrown.
 
