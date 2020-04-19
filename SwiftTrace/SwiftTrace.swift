@@ -533,14 +533,14 @@ open class SwiftTrace: NSObject {
         var stopped = false
         var nc: UInt32 = 0
 
-        if let classes = objc_copyClassList(&nc) {
-            for aClass in (0..<Int(nc)).map({ classes[$0] }) {
-                callback(aClass, &stopped)
+        if let classes = UnsafePointer<AnyClass>(objc_copyClassList(&nc)) {
+            for i in 0 ..< Int(nc) {
+                callback(classes[i], &stopped)
                 if stopped {
                     break
                 }
             }
-            free(UnsafeMutableRawPointer(classes))
+            free(UnsafeMutableRawPointer(mutating: classes))
         }
 
         return stopped
@@ -635,7 +635,9 @@ open class SwiftTrace: NSObject {
         let className = NSStringFromClass(aClass)
         var stop = false
 
-        guard (className.hasPrefix("_Tt") || className.contains(".")) && !className.hasPrefix("Swift.") else {
+        guard (className.hasPrefix("_Tt") || className.contains(".")) &&
+            !className.hasPrefix("Swift.") &&
+            swiftMeta.pointee.ClassSize < 0x50AF17B0 else {
             //print("Object is not instance of Swift class")
             return false
         }
