@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#159 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#169 $
 //
 
 import Foundation
@@ -14,9 +14,13 @@ import Foundation
 #if os(iOS)
 import UIKit
 typealias OSRect = CGRect
+typealias OSPoint = CGPoint
+typealias OSSize = CGSize
 #elseif os(macOS)
 import AppKit
 typealias OSRect = NSRect
+typealias OSPoint = NSPoint
+typealias OSSize = NSSize
 #endif
 
 /** unsafeBitCast one type to another */
@@ -53,13 +57,13 @@ open class SwiftTrace: NSObject {
     /**
         Class used to create "Patch" instances representing a member function
      */
-    public static var patchFactory = Patch.self
+    public static var swizzleFactory: Swizzle.Type = Arguments.self
 
     /**
         Class used to create "Invocation" instances representing a
         specific call to a member function on the "ThreadLocal" stack.
      */
-    public static var defaultInvocationFactory = Patch.Invocation.self
+    public static var defaultInvocationFactory = Swizzle.Invocation.self
 
     /**
         Type of "null implementation" replacing methods actual implementation
@@ -69,24 +73,24 @@ open class SwiftTrace: NSObject {
     /**
      Strace "info" instance used to store information about a patch on a method
      */
-    open class Patch: NSObject {
+    open class Swizzle: NSObject {
 
         /** Dictionary of patch objects created by trampoline */
-        static var active = [IMP: Patch]()
+        static var activeSwizzles = [IMP: Swizzle]()
 
         /** follow chain of Patches through to find original patch */
-        open class func originalPatch(for implementation: IMP) -> Patch? {
+        open class func originalSwizzle(for implementation: IMP) -> Swizzle? {
             var implementation = implementation
-            var patch: Patch?
-            while active[implementation] != nil {
-                patch = active[implementation]
+            var patch: Swizzle?
+            while activeSwizzles[implementation] != nil {
+                patch = activeSwizzles[implementation]
                 implementation = patch!.implementation
             }
             return patch
         }
 
        /** string representing Swift or Objective-C method to user */
-        public let name: String
+        public let signature: String
 
         /** pointer to original function implementing method */
         var implementation: IMP
@@ -101,16 +105,31 @@ open class SwiftTrace: NSObject {
         public let nullImplmentation: nullImplementationType?
 
         /**
+         Class used to create a specific "Invocation" of the "Patch" on entry
+         */
+        open var invocationFactory: Invocation.Type {
+            return defaultInvocationFactory
+        }
+
+        /**
+         The inner invocation instance on the stack of the current thread.
+         */
+        open func invocation() -> Invocation! {
+            return Invocation.current
+        }
+
+        /**
          designated initialiser
          - parameter name: string representing method being traced
          - parameter vtableSlot: pointer to vtable slot patched
          - parameter objcMethod: pointer to original Method patched
          - parameter replaceWith: implementation to replace that of class
          */
-        public required init?(name: String,
-                              vtableSlot: UnsafeMutablePointer<SIMP>? = nil, objcMethod: Method? = nil,
+        public required init?(name signature: String,
+                              vtableSlot: UnsafeMutablePointer<SIMP>? = nil,
+                              objcMethod: Method? = nil,
                               replaceWith: nullImplementationType? = nil) {
-            self.name = name
+            self.signature = signature
             self.vtableSlot = vtableSlot
             self.objcMethod = objcMethod
             if let vtableSlot = vtableSlot {
@@ -123,12 +142,14 @@ open class SwiftTrace: NSObject {
         }
 
         /** Called from assembly code on entry to Patched method */
-        static var onEntry: @convention(c) (_ patch: Patch, _ returnAddress: UnsafeRawPointer,
+        static var onEntry: @convention(c) (_ patch: Swizzle, _ returnAddress: UnsafeRawPointer,
             _ stackPointer: UnsafeMutablePointer<UInt64>) -> IMP? = {
                 (patch, returnAddress, stackPointer) -> IMP? in
                 let local = ThreadStack.threadLocal()
-                let invocation = patch.invocationFactory.init(stackDepth: local.stack.count, patch: patch,
-                                              returnAddress: returnAddress, stackPointer: stackPointer )
+                let invocation = patch.invocationFactory
+                    .init(stackDepth: local.stack.count, swizzle: patch,
+                          returnAddress: returnAddress,
+                          stackPointer: stackPointer )
                 local.stack.append(invocation)
                 patch.onEntry(stack: &invocation.entryStack.pointee)
                 return patch.nullImplmentation != nil ?
@@ -138,7 +159,7 @@ open class SwiftTrace: NSObject {
         /** Called from assembly code when Patched method returns */
         static var onExit: @convention(c) () -> UnsafeRawPointer = {
             let invocation = Invocation.current!
-            invocation.patch.onExit(stack: &invocation.exitStack.pointee)
+            invocation.swizzle.onExit(stack: &invocation.exitStack.pointee)
             ThreadStack.threadLocal().stack.removeLast()
             return invocation.returnAddress
         }
@@ -150,8 +171,8 @@ open class SwiftTrace: NSObject {
         func forwardingImplementation() -> SIMP {
             /* create trampoline */
             let impl = imp_implementationForwardingToTracer(autoBitCast(self),
-                                autoBitCast(Patch.onEntry), autoBitCast(Patch.onExit))
-            Patch.active[impl] = self // track Patches by trampoline and retain them
+                                autoBitCast(Swizzle.onEntry), autoBitCast(Swizzle.onExit))
+            Swizzle.activeSwizzles[impl] = self // track Patches by trampoline and retain them
             return autoBitCast(impl)
         }
 
@@ -165,24 +186,17 @@ open class SwiftTrace: NSObject {
          method called after trampoline exits the target "Patch"
          */
         open func onExit(stack: inout ExitStack) {
-            if let invocation = Invocation.current {
+            if let invocation = invocation() {
                 let elapsed = Invocation.usecTime() - invocation.timeEntered
-                print("\(String(repeating: "  ", count: invocation.stackDepth))\(name) \(String(format: "%.1fms", elapsed * 1000.0))")
+                print("\(String(repeating: "  ", count: invocation.stackDepth))\(message(stack: &stack)) \(String(format: "%.1fms", elapsed * 1000.0))")
             }
         }
 
         /**
-         Class used to create a specific "Invocation" of the "Patch" on entry
+         Provide message for trace
          */
-        open var invocationFactory: Invocation.Type {
-            return defaultInvocationFactory
-        }
-
-        /**
-         The inner invocation instance on the stack of the current thread.
-         */
-        open func invocation() -> Invocation! {
-            return Invocation.current
+        open func message(stack: inout ExitStack) -> String {
+            return signature
         }
 
         /**
@@ -201,7 +215,7 @@ open class SwiftTrace: NSObject {
             Remove all patches recursively
          */
         open func removeAll() {
-            (Patch.originalPatch(for: implementation) ?? self).remove()
+            (Swizzle.originalSwizzle(for: implementation) ?? self).remove()
         }
 
         /** find "self" for the current invocation */
@@ -217,7 +231,7 @@ open class SwiftTrace: NSObject {
         /** convert arguments & return results to a specifi type */
         open func rebind<IN,OUT>(_ pointer: UnsafeMutablePointer<IN>,
                                  to: OUT.Type = OUT.self) -> UnsafeMutablePointer<OUT> {
-            return pointer.withMemoryRebound(to: OUT.self, capacity: 1) { $0 }
+            return autoBitCast(pointer)
         }
 
         /**
@@ -232,7 +246,13 @@ open class SwiftTrace: NSObject {
             public let stackDepth: Int
 
             /** "Patch" related to this call */
-            public let patch: Patch
+            public let swizzle: Swizzle
+ 
+            /** signature with arguments substituted in */
+            public var decorated: String?
+
+            /** arguments parsed out of invocation */
+            public var arguments = [Any]()
 
             /** Original return address of call to trampoline */
             public let returnAddress: UnsafeRawPointer
@@ -241,7 +261,7 @@ open class SwiftTrace: NSObject {
             public let entryStack: UnsafeMutablePointer<EntryStack>
 
             public var exitStack: UnsafeMutablePointer<ExitStack> {
-                return patch.rebind(entryStack)
+                return swizzle.rebind(entryStack)
             }
 
             /** copy of struct return register in case function throws */
@@ -269,16 +289,16 @@ open class SwiftTrace: NSObject {
              - parameter returnAddress: adress in process trampoline was called from
              - parameter stackPointer: stack pointer of thread with saved registers
              */
-            public required init(stackDepth: Int, patch: Patch, returnAddress: UnsafeRawPointer,
+            public required init(stackDepth: Int, swizzle: Swizzle, returnAddress: UnsafeRawPointer,
                                  stackPointer: UnsafeMutablePointer<UInt64>) {
                 timeEntered = Invocation.usecTime()
                 self.stackDepth = stackDepth
-                self.patch = patch
+                self.swizzle = swizzle
                 self.returnAddress = returnAddress
-                self.entryStack = patch.rebind(stackPointer)
-                self.swiftSelf = patch.objcMethod != nil ?
-                    self.entryStack.pointee.intArg1 : self.entryStack.pointee.swiftSelf
-                self.structReturn = UnsafeMutableRawPointer(bitPattern: self.entryStack.pointee.structReturn)
+                self.entryStack = swizzle.rebind(stackPointer)
+                self.swiftSelf = swizzle.objcMethod != nil ?
+                    entryStack.pointee.intArg1 : entryStack.pointee.swiftSelf
+                self.structReturn = UnsafeMutableRawPointer(bitPattern: entryStack.pointee.structReturn)
             }
 
             /**
@@ -618,11 +638,16 @@ open class SwiftTrace: NSObject {
         iterateMethods(ofClass: aClass) {
             (name, vtableSlot, stop) in
             if included(symbol: name),
-                let patch = patchFactory.init(name: name, vtableSlot: vtableSlot) {
+                let patch = swizzleFactory.init(name: name, vtableSlot: vtableSlot) {
                 vtableSlot.pointee = patch.forwardingImplementation()
             }
         }
     }
+
+    /**
+     Value that crops up as a ClassSize since 5.2 runtime
+     */
+    static let invalidClassSize = 0x50AF17B0
 
     /**
         Iterate over all methods in the vtable that follows the class information
@@ -637,7 +662,7 @@ open class SwiftTrace: NSObject {
 
         guard (className.hasPrefix("_Tt") || className.contains(".")) &&
             !className.hasPrefix("Swift.") &&
-            swiftMeta.pointee.ClassSize < 0x50AF17B0 else {
+            swiftMeta.pointee.ClassSize < Self.invalidClassSize else {
             //print("Object is not instance of Swift class")
             return false
         }
@@ -652,7 +677,7 @@ open class SwiftTrace: NSObject {
                     var info = Dl_info()
                     for i in 0..<(vtableEnd - vtableStart) {
                         if var impl: IMP = autoBitCast(vtableStart[i]) {
-                            if let patch = Patch.originalPatch(for: impl) {
+                            if let patch = Swizzle.originalSwizzle(for: impl) {
                                 impl = patch.implementation
                             }
                             let voidPtr: UnsafeMutableRawPointer = autoBitCast(impl)
@@ -685,8 +710,8 @@ open class SwiftTrace: NSObject {
         return names
     }
 
-    public typealias EntryAspect = (_ patch: Patch, _ stack: inout EntryStack) -> Void
-    public typealias ExitAspect = (_ patch: Patch, _ stack: inout ExitStack) -> Void
+    public typealias EntryAspect = (_ swizzle: Swizzle, _ stack: inout EntryStack) -> Void
+    public typealias ExitAspect = (_ swizzle: Swizzle, _ stack: inout ExitStack) -> Void
 
     /**
         Add a closure aspect to be called before or after a "Patch" is called
@@ -751,7 +776,7 @@ open class SwiftTrace: NSObject {
         return iterateMethods(ofClass: aClass) {
             (name, vtableSlot, stop) in
             if name == methodName,
-                let patch = Patch.active[unsafeBitCast(vtableSlot.pointee, to: IMP.self)] {
+                let patch = Swizzle.activeSwizzles[unsafeBitCast(vtableSlot.pointee, to: IMP.self)] {
                 patch.remove()
                 stop = true
             }
@@ -761,7 +786,7 @@ open class SwiftTrace: NSObject {
     /**
         Internal class used in the implementation of aspects
      */
-    open class Aspect: Patch {
+    open class Aspect: Swizzle {
 
         let entryAspect: EntryAspect?
         let exitAspect: ExitAspect?
@@ -790,7 +815,7 @@ open class SwiftTrace: NSObject {
     /**
         Implementation of invocation api
      */
-    public class Call: Patch {
+    public class Call: Swizzle {
 
         public var input = EntryStack()
         public var output = ExitStack()
@@ -817,7 +842,7 @@ open class SwiftTrace: NSObject {
             input.swiftSelf = autoBitCast(target)
 
             caller = autoBitCast(imp_implementationForwardingToTracer(autoBitCast(self),
-                                  autoBitCast(Patch.onEntry), autoBitCast(Patch.onExit)))
+                                  autoBitCast(Swizzle.onEntry), autoBitCast(Swizzle.onExit)))
         }
 
         public required init?(name: String, vtableSlot: UnsafeMutablePointer<SIMP>? = nil,
@@ -883,7 +908,7 @@ open class SwiftTrace: NSObject {
         }
 
         public func getReturn<T>() -> T {
-            return output.genericReturn(patch: self).pointee
+            return output.genericReturn(swizzle: self).pointee
         }
     }
 
@@ -920,7 +945,7 @@ open class SwiftTrace: NSObject {
         Remove all patches applied until now
      */
     @objc open class func removeAllPatches() {
-        for (_, patch) in Patch.active {
+        for (_, patch) in Swizzle.activeSwizzles {
             patch.removeAll()
         }
     }
@@ -945,7 +970,7 @@ open class SwiftTrace: NSObject {
                     continue
                 }
 
-                if let info = patchFactory.init(name: name, objcMethod: method) {
+                if let info = swizzleFactory.init(name: name, objcMethod: method) {
                     method_setImplementation(method,
                         autoBitCast(info.forwardingImplementation()))
                 }
@@ -1061,32 +1086,38 @@ func _stdlib_demangleImpl(
     ) -> UnsafeMutablePointer<CChar>?
 
 extension SwiftTrace.EntryStack {
-    public var invocation: SwiftTrace.Patch.Invocation! {
-        return SwiftTrace.Patch.Invocation.current
+    public var invocation: SwiftTrace.Swizzle.Invocation! {
+        return SwiftTrace.Swizzle.Invocation.current
     }
 }
 
 extension SwiftTrace.ExitStack {
-    public var invocation: SwiftTrace.Patch.Invocation! {
-        return SwiftTrace.Patch.Invocation.current
+    public var invocation: SwiftTrace.Swizzle.Invocation! {
+        return SwiftTrace.Swizzle.Invocation.current
     }
-    mutating func genericReturn<T>(patch: SwiftTrace.Patch? = nil) -> UnsafeMutablePointer<T> {
+    mutating func genericReturn<T>(swizzle: SwiftTrace.Swizzle? = nil) -> UnsafeMutablePointer<T> {
         if MemoryLayout<T>.size > MemoryLayout<intptr_t>.size * SwiftTrace.ExitStack.returnRegs {
             resyncStructReturn()
             return invocation.structReturn!.assumingMemoryBound(to: T.self)
         }
         else {
-            let patch = patch ?? invocation!.patch
+            let swizzle = swizzle ?? invocation!.swizzle
             #if os(iOS) || os(macOS)
             if T.self is OSRect.Type {
-                return patch.rebind(&floatReturn1)
+                return swizzle.rebind(&floatReturn1)
+            }
+            if T.self is OSPoint.Type {
+                return swizzle.rebind(&floatReturn1)
+            }
+            if T.self is OSSize.Type {
+                return swizzle.rebind(&floatReturn1)
             }
             #endif
             if T.self is Double.Type || T.self is Float.Type {
-                return patch.rebind(&floatReturn1)
+                return swizzle.rebind(&floatReturn1)
             }
             else {
-                return patch.rebind(&intReturn1)
+                return swizzle.rebind(&intReturn1)
             }
         }
     }

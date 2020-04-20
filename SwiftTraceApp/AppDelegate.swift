@@ -25,6 +25,7 @@ public struct Strings: SwiftTraceArg {
 }
 
 public protocol P {
+    var i: Int { get set }
     func x()
     func y() -> CGRect
     @discardableResult
@@ -36,7 +37,7 @@ public protocol P {
 
 public class TestClass: P, SwiftTraceArg {
 
-    let i = 999
+    public var i = 999
 
     public func x() {
         print( "TestClass.x() self.i: \(i)" )
@@ -77,11 +78,11 @@ public class TestClass: P, SwiftTraceArg {
     }
 }
 
-class MyTracer: SwiftTrace.Patch {
+class MyTracer: SwiftTrace.Swizzle {
 
     override func onEntry(stack: inout SwiftTrace.EntryStack) {
         //print(stack)
-        if name == "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String" {
+        if signature == "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String" {
             print("\(stack.intArg1) \(rebind(&stack.intArg2, to: String.self).pointee) \(stack.floatArg1) \(rebind(&stack.floatArg5, to: Float.self).pointee) \(rebind(&stack.intArg6, to: TestClass.self).pointee.i) \((getSelf() as TestClass).i)")
         }
     }
@@ -89,10 +90,10 @@ class MyTracer: SwiftTrace.Patch {
     override func onExit(stack: inout SwiftTrace.ExitStack) {
         //print(stack)
         print("\(getSelf() as AnyObject)")
-        if name == "SwiftTwaceApp.TestClass.ssssss(a: SwiftTwaceApp.TestStruct) -> SwiftTwaceApp.TestStruct" {
+        if signature == "SwiftTwaceApp.TestClass.ssssss(a: SwiftTwaceApp.TestStruct) -> SwiftTwaceApp.TestStruct" {
             print(structReturn().pointee as TestStruct)
         }
-        if name == "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String" {
+        if signature == "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String" {
             if stack.thrownError != 0 {
                 print(rebind(&stack.thrownError, to: NSError.self).pointee)
             }
@@ -100,10 +101,10 @@ class MyTracer: SwiftTrace.Patch {
 //            stack.invocation.patch.argument(&intReturn1, as: String.self) = "5-5-5"
             stack.setReturn(value: "5-5-5")
         }
-        if name == "SwiftTwaceApp.TestClass.y() -> __C.CGRect" {
+        if signature == "SwiftTwaceApp.TestClass.y() -> __C.CGRect" {
             rebind(&stack.floatReturn1).pointee = CGRect(x: 11.0, y: 22.0, width: 33.0, height: 44.0)
         }
-        if name == "SwiftTwaceApp.TestClass.str2(strs: inout SwiftTwaceApp.Strings) -> SwiftTwaceApp.Strings" {
+        if signature == "SwiftTwaceApp.TestClass.str2(strs: inout SwiftTwaceApp.Strings) -> SwiftTwaceApp.Strings" {
             rebind(&stack.intReturn1, to: Strings.self).pointee.s2 += "!"
         }
     }
@@ -136,7 +137,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         splitViewController.delegate = self
 
         // any inclusions or exlusions need to come before trace enabled
-        SwiftTrace.patchFactory = MyTracer.self
+        SwiftTrace.swizzleFactory = MyTracer.self
 
         type(of: self).traceBundle()
         SwiftTrace.trace(aClass: type(of: self))
@@ -145,10 +146,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print(SwiftTrace.methodNames(ofClass: TestClass.self))
 
         print(SwiftTrace.addAspect(aClass: TestClass.self, methodName: "SwiftTwaceApp.TestClass.x() -> ()",
-           onEntry: { (patch: SwiftTrace.Patch, stack: inout SwiftTrace.EntryStack) in
+           onEntry: { (patch: SwiftTrace.Swizzle, stack: inout SwiftTrace.EntryStack) in
 //            patch.rebind(&stack.intArg2).pointee = "Grief"
             print("SwiftTwaceApp.TestClass.x() enter") },
-           onExit: { (patch: SwiftTrace.Patch, stack: inout SwiftTrace.ExitStack) in
+           onExit: { (patch: SwiftTrace.Swizzle, stack: inout SwiftTrace.ExitStack) in
 //            stack.setReturn(value: "Phew")
             print("SwiftTwaceApp.TestClass.x() exit") }))
         print(SwiftTrace.addAspect(methodName: "SwiftTwaceApp.TestClass.y() -> __C.CGRect", onExit: { (_, _) in print("SwiftTwaceApp.TestClass.y() exit!") }))
@@ -160,7 +161,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             patch.structReturn(as: TestStruct.self).pointee.k = "8-8-8"
         }))
 
-        let a: P = TestClass()
+        var a: P = TestClass()
         a.x()
 
         print( a.y() )
@@ -168,6 +169,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print( a.y() )
 
         a.x()
+        a.i = 888
+
         print(try! a.zzz( 123, f: 66, g: 55, h: "4-4", f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77, ff: 11, o: TestClass()))
         print(a.ssssss( a: TestStruct()))
 

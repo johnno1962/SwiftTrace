@@ -56,7 +56,7 @@ class SwiftTwaceTests: XCTestCase {
             return a
         }
 
-        class TestPatch: SwiftTrace.Patch {
+        class TestSwizzle: SwiftTrace.Swizzle {
 
             override func onEntry(stack: inout SwiftTrace.EntryStack) {
                 args = "\(stack.intArg1) \(getSelf(as: TestClass.self).i) \(stack.floatArg1)"
@@ -69,7 +69,7 @@ class SwiftTwaceTests: XCTestCase {
     override func setUp() {
         super.setUp()
         // Put setup code here. This method is called before the invocation of each test method in the class.
-        SwiftTrace.patchFactory = TestClass.TestPatch.self
+        SwiftTrace.swizzleFactory = TestClass.TestSwizzle.self
         SwiftTrace.trace(aClass: TestClass.self)
     }
 
