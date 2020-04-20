@@ -12,8 +12,9 @@ public protocol P {
     var i: Int { get set }
     func x()
     func y() -> Float
-    func z( _ d: Int, f: Double, s: String, g: Float, h: Double, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int )
+    func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int )
     func rect(r1: NSRect, r2: NSRect) -> NSRect
+    func arr(a: [String]) -> [String]
 }
 
 open class TestClass: P {
@@ -29,12 +30,16 @@ open class TestClass: P {
         return -9.0
     }
 
-    open func z( _ d: Int, f: Double, s: String, g: Float, h: Double, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int ) {
+    open func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int ) {
         print( "open func z( \(i) \(d) \(e) \(f) \(s) \(g) \(h) \(f1) \(g1) \(h1) \(f2) \(g2) \(h2) )" )
     }
 
     public func rect(r1: NSRect, r2: NSRect) -> NSRect {
         return r2
+    }
+
+    public func arr(a: [String]) -> [String] {
+        return a
     }
 }
 
@@ -70,6 +75,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         print( a.y() )
         a.x()
         a.z( 88, f: 66, s: "$%^", g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
+        print(a.arr(a: ["a", "b", "c"]))
         print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect(r1: __C.CGRect, r2: __C.CGRect) -> __C.CGRect", args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)) as NSRect)
     }
 
