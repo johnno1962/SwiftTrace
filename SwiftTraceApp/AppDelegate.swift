@@ -138,8 +138,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         splitViewController.delegate = self
 
         // any inclusions or exlusions need to come before trace enabled
-        SwiftTrace.swizzleFactory = MyTracer.self
 
+        SwiftTrace.traceBundle()
+        ObjcTraceTester().a(44, i:45, b: 55, c: "66", o: self, s: Selector(("jjj:")))
+
+        SwiftTrace.swizzleFactory = MyTracer.self
         type(of: self).traceBundle()
         SwiftTrace.trace(aClass: type(of: self))
 

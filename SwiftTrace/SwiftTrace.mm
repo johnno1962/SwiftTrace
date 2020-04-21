@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#40 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#42 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -207,18 +207,18 @@ NSMethodSignature *method_getSignature(Method method) {
     return [NSMethodSignature signatureWithObjCTypes:encoding];
 }
 
-NSString *method_argumentType(id signature, NSUInteger index) {
-    return [NSString stringWithUTF8String:[signature getArgumentTypeAtIndex:index]];
+const char *sig_argumentType(id signature, NSUInteger index) {
+    return [signature getArgumentTypeAtIndex:index];
 }
 
-NSString *method_returnType(id signature) {
-    return [NSString stringWithUTF8String:[signature methodReturnType]];
+const char *sig_returnType(id signature) {
+    return [signature methodReturnType];
 }
 
 @implementation ObjcTraceTester: NSObject
 
-- a:(float)a i:(int)i b:(double)b c:(NSString *)c o:o s:(SEL)s {
-    return o;
+- (OSRect)a:(float)a i:(int)i b:(double)b c:(NSString *)c o:o s:(SEL)s {
+    return OSMakeRect(1, 2, 3, 4);
 }
 
 @end

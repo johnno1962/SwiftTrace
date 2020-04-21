@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#33 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#36 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -182,10 +182,24 @@ extension SwiftTrace {
                                intArgs: UnsafePointer<intptr_t>,
                                floatArgs: UnsafePointer<Double>) -> String {
             let isReturn = signature != nil
+            let returnType = String(cString: sig_returnType(methodSignature))
+            // Is method returning a struct?
+            // If so there is an implicit argument which is the address
+            // to write the struct into (even if the registers are used.)
+            #if arch(arm64)
+            let isStret = false
+            #else
+            let isStret = returnType.hasPrefix("{")
+            if isStret && !isReturn {
+                invocation.swiftSelf = intArgs[1]
+            }
+            #endif
             let objcSelf = unsafeBitCast(invocation.swiftSelf, to: AnyObject.self)
             var output = isReturn ? signature! + " -> " :
                 "\(object_isClass(objcSelf) ? "+" : "-")[\(objcSelf) "
-            var index: UInt = 2, intSlot = isReturn ? 0 : 2, floatSlot = 0
+            // (Objective-)C methods have two implict arguments: self and _cmd;
+            // if returning a struct, there is also the struct return address.
+            var index = 2, intSlot = isReturn ? 0 : isStret ? 3 : 2, floatSlot = 0
             let selector = isReturn ? "__RETURN__:" : self.selector
 
             if !selector.hasSuffix(":") {
@@ -243,8 +257,9 @@ extension SwiftTrace {
                                  maxSlots: SwiftTrace.EntryStack.maxFloatArgs)
                     }
 
-                    let type = isReturn ? method_returnType(methodSignature) :
-                                    method_argumentType(methodSignature, index)
+                    let type = isReturn ? returnType :
+                        String(cString: sig_argumentType(methodSignature, UInt(index)))
+
                     switch type {
                     case "@": intValue(type: AnyObject?.self)
                     case "#": intValue(type: AnyObject?.self)

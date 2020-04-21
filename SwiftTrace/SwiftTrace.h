@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#14 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#17 $
 //
 
 #import <Foundation/Foundation.h>
@@ -28,16 +28,26 @@ extern "C" {
     IMP _Nonnull imp_implementationForwardingToTracer(void * _Nonnull patch, IMP _Nonnull onEntry, IMP _Nonnull onExit);
     NSArray<Class> * _Nonnull objc_classArray();
     NSMethodSignature * _Nonnull method_getSignature(Method _Nonnull Method);
-    NSString * _Nonnull method_argumentType(id _Nonnull signature, NSUInteger index);
-    NSString * _Nonnull method_returnType(id _Nonnull signature);
+    const char * _Nonnull sig_argumentType(id _Nonnull signature, NSUInteger index);
+    const char * _Nonnull sig_returnType(id _Nonnull signature);
     void findPureSwiftClasses(const char * _Nullable path, void (^ _Nonnull callback)(void * _Nonnull symbol));
     int fast_dladdr(const void * _Nonnull, Dl_info * _Nonnull);
 #ifdef __cplusplus
 }
 #endif
 
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
+#import <CoreGraphics/CGGeometry.h>
+#define OSRect CGRect
+#define OSMakeRect(x, y, w, h) CGRectMake(x, y, w, h)
+#else
+#define OSRect NSRect
+#define OSMakeRect(x, y, w, h) NSMakeRect(x, y, w, h)
+
+#endif
+
 @interface ObjcTraceTester: NSObject
 
-- a:(float)a i:(int)i b:(double)b c:(NSString *_Nullable)c o:o s:(SEL _Nullable)s;
+- (OSRect)a:(float)a i:(int)i b:(double)b c:(NSString *_Nullable)c o:o s:(SEL _Nullable)s;
 
 @end

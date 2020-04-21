@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#4 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#5 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -214,7 +214,7 @@ extension SwiftTrace {
            public var structReturn: UnsafeMutableRawPointer? = nil
 
            /** "self" for method invocations */
-           public let swiftSelf: intptr_t
+           public var swiftSelf: intptr_t
 
            /** for use relaying data from entry to exit */
            public var userInfo: AnyObject?
