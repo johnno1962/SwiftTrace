@@ -32,7 +32,7 @@ open class TestClass: P {
     }
 
     open func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int ) {
-        print( "open func z( \(i) \(d) \(e) \(f) \(s) \(g) \(h) \(f1) \(g1) \(h1) \(f2) \(g2) \(h2) )" )
+        print( "open func z( \(i) \(d) \(e) \(f) \(String(describing: s)) \(g) \(h) \(f1) \(g1) \(h1) \(f2) \(g2) \(h2) )" )
     }
 
     public func rect(r1: NSRect, r2: NSRect) -> NSRect {
@@ -71,6 +71,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 //        SwiftTrace.patchFactory = MyTracer.self
 
         type(of: self).traceBundle()
+        ObjcTraceTester().a(44, i:45, b: 55, c: "66", o: self, s: Selector(("jjj:")))
 
         print(SwiftTrace.methodNames(ofClass: TestClass.self))
 

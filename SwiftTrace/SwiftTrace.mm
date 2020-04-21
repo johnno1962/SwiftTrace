@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#37 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#40 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -41,6 +41,7 @@
 #import <mach/vm_types.h>
 #import <mach/vm_map.h>
 #import <mach/mach_init.h>
+#import <objc/runtime.h>
 
 extern char xt_forwarding_trampoline_page, xt_forwarding_trampolines_start,
             xt_forwarding_trampolines_next, xt_forwarding_trampolines_end;
@@ -190,6 +191,37 @@ typedef struct mach_header mach_header_t;
 typedef struct segment_command segment_command_t;
 typedef struct nlist nlist_t;
 #endif
+
+NSArray<Class> *objc_classArray() {
+    unsigned nc;
+    NSMutableArray<Class> *array = [NSMutableArray new];
+    if (Class *classes = objc_copyClassList(&nc))
+        for (int i=0; i<nc; i++)
+            if (class_getSuperclass(classes[i]))
+                [array addObject:classes[i]];
+    return array;
+}
+
+NSMethodSignature *method_getSignature(Method method) {
+    const char *encoding = method_getTypeEncoding(method);
+    return [NSMethodSignature signatureWithObjCTypes:encoding];
+}
+
+NSString *method_argumentType(id signature, NSUInteger index) {
+    return [NSString stringWithUTF8String:[signature getArgumentTypeAtIndex:index]];
+}
+
+NSString *method_returnType(id signature) {
+    return [NSString stringWithUTF8String:[signature methodReturnType]];
+}
+
+@implementation ObjcTraceTester: NSObject
+
+- a:(float)a i:(int)i b:(double)b c:(NSString *)c o:o s:(SEL)s {
+    return o;
+}
+
+@end
 
 void findPureSwiftClasses(const char *path, void (^callback)(void *aClass)) {
     for (int32_t i = _dyld_image_count(); i >= 0 ; i--) {
