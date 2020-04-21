@@ -14,7 +14,8 @@ public protocol P {
     func y() -> Float
     func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int )
     func rect(r1: NSRect, r2: NSRect) -> NSRect
-    func arr(a: [String]) -> [String]
+    func arr(a: [String], b: [Int]) -> [String]
+    func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> ()
 }
 
 open class TestClass: P {
@@ -38,8 +39,12 @@ open class TestClass: P {
         return r2
     }
 
-    public func arr(a: [String]) -> [String] {
+    public func arr(a: [String], b: [Int]) -> [String] {
         return a
+    }
+
+    public func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> () {
+        return c
     }
 }
 
@@ -51,6 +56,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Insert code here to initialize your application
+        print(objc_classArray().count)
 
         // any inclusions or exlusiona need to come before trace enabled
         //SwiftTrace.include( "Swift.Optiona|TestClass" )
@@ -75,7 +81,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         print( a.y() )
         a.x()
         a.z( 88, f: 66, s: "$%^", g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
-        print(a.arr(a: ["a", "b", "c"]))
+        print(a.arr(a: ["a", "b", "c"], b: [1, 2, 3]))
+        print(a.c(c: { _ in }))
         print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect(r1: __C.CGRect, r2: __C.CGRect) -> __C.CGRect", args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)) as NSRect)
     }
 

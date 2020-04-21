@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#176 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#178 $
 //
 
 import Foundation
@@ -238,8 +238,7 @@ open class SwiftTrace: NSObject {
         var stop = false
 
         guard (className.hasPrefix("_Tt") || className.contains(".")) &&
-            !className.hasPrefix("Swift.") &&
-            swiftMeta.pointee.ClassSize < Self.invalidClassSize else {
+            !className.hasPrefix("Swift.") && class_getSuperclass(aClass) != nil else {
             //print("Object is not instance of Swift class")
             return false
         }
@@ -290,9 +289,9 @@ open class SwiftTrace: NSObject {
     /**
         Remove all patches applied until now
      */
-    @objc open class func removeAllPatches() {
-        for (_, patch) in Swizzle.activeSwizzles {
-            patch.removeAll()
+    @objc open class func removeAllSwizzles() {
+        for (_, swizzle) in Swizzle.activeSwizzles {
+            swizzle.removeAll()
         }
     }
 

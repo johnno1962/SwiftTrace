@@ -78,9 +78,10 @@ public class TestClass: P, SwiftTraceArg {
     }
 }
 
-class MyTracer: SwiftTrace.Swizzle {
+class MyTracer: SwiftTrace.Arguments {
 
     override func onEntry(stack: inout SwiftTrace.EntryStack) {
+        print(arguments)
         //print(stack)
         if signature == "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String" {
             print("\(stack.intArg1) \(rebind(&stack.intArg2, to: String.self).pointee) \(stack.floatArg1) \(rebind(&stack.floatArg5, to: Float.self).pointee) \(rebind(&stack.intArg6, to: TestClass.self).pointee.i) \((getSelf() as TestClass).i)")
@@ -214,7 +215,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.str3(strs: SwiftTwaceApp.Strings) -> SwiftTwaceApp.Strings", args: strings) as Strings)
         print(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.x() -> ()", args: strings) as Void)
 
-        SwiftTrace.removeAllPatches()
+        SwiftTrace.removeAllSwizzles()
 
         let x = Benchmark()
 

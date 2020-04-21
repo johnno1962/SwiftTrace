@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#2 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#4 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -134,14 +134,14 @@ extension SwiftTrace {
        open func onExit(stack: inout ExitStack) {
            if let invocation = invocation() {
                let elapsed = Invocation.usecTime() - invocation.timeEntered
-               print("\(String(repeating: "  ", count: invocation.stackDepth))\(message(stack: &stack)) \(String(format: "%.1fms", elapsed * 1000.0))")
+               print("\(String(repeating: "  ", count: invocation.stackDepth))\(traceMessage(stack: &stack)) \(String(format: "%.1fms", elapsed * 1000.0))")
            }
        }
 
        /**
         Provide message for trace
         */
-       open func message(stack: inout ExitStack) -> String {
+       open func traceMessage(stack: inout ExitStack) -> String {
            return signature
        }
 
@@ -207,7 +207,7 @@ extension SwiftTrace {
            public let entryStack: UnsafeMutablePointer<EntryStack>
 
            public var exitStack: UnsafeMutablePointer<ExitStack> {
-               return swizzle.rebind(entryStack)
+               return autoBitCast(entryStack)
            }
 
            /** copy of struct return register in case function throws */

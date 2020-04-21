@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#2 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#3 $
 //
 //  Add aspects to Swift methods
 //  ============================
@@ -90,7 +90,7 @@ extension SwiftTrace {
     /**
         Internal class used in the implementation of aspects
      */
-    open class Aspect: Swizzle {
+    open class Aspect: Arguments {
 
         let entryAspect: EntryAspect?
         let exitAspect: ExitAspect?
