@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#5 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#7 $
 //
 //  Invocation interface for Swift
 //  ==============================
@@ -44,12 +44,12 @@ extension SwiftTrace {
             input.swiftSelf = autoBitCast(target)
 
             caller = autoBitCast(imp_implementationForwardingToTracer(autoBitCast(self),
-                                  autoBitCast(Swizzle.onEntry), autoBitCast(Swizzle.onExit)))
+                                 autoBitCast(Swizzle.onEntry), autoBitCast(Swizzle.onExit)))
         }
 
         public required init?(name: String, vtableSlot: UnsafeMutablePointer<SIMP>? = nil,
                               objcMethod: Method? = nil, replaceWith: nullImplementationType? = nil) {
-            fatalError("SwiftTrace.Call.init(name:vtableSlot:objcMethod:replaceWith:) should not be used")
+            fatalError("SwiftTrace.Call.init(name:vtableSlot:objcMethod:replaceWith:) must not be used")
         }
 
         public func reset(target: AnyObject) {
@@ -65,36 +65,20 @@ extension SwiftTrace {
         }
 
         public func add<T>(arg: T) {
-            let registers = MemoryLayout<T>.size / MemoryLayout<intptr_t>.size
-            #if os(macOS) || os(iOS) || os(tvOS)
-            if arg is OSRect {
-                rebind(rebind(&input.floatArg1, to: Double.self).advanced(by: floatArgNumber))
-                    .pointee = arg
-                floatArgNumber += registers
-                return
-            }
-            else if arg is OSPoint {
-                rebind(rebind(&input.floatArg1, to: Double.self).advanced(by: floatArgNumber))
-                    .pointee = arg
-                floatArgNumber += registers
-                return
-            }
-            else if arg is OSSize {
-                rebind(rebind(&input.floatArg1, to: Double.self).advanced(by: floatArgNumber))
-                    .pointee = arg
-                floatArgNumber += registers
-                return
-            }
-            #endif
-            if arg is Double || arg is Float {
-                if floatArgNumber + 1 > EntryStack.maxFloatArgs {
+            if arg is SwiftTraceFloatArg {
+                let registers = (MemoryLayout<T>.size +
+                    MemoryLayout<Double>.size - 1) / MemoryLayout<Double>.size
+                if floatArgNumber + registers > EntryStack.maxFloatArgs {
                     fatalError("Too many float args for SwiftTrace.Call")
                 }
-                rebind(rebind(&input.floatArg1, to: Double.self).advanced(by: floatArgNumber))
+                rebind(rebind(&input.floatArg1, to: T.self).advanced(by: floatArgNumber))
                     .pointee = arg
-                floatArgNumber += 1
+                floatArgNumber += registers
+                return
             }
             else {
+                let registers = (MemoryLayout<T>.size +
+                    MemoryLayout<intptr_t>.size - 1) / MemoryLayout<intptr_t>.size
                 if intArgNumber + registers > EntryStack.maxIntArgs {
                     fatalError("Too many int args for SwiftTrace.Call")
                 }
@@ -118,7 +102,7 @@ extension SwiftTrace {
 
         public override func onExit(stack: inout ExitStack) {
             output = stack
-            rebind(&stack.floatReturn1).pointee  = backup
+            rebind(&stack.floatReturn1).pointee = backup
         }
 
         public func getReturn<T>() -> T {
@@ -141,9 +125,8 @@ extension SwiftTrace {
             if let arg = arg as? SwiftTraceArg {
                 arg.add(toCall: call)
             }
-            else if arg is Int || type(of: arg) is AnyObject.Type {
-                var arg = arg
-                call.add(arg: call.rebind(&arg, to: Int.self).pointee)
+            else if type(of: arg) is AnyObject.Type {
+                call.add(arg: unsafeBitCast(arg, to: Int.self))
             }
             else {
                 fatalError("Unsupported argument type \(type(of: arg))")
@@ -159,19 +142,32 @@ extension SwiftTrace {
 public protocol SwiftTraceArg {
     func add(toCall call: SwiftTrace.Call)
 }
+public protocol SwiftTraceFloatArg: SwiftTraceArg {
+}
 extension SwiftTraceArg {
     public func add(toCall call: SwiftTrace.Call) {
         call.add(arg: self)
     }
 }
 
-extension UnsafeMutablePointer: SwiftTraceArg {}
+extension Bool: SwiftTraceArg {}
+extension Int: SwiftTraceArg {}
+extension UInt: SwiftTraceArg {}
+extension Int8: SwiftTraceArg {}
+extension UInt8: SwiftTraceArg {}
+extension Int16: SwiftTraceArg {}
+extension UInt16: SwiftTraceArg {}
+extension Int32: SwiftTraceArg {}
+extension UInt32: SwiftTraceArg {}
+extension Int64: SwiftTraceArg {}
+extension UInt64: SwiftTraceArg {}
 extension UnsafePointer: SwiftTraceArg {}
-extension Double: SwiftTraceArg {}
-extension Float: SwiftTraceArg {}
+extension UnsafeMutablePointer: SwiftTraceArg {}
 extension String: SwiftTraceArg {}
+extension Double: SwiftTraceFloatArg {}
+extension Float: SwiftTraceFloatArg {}
 #if os(macOS) || os(iOS) || os(tvOS)
-extension OSRect: SwiftTraceArg {}
-extension OSPoint: SwiftTraceArg {}
-extension OSSize: SwiftTraceArg {}
+extension OSRect: SwiftTraceFloatArg {}
+extension OSPoint: SwiftTraceFloatArg {}
+extension OSSize: SwiftTraceFloatArg {}
 #endif

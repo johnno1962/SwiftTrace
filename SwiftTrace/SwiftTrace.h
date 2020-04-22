@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#17 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#18 $
 //
 
 #import <Foundation/Foundation.h>
@@ -39,10 +39,10 @@ extern "C" {
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 #import <CoreGraphics/CGGeometry.h>
 #define OSRect CGRect
-#define OSMakeRect(x, y, w, h) CGRectMake(x, y, w, h)
+#define OSMakeRect CGRectMake
 #else
 #define OSRect NSRect
-#define OSMakeRect(x, y, w, h) NSMakeRect(x, y, w, h)
+#define OSMakeRect NSMakeRect
 
 #endif
 
