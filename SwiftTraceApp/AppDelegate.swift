@@ -136,14 +136,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count-1] as! UINavigationController
         navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
         splitViewController.delegate = self
+        print(objc_classArray().count)
 
         // any inclusions or exlusions need to come before trace enabled
 
-        SwiftTrace.traceBundle()
+        SwiftTrace.swiftTraceBundle()
         ObjcTraceTester().a(44, i:45, b: 55, c: "66", o: self, s: Selector(("jjj:")))
 
         SwiftTrace.swizzleFactory = MyTracer.self
-        type(of: self).traceBundle()
+        type(of: self).swiftTraceBundle()
         SwiftTrace.trace(aClass: type(of: self))
 
         print(SwiftTrace.swiftClassList(bundlePath: Bundle.main.executablePath!))

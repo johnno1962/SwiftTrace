@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#5 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#7 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -21,15 +21,12 @@ extension SwiftTrace {
     */
    open class Swizzle: NSObject {
 
-       /** Dictionary of patch objects created by trampoline */
-       static var activeSwizzles = [IMP: Swizzle]()
-
        /** follow chain of Patches through to find original patch */
        open class func originalSwizzle(for implementation: IMP) -> Swizzle? {
            var implementation = implementation
            var patch: Swizzle?
-           while activeSwizzles[implementation] != nil {
-               patch = activeSwizzles[implementation]
+        while SwiftTrace.lastSwiftTrace.activeSwizzles[implementation] != nil {
+               patch = SwiftTrace.lastSwiftTrace.activeSwizzles[implementation]
                implementation = patch!.implementation
            }
            return patch
@@ -121,7 +118,7 @@ extension SwiftTrace {
            /* create trampoline */
            let impl = imp_implementationForwardingToTracer(autoBitCast(self),
                                autoBitCast(Swizzle.onEntry), autoBitCast(Swizzle.onExit))
-           Swizzle.activeSwizzles[impl] = self // track Patches by trampoline and retain them
+           SwiftTrace.lastSwiftTrace.activeSwizzles[impl] = self // track Patches by trampoline and retain them
            return autoBitCast(impl)
        }
 

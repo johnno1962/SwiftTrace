@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#36 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#39 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -192,7 +192,7 @@ extension SwiftTrace {
             guard methodSignature != nil else {
                 return signature ?? invocation.swizzle.signature }
             let isReturn = signature != nil
-            let returnType = String(cString: sig_returnType(methodSignature))
+            let returnType = String(cString: sig_returnType(methodSignature!))
             // Is method returning a struct?
             // If so there is an implicit argument which is the address
             // to write the struct into (even if the registers are used.)
@@ -218,7 +218,7 @@ extension SwiftTrace {
             } else {
                 var args = [String]()
                 let thread = ThreadStack.threadLocal()
-                var unknown = false
+                var hasSeenUnknownArgumentType = false
 
                 for arg in selector.components(separatedBy: ":").dropLast() {
                     var value: String?
@@ -232,24 +232,20 @@ extension SwiftTrace {
                         if slot + slotsRequired <= maxSlots {
                             (registers + slot)
                                 .withMemoryRebound(to: Type.self, capacity: 1) {
-                                let describing = thread.describing
-                                thread.describing = true
-                                defer { thread.describing = describing }
 
-                                if unknown {
+                                if hasSeenUnknownArgumentType {
                                     return
                                 } else if Type.self == AnyObject?.self {
                                     if let id = unsafeBitCast($0.pointee,
                                                               to: AnyObject?.self) {
+                                        let describing = thread.describing
+                                        thread.describing = true
                                         if id.isKind(of: NSString.self) {
                                             value = "@\"\(id)\""
-                                        } else if id.isKind(of: NSArray.self) {
-                                            let array = unsafeBitCast(id, to: NSArray.self)
-                                            value = "[" + array.map({ "\($0)" })
-                                                .joined(separator: ", ") + "]"
                                         } else {
                                             value = describing ? identify(id: id) : "\(id)"
                                         }
+                                        thread.describing = describing
                                     } else {
                                         value = "nil"
                                     }
@@ -321,7 +317,7 @@ extension SwiftTrace {
                         if type.hasPrefix("^") {
                             intValue(type: UnsafeRawPointer.self)
                         } else {
-                            unknown = true
+                            hasSeenUnknownArgumentType = true
                         }
                     }
 

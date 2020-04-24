@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#3 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#4 $
 //
 //  Add aspects to Swift methods
 //  ============================
@@ -80,7 +80,7 @@ extension SwiftTrace {
         return iterateMethods(ofClass: aClass) {
             (name, vtableSlot, stop) in
             if name == methodName,
-                let patch = Swizzle.activeSwizzles[unsafeBitCast(vtableSlot.pointee, to: IMP.self)] {
+                let patch = SwiftTrace.lastSwiftTrace.activeSwizzles[unsafeBitCast(vtableSlot.pointee, to: IMP.self)] {
                 patch.remove()
                 stop = true
             }

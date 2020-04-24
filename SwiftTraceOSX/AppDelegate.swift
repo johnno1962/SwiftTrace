@@ -70,7 +70,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 //        SwiftTrace.patchFactory = MyTracer.self
 
-        type(of: self).traceBundle()
+        type(of: self).swiftTraceBundle()
         ObjcTraceTester().a(44, i:45, b: 55, c: "66", o: self, s: Selector(("jjj:")))
 
         print(SwiftTrace.methodNames(ofClass: TestClass.self))

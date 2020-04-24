@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#18 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#19 $
 //
 
 #import <Foundation/Foundation.h>
@@ -21,6 +21,11 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
 
 #import <dlfcn.h>
 #import <objc/runtime.h>
+
+@interface NSObject(SwiftTrace)
++(void)swiftTrace;
++(void)swiftTraceBundle;
+@end
 
 #ifdef __cplusplus
 extern "C" {

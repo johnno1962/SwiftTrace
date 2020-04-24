@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#42 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#44 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -174,31 +174,38 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 
 // From here on added to the original code for use by "SwiftTrace".
 
-// https://stackoverflow.com/questions/20481058/find-pathname-from-dlopen-handle-on-osx
+@interface SwiftTrace
++ (void)traceBundleWithContaining:(Class)aClass;
++ (void)traceWithAClass:(Class)aClass;
+@end
 
-#import <dlfcn.h>
-#import <mach-o/dyld.h>
-#import <mach-o/arch.h>
-#import <mach-o/getsect.h>
-#import <mach-o/nlist.h>
+@implementation NSObject(SwiftTrace)
++(void)swiftTraceBundle {
+    [SwiftTrace traceBundleWithContaining:self];
+}
++(void)swiftTrace {
+    [SwiftTrace traceWithAClass:self];
+}
+@end
 
-#ifdef __LP64__
-typedef struct mach_header_64 mach_header_t;
-typedef struct segment_command_64 segment_command_t;
-typedef struct nlist_64 nlist_t;
-#else
-typedef struct mach_header mach_header_t;
-typedef struct segment_command segment_command_t;
-typedef struct nlist nlist_t;
-#endif
+@implementation ObjcTraceTester: NSObject
+
+- (OSRect)a:(float)a i:(int)i b:(double)b c:(NSString *)c o:o s:(SEL)s {
+    return OSMakeRect(1, 2, 3, 4);
+}
+
+@end
 
 NSArray<Class> *objc_classArray() {
     unsigned nc;
     NSMutableArray<Class> *array = [NSMutableArray new];
     if (Class *classes = objc_copyClassList(&nc))
-        for (int i=0; i<nc; i++)
+        for (int i=0; i<nc; i++) {
             if (class_getSuperclass(classes[i]))
                 [array addObject:classes[i]];
+            else
+                printf("%s\n", class_getName(classes[i]));
+        }
     return array;
 }
 
@@ -221,13 +228,23 @@ const char *sig_returnType(id signature) {
     return [signature methodReturnType];
 }
 
-@implementation ObjcTraceTester: NSObject
+// https://stackoverflow.com/questions/20481058/find-pathname-from-dlopen-handle-on-osx
 
-- (OSRect)a:(float)a i:(int)i b:(double)b c:(NSString *)c o:o s:(SEL)s {
-    return OSMakeRect(1, 2, 3, 4);
-}
+#import <dlfcn.h>
+#import <mach-o/dyld.h>
+#import <mach-o/arch.h>
+#import <mach-o/getsect.h>
+#import <mach-o/nlist.h>
 
-@end
+#ifdef __LP64__
+typedef struct mach_header_64 mach_header_t;
+typedef struct segment_command_64 segment_command_t;
+typedef struct nlist_64 nlist_t;
+#else
+typedef struct mach_header mach_header_t;
+typedef struct segment_command segment_command_t;
+typedef struct nlist nlist_t;
+#endif
 
 void findPureSwiftClasses(const char *path, void (^callback)(void *aClass)) {
     for (int32_t i = _dyld_image_count(); i >= 0 ; i--) {
