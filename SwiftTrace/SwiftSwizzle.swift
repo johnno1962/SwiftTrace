@@ -12,7 +12,7 @@
 //  ============================
 //
 
-import ObjectiveC
+import Foundation
 
 extension SwiftTrace {
 
@@ -46,6 +46,9 @@ extension SwiftTrace {
 
        /** Original objc method swizzled */
        let objcMethod: Method?
+
+       /** Total time spent in this method */
+       var totalElapsed: TimeInterval = 0.0
 
        /** Closure that can be called instead of original implementation */
        public let nullImplmentation: nullImplementationType?
@@ -135,6 +138,7 @@ extension SwiftTrace {
            if let invocation = invocation() {
                let elapsed = Invocation.usecTime() - invocation.timeEntered
                print("\(String(repeating: "  ", count: invocation.stackDepth))\(traceMessage(stack: &stack)) \(String(format: "%.1fms", elapsed * 1000.0))")
+               totalElapsed += elapsed
            }
        }
 
@@ -280,6 +284,11 @@ extension SwiftTrace {
             The stack of Invocations logged on this thread
             */
            public var stack = [Invocation]()
+
+           /**
+            currently describing an instance
+            */
+           public var describing = false
 
            /**
             Returns an instance of ThreadLocal specific to the current thread

@@ -73,7 +73,7 @@ open class SwiftTrace: NSObject {
     /**
      default pattern of symbols to be excluded from tracing
      */
-    static public let defaultMethodExclusions = "\\.getter|retain]|release]|_tryRetain]|.cxx_destruct]|initWithCoder|_isDeallocating]|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[UIView |UIButton _defaultBackgroundImageForType:andState:|RxSwift.ScheduledDisposable.dispose|subtractAndEncode:"
+    static public var defaultMethodExclusions = "\\.getter| retain]| _tryRetain]| release]| _isDeallocating]| .cxx_destruct]| dealloc]| description]| debugDescription]|initWithCoder|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[UIView |UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|_UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|UIColorEffect colorEffectSaturate:|_windowWithContextId:|RxSwift.ScheduledDisposable.dispose|RemoteCapture subtractAndEncode:"
 
     static var inclusionRegexp: NSRegularExpression?
     static var exclusionRegexp: NSRegularExpression? = NSRegularExpression(regexp: defaultMethodExclusions)
@@ -136,7 +136,7 @@ open class SwiftTrace: NSObject {
         var stopped = false
         var nc: UInt32 = 0
 
-        if let classes = UnsafePointer<AnyClass>(objc_copyClassList(&nc)) {
+        if let classes = UnsafePointer(objc_copyClassList(&nc)) {
             for i in 0 ..< Int(nc) {
                 callback(classes[i], &stopped)
                 if stopped {

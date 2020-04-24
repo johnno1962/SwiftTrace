@@ -204,7 +204,13 @@ NSArray<Class> *objc_classArray() {
 
 NSMethodSignature *method_getSignature(Method method) {
     const char *encoding = method_getTypeEncoding(method);
-    return [NSMethodSignature signatureWithObjCTypes:encoding];
+    @try {
+        return [NSMethodSignature signatureWithObjCTypes:encoding];
+    }
+    @catch(NSException *err) {
+        NSLog(@"*** Unsupported method encoding: %s", encoding);
+        return nil;
+    }
 }
 
 const char *sig_argumentType(id signature, NSUInteger index) {

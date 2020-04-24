@@ -27,7 +27,7 @@ extern "C" {
 #endif
     IMP _Nonnull imp_implementationForwardingToTracer(void * _Nonnull patch, IMP _Nonnull onEntry, IMP _Nonnull onExit);
     NSArray<Class> * _Nonnull objc_classArray();
-    NSMethodSignature * _Nonnull method_getSignature(Method _Nonnull Method);
+    NSMethodSignature * _Nullable method_getSignature(Method _Nonnull Method);
     const char * _Nonnull sig_argumentType(id _Nonnull signature, NSUInteger index);
     const char * _Nonnull sig_returnType(id _Nonnull signature);
     void findPureSwiftClasses(const char * _Nullable path, void (^ _Nonnull callback)(void * _Nonnull symbol));

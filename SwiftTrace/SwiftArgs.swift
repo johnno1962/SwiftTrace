@@ -170,7 +170,7 @@ extension SwiftTrace {
             return output + signature[position ..< signature.endIndex]
         }
 
-        lazy var methodSignature: Any = {
+        lazy var methodSignature: Any? = {
             return method_getSignature(self.objcMethod!)
         }()
 
@@ -178,9 +178,19 @@ extension SwiftTrace {
             return NSStringFromSelector(method_getName(objcMethod!))
         }()
 
+        static var identifyFormat = "<%@ %p>"
+
+        func identify(id: AnyObject) -> String {
+            return String(format: Self.identifyFormat,
+                          NSString(string: NSStringFromClass(object_getClass(id)!)),
+                          unsafeBitCast(id, to: uintptr_t.self))
+        }
+
         open func objcDecorate(signature: String?, invocation: Invocation,
                                intArgs: UnsafePointer<intptr_t>,
                                floatArgs: UnsafePointer<Double>) -> String {
+            guard methodSignature != nil else {
+                return signature ?? invocation.swizzle.signature }
             let isReturn = signature != nil
             let returnType = String(cString: sig_returnType(methodSignature))
             // Is method returning a struct?
@@ -189,14 +199,15 @@ extension SwiftTrace {
             #if arch(arm64)
             let isStret = false
             #else
-            let isStret = returnType.hasPrefix("{")
+            let isStret = returnType.hasPrefix("{") &&
+                !returnType.hasSuffix("=dd}") && !returnType.hasSuffix("=QQ}")
             if isStret && !isReturn {
                 invocation.swiftSelf = intArgs[1]
             }
             #endif
             let objcSelf = unsafeBitCast(invocation.swiftSelf, to: AnyObject.self)
             var output = isReturn ? signature! + " -> " :
-                "\(object_isClass(objcSelf) ? "+" : "-")[\(objcSelf) "
+                "\(object_isClass(objcSelf) ? "+" : "-")[\(identify(id: objcSelf)) "
             // (Objective-)C methods have two implict arguments: self and _cmd;
             // if returning a struct, there is also the struct return address.
             var index = 2, intSlot = isReturn ? 0 : isStret ? 3 : 2, floatSlot = 0
@@ -206,6 +217,8 @@ extension SwiftTrace {
                 output += selector
             } else {
                 var args = [String]()
+                let thread = ThreadStack.threadLocal()
+                var unknown = false
 
                 for arg in selector.components(separatedBy: ":").dropLast() {
                     var value: String?
@@ -219,13 +232,23 @@ extension SwiftTrace {
                         if slot + slotsRequired <= maxSlots {
                             (registers + slot)
                                 .withMemoryRebound(to: Type.self, capacity: 1) {
-                                if Type.self == AnyObject?.self {
+                                let describing = thread.describing
+                                thread.describing = true
+                                defer { thread.describing = describing }
+
+                                if unknown {
+                                    return
+                                } else if Type.self == AnyObject?.self {
                                     if let id = unsafeBitCast($0.pointee,
                                                               to: AnyObject?.self) {
                                         if id.isKind(of: NSString.self) {
                                             value = "@\"\(id)\""
+                                        } else if id.isKind(of: NSArray.self) {
+                                            let array = unsafeBitCast(id, to: NSArray.self)
+                                            value = "[" + array.map({ "\($0)" })
+                                                .joined(separator: ", ") + "]"
                                         } else {
-                                            value = "\(id)"
+                                            value = describing ? identify(id: id) : "\(id)"
                                         }
                                     } else {
                                         value = "nil"
@@ -234,6 +257,8 @@ extension SwiftTrace {
                                     let str = unsafeBitCast($0.pointee,
                                                             to: UnsafePointer<UInt8>.self)
                                     value = "\"\(String(cString: str))\""
+                                } else if Type.self == UnsafeRawPointer.self {
+                                    value = String(format: "%p", unsafeBitCast($0.pointee, to: uintptr_t.self))
                                 } else if Type.self == Selector.self {
                                     let SEL = unsafeBitCast($0.pointee, to: Selector.self)
                                     value = "@selector(\(NSStringFromSelector(SEL)))"
@@ -244,6 +269,7 @@ extension SwiftTrace {
                                 invocation.arguments.append($0.pointee)
                             }
                         }
+
                         slot += slotsRequired
                     }
 
@@ -278,6 +304,7 @@ extension SwiftTrace {
                     case "B": intValue(type: Bool.self)
                     case "*": intValue(type: UnsafePointer<UInt8>.self)
                     case ":": intValue(type: Selector.self)
+                    case "{_NSRange=QQ}": intValue(type: NSRange.self)
                     #if os(macOS) || os(iOS) || os(tvOS)
                     case "{CGRect={CGPoint=dd}{CGSize=dd}}":
                         floatValue(type: OSRect.self)
@@ -288,8 +315,14 @@ extension SwiftTrace {
                     #endif
                     case "v":
                         value = "Void"
+                    case "@?":
+                        value = "^{}"
                     default:
-                        break
+                        if type.hasPrefix("^") {
+                            intValue(type: UnsafeRawPointer.self)
+                        } else {
+                            unknown = true
+                        }
                     }
 
                     args.append((isReturn ? "" : arg + ":") + (value ?? "(\(type))"))
