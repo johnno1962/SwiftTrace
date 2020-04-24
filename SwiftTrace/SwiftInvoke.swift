@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#7 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#8 $
 //
 //  Invocation interface for Swift
 //  ==============================
@@ -47,8 +47,7 @@ extension SwiftTrace {
                                  autoBitCast(Swizzle.onEntry), autoBitCast(Swizzle.onExit)))
         }
 
-        public required init?(name: String, vtableSlot: UnsafeMutablePointer<SIMP>? = nil,
-                              objcMethod: Method? = nil, replaceWith: nullImplementationType? = nil) {
+        public required init?(name signature: String, vtableSlot: UnsafeMutablePointer<SIMP>? = nil, objcMethod: Method? = nil, replaceWith: nullImplementationType? = nil) {
             fatalError("SwiftTrace.Call.init(name:vtableSlot:objcMethod:replaceWith:) must not be used")
         }
 

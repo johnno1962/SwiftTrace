@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#182 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#184 $
 //
 
 import Foundation
@@ -51,15 +51,34 @@ open class SwiftTrace: NSObject {
      */
     public typealias nullImplementationType = @convention(c) () -> AnyObject?
 
-    static var lastSwiftTrace = SwiftTrace()
+    static var lastSwiftTrace = SwiftTrace(previous: nil)
+
+    init(previous: SwiftTrace?) {
+        previousSwiftTrace = previous
+    }
+
+    /** Dictionary of patch objects created by trampoline */
+    var previousSwiftTrace: SwiftTrace?
+
+    /** Trace only instances of a particular class */
+    var classFilter: AnyClass?
+
+    /** Trace only a particualar instance */
+    var instanceFilter: AnyObject?
 
     /** Dictionary of patch objects created by trampoline */
     var activeSwizzles = [IMP: Swizzle]()
 
+    @discardableResult
+    open class func startNewTrace() -> SwiftTrace {
+        lastSwiftTrace = SwiftTrace(previous: Self.lastSwiftTrace)
+        return lastSwiftTrace
+    }
+
     /**
      default pattern of symbols to be excluded from tracing
      */
-    static public let defaultMethodExclusions = "\\.getter| (?:retain|_tryRetain|release|_isDeallocating|.cxx_destruct|dealloc|description| debugDescription)]|initWithCoder|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[UIView |UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|_UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose|RemoteCapture (?:capture0|subtractAndEncode:)"
+    open class var defaultMethodExclusions: String { "\\.getter| (?:retain|_tryRetain|release|_isDeallocating|.cxx_destruct|dealloc|description| debugDescription)]|initWithCoder|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[UIView |UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|_UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose|RemoteCapture (?:capture0|subtractAndEncode:)" }
 
     static var inclusionRegexp: NSRegularExpression?
     static var exclusionRegexp: NSRegularExpression? = NSRegularExpression(regexp: defaultMethodExclusions)
@@ -96,6 +115,7 @@ open class SwiftTrace: NSObject {
         - parameter containing: the class to specify the bundle
      */
     open class func traceBundle(containing theClass: AnyClass) {
+        startNewTrace()
         trace(bundlePath: class_getImageName(theClass))
     }
 
@@ -139,6 +159,7 @@ open class SwiftTrace: NSObject {
         Trace a classes defined in a specific bundlePath (executable image)
      */
     class func trace(bundlePath: UnsafePointer<Int8>?) {
+        startNewTrace()
         var registered = Set<UnsafeRawPointer>()
         forAllClasses {
             (aClass, stop) in
@@ -171,6 +192,7 @@ open class SwiftTrace: NSObject {
         - parameter pattern: regexp patten to specify classes to trace
      */
     open class func traceClassesMatching(pattern: String) {
+        startNewTrace()
         let regexp = NSRegularExpression(regexp: pattern)
         forAllClasses {
             (aClass, stop) in
@@ -186,7 +208,6 @@ open class SwiftTrace: NSObject {
         - parameter aClass: the class, the methods of which to trace
      */
     open class func trace(aClass: AnyClass) {
-
         let className = NSStringFromClass(aClass)
         if className.hasPrefix("Swift.") || className.hasPrefix("__") {
             return
@@ -210,6 +231,28 @@ open class SwiftTrace: NSObject {
                 vtableSlot.pointee = patch.forwardingImplementation()
             }
         }
+    }
+
+    /**
+        Specify an individual classs to trace
+        - parameter aClass: the class, the methods of which to trace
+     */
+    open class func traceInstances(aClass: AnyClass) {
+        startNewTrace().classFilter = aClass
+        var tClass: AnyClass? = aClass
+        while tClass != NSObject.self && tClass != nil {
+            trace(aClass: tClass!)
+            tClass = class_getSuperclass(tClass)
+        }
+    }
+
+    /**
+        Specify an individual classs to trace
+        - parameter aClass: the class, the methods of which to trace
+     */
+    open class func traceInstance(anInstance: AnyObject) {
+        startNewTrace().instanceFilter = anInstance
+        traceInstances(aClass: object_getClass(anInstance)!)
     }
 
     /**
@@ -276,7 +319,21 @@ open class SwiftTrace: NSObject {
         Remove all patches applied until now
      */
     open class func removeAllSwizzles() {
-        for (_, swizzle) in SwiftTrace.lastSwiftTrace.activeSwizzles {
+        while true {
+            lastSwiftTrace.removeSwizzles()
+            if let previous = lastSwiftTrace.previousSwiftTrace {
+                lastSwiftTrace = previous
+            } else {
+                break
+            }
+        }
+    }
+
+    /**
+        Remove all patches for this trace
+     */
+    open func removeSwizzles() {
+        for (_, swizzle) in activeSwizzles {
             swizzle.removeAll()
         }
     }

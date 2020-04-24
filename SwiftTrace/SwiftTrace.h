@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#19 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#21 $
 //
 
 #import <Foundation/Foundation.h>
@@ -19,13 +19,24 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <SwiftTrace/PublicHeader.h>
 
-#import <dlfcn.h>
 #import <objc/runtime.h>
 
 @interface NSObject(SwiftTrace)
-+(void)swiftTrace;
-+(void)swiftTraceBundle;
++ (void)swiftTrace;
++ (void)swiftTraceBundle;
++ (void)swiftTraceMainBundle;
++ (NSString * _Nonnull)swiftTraceMethodExclusions;
++ (NSArray<NSString *> * _Nonnull)swiftTraceMethodNames;
++ (void)swiftTraceInclude:(NSString * _Nonnull)pattern;
++ (void)swiftTraceExclude:(NSString * _Nonnull)pattern;
++ (void)swiftTraceClassesMatching:(NSString * _Nonnull)pattern;
++ (NSArray<NSString *> * _Nonnull)switTraceMethodsOfClass:(Class _Nonnull)aClass;
++ (void)traceInstances;
+- (void)traceInstance;
++ (void)switTraceReset;
 @end
+
+#import <dlfcn.h>
 
 #ifdef __cplusplus
 extern "C" {

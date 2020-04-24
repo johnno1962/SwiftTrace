@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#44 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#46 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -175,16 +175,55 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 // From here on added to the original code for use by "SwiftTrace".
 
 @interface SwiftTrace
++ (void)traceMainBundle;
 + (void)traceBundleWithContaining:(Class)aClass;
++ (NSString *)defaultMethodExclusions;
++ (void)include:(NSString *)pattern;
++ (void)exclude:(NSString *)pattern;
++ (void)traceClassesMatchingWithPattern:(NSString *)pattern;
++ (NSArray<NSString *> *)methodNamesOfClass:(Class)aClass;
 + (void)traceWithAClass:(Class)aClass;
++ (void)traceInstancesWithAClass:(Class)aClass;
+- (void)traceInstanceWithAnInstance:(id)instance;
++ (void)removeAllSwizzles;
 @end
 
 @implementation NSObject(SwiftTrace)
-+(void)swiftTraceBundle {
++ (void)swiftTrace {
+    [SwiftTrace traceWithAClass:self];
+}
++ (void)swiftTraceBundle {
     [SwiftTrace traceBundleWithContaining:self];
 }
-+(void)swiftTrace {
-    [SwiftTrace traceWithAClass:self];
++ (void)swiftTraceMainBundle {
+    [SwiftTrace traceMainBundle];
+}
++ (NSString *)swiftTraceMethodExclusions {
+    return [SwiftTrace defaultMethodExclusions];
+}
++ (void)swiftTraceInclude:(NSString *)pattern {
+    [SwiftTrace include:pattern];
+}
++ (void)swiftTraceExclude:(NSString *)pattern {
+    [SwiftTrace exclude:pattern];
+}
++ (NSArray<NSString *> *)swiftTraceMethodNames {
+    return [self switTraceMethodsOfClass:self];
+}
++ (void)swiftTraceClassesMatching:(NSString *)pattern {
+    [SwiftTrace traceClassesMatchingWithPattern:pattern];
+}
++ (NSArray<NSString *> *)switTraceMethodsOfClass:(Class)aClass {
+    return [SwiftTrace methodNamesOfClass:aClass];
+}
++ (void)switTraceReset {
+    [SwiftTrace removeAllSwizzles];
+}
++ (void)traceInstances {
+    [SwiftTrace traceInstancesWithAClass:self];
+}
+- (void)traceInstance {
+    [SwiftTrace traceInstanceWithAnInstance:self];
 }
 @end
 

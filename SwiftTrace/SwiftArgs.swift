@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#39 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#40 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -280,7 +280,7 @@ extension SwiftTrace {
                     }
 
                     let type = isReturn ? returnType :
-                        String(cString: sig_argumentType(methodSignature, UInt(index)))
+                        String(cString: sig_argumentType(methodSignature!, UInt(index)))
 
                     switch type {
                     case "@": intValue(type: AnyObject?.self)

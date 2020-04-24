@@ -18,7 +18,7 @@ public protocol P {
     func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> ()
 }
 
-open class TestClass: P {
+open class TestClass: NSObject, P {
 
     public var i = 999
 
@@ -68,12 +68,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
+        Self.swiftTraceExclude(NSObject.swiftTraceMethodExclusions())
 //        SwiftTrace.patchFactory = MyTracer.self
 
-        type(of: self).swiftTraceBundle()
-        ObjcTraceTester().a(44, i:45, b: 55, c: "66", o: self, s: Selector(("jjj:")))
+        let objcTester = ObjcTraceTester()
+        objcTester.traceInstance()
+        objcTester.a(44, i:45, b: 55, c: "66", o: self, s: Selector(("jjj:")))
 
-        print(SwiftTrace.methodNames(ofClass: TestClass.self))
+        print(TestClass.swiftTraceMethodNames())
+
+        NSObject.swiftTraceMainBundle()
 
         var a: P = TestClass()
         a.i = 888

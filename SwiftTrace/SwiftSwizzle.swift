@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#7 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#8 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -34,6 +34,9 @@ extension SwiftTrace {
 
       /** string representing Swift or Objective-C method to user */
        public let signature: String
+
+       /** trace that resulted in this Swizzle */
+       let trace: SwiftTrace
 
        /** pointer to original function implementing method */
        var implementation: IMP
@@ -71,10 +74,11 @@ extension SwiftTrace {
         - parameter objcMethod: pointer to original Method patched
         - parameter replaceWith: implementation to replace that of class
         */
-       public required init?(name signature: String,
-                             vtableSlot: UnsafeMutablePointer<SIMP>? = nil,
-                             objcMethod: Method? = nil,
-                             replaceWith: nullImplementationType? = nil) {
+    public required init?(name signature: String,
+                          vtableSlot: UnsafeMutablePointer<SIMP>? = nil,
+                          objcMethod: Method? = nil,
+                          replaceWith: nullImplementationType? = nil) {
+           self.trace = SwiftTrace.lastSwiftTrace
            self.signature = signature
            self.vtableSlot = vtableSlot
            self.objcMethod = objcMethod
@@ -134,7 +138,11 @@ extension SwiftTrace {
        open func onExit(stack: inout ExitStack) {
            if let invocation = invocation() {
                let elapsed = Invocation.usecTime() - invocation.timeEntered
+            let instance: AnyObject = getSelf()
+            if (trace.instanceFilter == nil || trace.instanceFilter === instance) &&
+                (trace.classFilter == nil || trace.classFilter === object_getClass(instance)) {
                print("\(String(repeating: "  ", count: invocation.stackDepth))\(traceMessage(stack: &stack)) \(String(format: "%.1fms", elapsed * 1000.0))")
+               }
                totalElapsed += elapsed
            }
        }
