@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#185 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#186 $
 //
 
 import Foundation
@@ -388,9 +388,9 @@ open class SwiftTrace: NSObject {
                     continue
                 }
 
-                if let info = swizzleFactory.init(name: name, objcMethod: method) {
-                    method_setImplementation(method,
-                        autoBitCast(info.forwardingImplementation()))
+                if let swizzle = swizzleFactory.init(name: name, objcMethod: method) {
+                    class_replaceMethod(aClass, sel,
+                            autoBitCast(swizzle.forwardingImplementation()), type)
                 }
             }
             free(methods)
