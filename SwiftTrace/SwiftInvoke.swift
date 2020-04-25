@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#8 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#9 $
 //
 //  Invocation interface for Swift
 //  ==============================

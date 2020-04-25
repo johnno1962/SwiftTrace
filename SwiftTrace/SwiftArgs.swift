@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#40 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#41 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -42,7 +42,7 @@ extension SwiftTrace {
         }
 
         open func entryDecorate(stack: inout EntryStack) {
-            let invocation =  self.invocation()!
+            let invocation = self.invocation()!
                 invocation.decorated = objcMethod != nil ?
                     objcDecorate(signature: nil,
                                  invocation: invocation,
@@ -81,6 +81,9 @@ extension SwiftTrace {
                                 parser: NSRegularExpression,
                                 intArgs: UnsafePointer<intptr_t>,
                                 floatArgs: UnsafePointer<Double>) -> String {
+            guard invocation.shouldTrace else {
+                return signature
+            }
             var intSlot = 0, floatSlot = 0
             var position = signature.startIndex
             var output = ""
@@ -181,9 +184,11 @@ extension SwiftTrace {
         static var identifyFormat = "<%@ %p>"
 
         func identify(id: AnyObject) -> String {
-            return String(format: Self.identifyFormat,
-                          NSString(string: NSStringFromClass(object_getClass(id)!)),
-                          unsafeBitCast(id, to: uintptr_t.self))
+            let className = NSStringFromClass(object_getClass(id)!)
+            return object_isClass(id) ? className :
+                String(format: Self.identifyFormat,
+                       className as NSString,
+                       unsafeBitCast(id, to: uintptr_t.self))
         }
 
         open func objcDecorate(signature: String?, invocation: Invocation,
@@ -205,9 +210,13 @@ extension SwiftTrace {
                 invocation.swiftSelf = intArgs[1]
             }
             #endif
+            guard invocation.shouldTrace else {
+                return invocation.swizzle.signature
+            }
             let objcSelf = unsafeBitCast(invocation.swiftSelf, to: AnyObject.self)
             var output = isReturn ? signature! + " -> " :
                 "\(object_isClass(objcSelf) ? "+" : "-")[\(identify(id: objcSelf)) "
+            // /\(ThreadLocal.current().levelsTracing)/\(trace.instanceFilter)/\(trace.classFilter)
             // (Objective-)C methods have two implict arguments: self and _cmd;
             // if returning a struct, there is also the struct return address.
             var index = 2, intSlot = isReturn ? 0 : isStret ? 3 : 2, floatSlot = 0
@@ -217,7 +226,7 @@ extension SwiftTrace {
                 output += selector
             } else {
                 var args = [String]()
-                let thread = ThreadStack.threadLocal()
+                let thread = ThreadLocal.current()
                 var hasSeenUnknownArgumentType = false
 
                 for arg in selector.components(separatedBy: ":").dropLast() {

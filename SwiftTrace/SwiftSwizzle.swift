@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#8 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#12 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -20,17 +20,6 @@ extension SwiftTrace {
     Strace "info" instance used to store information about a patch on a method
     */
    open class Swizzle: NSObject {
-
-       /** follow chain of Patches through to find original patch */
-       open class func originalSwizzle(for implementation: IMP) -> Swizzle? {
-           var implementation = implementation
-           var patch: Swizzle?
-        while SwiftTrace.lastSwiftTrace.activeSwizzles[implementation] != nil {
-               patch = SwiftTrace.lastSwiftTrace.activeSwizzles[implementation]
-               implementation = patch!.implementation
-           }
-           return patch
-       }
 
       /** string representing Swift or Objective-C method to user */
        public let signature: String
@@ -49,6 +38,9 @@ extension SwiftTrace {
 
        /** Total time spent in this method */
        var totalElapsed: TimeInterval = 0.0
+
+       /** Number of times this method has beeen called */
+       var invocationCount = 0
 
        /** Closure that can be called instead of original implementation */
        public let nullImplmentation: nullImplementationType?
@@ -74,10 +66,10 @@ extension SwiftTrace {
         - parameter objcMethod: pointer to original Method patched
         - parameter replaceWith: implementation to replace that of class
         */
-    public required init?(name signature: String,
-                          vtableSlot: UnsafeMutablePointer<SIMP>? = nil,
-                          objcMethod: Method? = nil,
-                          replaceWith: nullImplementationType? = nil) {
+        public required init?(name signature: String,
+                              vtableSlot: UnsafeMutablePointer<SIMP>? = nil,
+                              objcMethod: Method? = nil,
+                              replaceWith: nullImplementationType? = nil) {
            self.trace = SwiftTrace.lastSwiftTrace
            self.signature = signature
            self.vtableSlot = vtableSlot
@@ -94,24 +86,28 @@ extension SwiftTrace {
        /** Called from assembly code on entry to Patched method */
        static var onEntry: @convention(c) (_ patch: Swizzle, _ returnAddress: UnsafeRawPointer,
            _ stackPointer: UnsafeMutablePointer<UInt64>) -> IMP? = {
-               (patch, returnAddress, stackPointer) -> IMP? in
-               let local = ThreadStack.threadLocal()
-               let invocation = patch.invocationFactory
-                   .init(stackDepth: local.stack.count, swizzle: patch,
-                         returnAddress: returnAddress,
-                         stackPointer: stackPointer )
-               local.stack.append(invocation)
-               patch.onEntry(stack: &invocation.entryStack.pointee)
-               return patch.nullImplmentation != nil ?
-                   autoBitCast(patch.nullImplmentation) : patch.implementation
+               (swizzle, returnAddress, stackPointer) -> IMP? in
+               let threadLocal = ThreadLocal.current()
+               let invocation = swizzle.invocationFactory
+                   .init(stackDepth: threadLocal.invocationStack.count, swizzle: swizzle,
+                         returnAddress: returnAddress, stackPointer: stackPointer)
+               invocation.saveLevelsTracing = threadLocal.levelsTracing
+               threadLocal.invocationStack.append(invocation)
+               swizzle.onEntry(stack: &invocation.entryStack.pointee)
+               if invocation.shouldTrace {
+                    threadLocal.levelsTracing -= 1
+               }
+               return swizzle.nullImplmentation != nil ?
+                   autoBitCast(swizzle.nullImplmentation) : swizzle.implementation
        }
 
        /** Called from assembly code when Patched method returns */
        static var onExit: @convention(c) () -> UnsafeRawPointer = {
+           let threadLocal = ThreadLocal.current()
            let invocation = Invocation.current!
            invocation.swizzle.onExit(stack: &invocation.exitStack.pointee)
-           ThreadStack.threadLocal().stack.removeLast()
-           return invocation.returnAddress
+           threadLocal.levelsTracing = invocation.saveLevelsTracing
+           return threadLocal.invocationStack.removeLast().returnAddress
        }
 
        /**
@@ -138,12 +134,11 @@ extension SwiftTrace {
        open func onExit(stack: inout ExitStack) {
            if let invocation = invocation() {
                let elapsed = Invocation.usecTime() - invocation.timeEntered
-            let instance: AnyObject = getSelf()
-            if (trace.instanceFilter == nil || trace.instanceFilter === instance) &&
-                (trace.classFilter == nil || trace.classFilter === object_getClass(instance)) {
-               print("\(String(repeating: "  ", count: invocation.stackDepth))\(traceMessage(stack: &stack)) \(String(format: "%.1fms", elapsed * 1000.0))")
+               if invocation.shouldTrace {
+                   print("\(String(repeating: "  ", count: invocation.stackDepth))\(traceMessage(stack: &stack)) \(String(format: "%.1fms", elapsed * 1000.0))")
                }
                totalElapsed += elapsed
+               invocationCount += 1
            }
        }
 
@@ -170,12 +165,18 @@ extension SwiftTrace {
            Remove all patches recursively
         */
        open func removeAll() {
-           (Swizzle.originalSwizzle(for: implementation) ?? self).remove()
+           (SwiftTrace.originalSwizzle(for: implementation) ?? self).remove()
        }
 
        /** find "self" for the current invocation */
        open func getSelf<T>(as: T.Type = T.self) -> T {
            return autoBitCast(invocation().swiftSelf)
+       }
+
+       /** find Class for the current invocation */
+       open func getClass() -> AnyClass {
+           let id: AnyObject = autoBitCast(invocation().swiftSelf)
+           return object_isClass(id) ? autoBitCast(id) : object_getClass(id)!
        }
 
        /** pointer to memory for return of struct */
@@ -211,6 +212,24 @@ extension SwiftTrace {
 
            /** Original return address of call to trampoline */
            public let returnAddress: UnsafeRawPointer
+
+           /** levelsTracing on entry for restore */
+           public var saveLevelsTracing = 0
+
+           /** This invocation qualifies for tracing */
+           lazy public var shouldTrace: Bool = {
+                if ThreadLocal.current().levelsTracing > 0 {
+                    return true
+                }
+                if (swizzle.trace.instanceFilter == SwiftTrace.noFilter ||
+                    swizzle.trace.instanceFilter == swiftSelf) &&
+                    (swizzle.trace.classFilter == nil ||
+                        swizzle.trace.classFilter === swizzle.getClass()) {
+                    ThreadLocal.current().levelsTracing = swizzle.trace.subLevels
+                    return true
+                }
+                return false
+           }()
 
            /** Architecture depenent place on stack where arguments stored */
            public let entryStack: UnsafeMutablePointer<EntryStack>
@@ -250,7 +269,7 @@ extension SwiftTrace {
                self.stackDepth = stackDepth
                self.swizzle = swizzle
                self.returnAddress = returnAddress
-               self.entryStack = swizzle.rebind(stackPointer)
+               self.entryStack = autoBitCast(stackPointer)
                self.swiftSelf = swizzle.objcMethod != nil ?
                    entryStack.pointee.intArg1 : entryStack.pointee.swiftSelf
                self.structReturn = UnsafeMutableRawPointer(bitPattern: entryStack.pointee.structReturn)
@@ -260,23 +279,23 @@ extension SwiftTrace {
             The inner invocation instance on the current thread.
             */
            public static var current: Invocation! {
-               return ThreadStack.threadLocal().stack.last
+               return ThreadLocal.current().invocationStack.last
            }
        }
 
        /**
         Class implementing thread local storage to arrange a call stack
         */
-       public class ThreadStack {
+       public class ThreadLocal {
 
            private static var keyVar: pthread_key_t = 0
 
            private static var pthreadKey: pthread_key_t = {
                let ret = pthread_key_create(&keyVar, {
                    #if os(Linux) || os(Android)
-                   Unmanaged<ThreadStack>.fromOpaque($0!).release()
+                   Unmanaged<ThreadLocal>.fromOpaque($0!).release()
                    #else
-                   Unmanaged<ThreadStack>.fromOpaque($0).release()
+                   Unmanaged<ThreadLocal>.fromOpaque($0).release()
                    #endif
                })
                if ret != 0 {
@@ -288,7 +307,7 @@ extension SwiftTrace {
            /**
             The stack of Invocations logged on this thread
             */
-           public var stack = [Invocation]()
+           public var invocationStack = [Invocation]()
 
            /**
             currently describing an instance
@@ -296,15 +315,20 @@ extension SwiftTrace {
            public var describing = false
 
            /**
+            currently describing an instance
+            */
+           public var levelsTracing = 0
+
+           /**
             Returns an instance of ThreadLocal specific to the current thread
             */
-           static public func threadLocal() -> ThreadStack {
-               let keyVar = ThreadStack.pthreadKey
+           static public func current() -> ThreadLocal {
+               let keyVar = ThreadLocal.pthreadKey
                if let existing = pthread_getspecific(keyVar) {
-                   return Unmanaged<ThreadStack>.fromOpaque(existing).takeUnretainedValue()
+                   return Unmanaged<ThreadLocal>.fromOpaque(existing).takeUnretainedValue()
                }
                else {
-                   let unmanaged = Unmanaged.passRetained(ThreadStack())
+                   let unmanaged = Unmanaged.passRetained(ThreadLocal())
                    let ret = pthread_setspecific(keyVar, unmanaged.toOpaque())
                    if ret != 0 {
                        NSLog("Could not pthread_setspecific: %s", strerror(ret))

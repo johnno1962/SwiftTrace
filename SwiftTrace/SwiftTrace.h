@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#21 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#22 $
 //
 
 #import <Foundation/Foundation.h>
@@ -24,16 +24,20 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
 @interface NSObject(SwiftTrace)
 + (void)swiftTrace;
 + (void)swiftTraceBundle;
++ (void)swiftTraceBundleWithSubLevels:(int)subLevels;
 + (void)swiftTraceMainBundle;
++ (void)swiftTraceMainBundleWithSubLevels:(int)subLevels;
 + (NSString * _Nonnull)swiftTraceMethodExclusions;
 + (NSArray<NSString *> * _Nonnull)swiftTraceMethodNames;
 + (void)swiftTraceInclude:(NSString * _Nonnull)pattern;
 + (void)swiftTraceExclude:(NSString * _Nonnull)pattern;
 + (void)swiftTraceClassesMatching:(NSString * _Nonnull)pattern;
 + (NSArray<NSString *> * _Nonnull)switTraceMethodsOfClass:(Class _Nonnull)aClass;
-+ (void)traceInstances;
-- (void)traceInstance;
-+ (void)switTraceReset;
++ (void)swiftTraceInstances;
++ (void)swiftTraceInstancesWithSubLevels:(int)subLevels;
+- (void)swiftTraceInstance;
+- (void)swiftTraceInstanceWithSubLevels:(int)subLevels;
++ (void)swiftTraceReset;
 @end
 
 #import <dlfcn.h>

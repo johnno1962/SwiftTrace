@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#184 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#185 $
 //
 
 import Foundation
@@ -51,28 +51,43 @@ open class SwiftTrace: NSObject {
      */
     public typealias nullImplementationType = @convention(c) () -> AnyObject?
 
-    static var lastSwiftTrace = SwiftTrace(previous: nil)
-
-    init(previous: SwiftTrace?) {
-        previousSwiftTrace = previous
-    }
+    static var lastSwiftTrace = SwiftTrace(previous: nil, subLevels: 0)
 
     /** Dictionary of patch objects created by trampoline */
-    var previousSwiftTrace: SwiftTrace?
+    let previousSwiftTrace: SwiftTrace?
 
     /** Trace only instances of a particular class */
     var classFilter: AnyClass?
 
-    /** Trace only a particualar instance */
-    var instanceFilter: AnyObject?
+    /** Trace only a particular instance */
+    var instanceFilter: intptr_t = SwiftTrace.noFilter
+
+    /** Trace only a particular instance */
+    let subLevels: Int
 
     /** Dictionary of patch objects created by trampoline */
     var activeSwizzles = [IMP: Swizzle]()
 
+    init(previous: SwiftTrace?, subLevels: Int) {
+        previousSwiftTrace = previous
+        self.subLevels = subLevels
+        super.init()
+    }
+
     @discardableResult
-    open class func startNewTrace() -> SwiftTrace {
-        lastSwiftTrace = SwiftTrace(previous: Self.lastSwiftTrace)
+    open class func startNewTrace(subLevels: Int) -> SwiftTrace {
+        lastSwiftTrace.mutePreviousUnfiltered()
+        lastSwiftTrace = SwiftTrace(previous: Self.lastSwiftTrace, subLevels: subLevels)
         return lastSwiftTrace
+    }
+
+    static let noFilter = -1, noObject = -2
+
+    func mutePreviousUnfiltered() {
+        if instanceFilter == SwiftTrace.noFilter && classFilter == nil {
+            instanceFilter = SwiftTrace.noObject
+        }
+        previousSwiftTrace?.mutePreviousUnfiltered()
     }
 
     /**
@@ -114,19 +129,18 @@ open class SwiftTrace: NSObject {
         Intercepts and tracess all classes linked into the bundle containing a class.
         - parameter containing: the class to specify the bundle
      */
-    open class func traceBundle(containing theClass: AnyClass) {
-        startNewTrace()
-        trace(bundlePath: class_getImageName(theClass))
+    open class func traceBundle(containing theClass: AnyClass, subLevels: Int = 0) {
+        trace(bundlePath: class_getImageName(theClass), subLevels: subLevels)
     }
 
     /**
         Trace all user developed classes in the main bundle of an app
      */
-    open class func traceMainBundle() {
+    open class func traceMainBundle(subLevels: Int = 0) {
         let main = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "main")
         var info = Dl_info()
         if main != nil && dladdr(main, &info) != 0 && info.dli_fname != nil {
-            trace(bundlePath: info.dli_fname)
+            trace(bundlePath: info.dli_fname, subLevels: subLevels)
         }
         else {
             fatalError("Could not locate main bundle")
@@ -158,8 +172,8 @@ open class SwiftTrace: NSObject {
     /**
         Trace a classes defined in a specific bundlePath (executable image)
      */
-    class func trace(bundlePath: UnsafePointer<Int8>?) {
-        startNewTrace()
+    class func trace(bundlePath: UnsafePointer<Int8>?, subLevels: Int = 0) {
+        startNewTrace(subLevels: subLevels)
         var registered = Set<UnsafeRawPointer>()
         forAllClasses {
             (aClass, stop) in
@@ -191,8 +205,8 @@ open class SwiftTrace: NSObject {
         Intercepts and tracess all classes with names matching regexp pattern
         - parameter pattern: regexp patten to specify classes to trace
      */
-    open class func traceClassesMatching(pattern: String) {
-        startNewTrace()
+    open class func traceClassesMatching(pattern: String, subLevels: Int = 0) {
+        startNewTrace(subLevels: subLevels)
         let regexp = NSRegularExpression(regexp: pattern)
         forAllClasses {
             (aClass, stop) in
@@ -237,8 +251,8 @@ open class SwiftTrace: NSObject {
         Specify an individual classs to trace
         - parameter aClass: the class, the methods of which to trace
      */
-    open class func traceInstances(aClass: AnyClass) {
-        startNewTrace().classFilter = aClass
+    open class func traceInstances(ofClass aClass: AnyClass, subLevels: Int) {
+        startNewTrace(subLevels: subLevels).classFilter = aClass
         var tClass: AnyClass? = aClass
         while tClass != NSObject.self && tClass != nil {
             trace(aClass: tClass!)
@@ -250,9 +264,10 @@ open class SwiftTrace: NSObject {
         Specify an individual classs to trace
         - parameter aClass: the class, the methods of which to trace
      */
-    open class func traceInstance(anInstance: AnyObject) {
-        startNewTrace().instanceFilter = anInstance
-        traceInstances(aClass: object_getClass(anInstance)!)
+    open class func traceInstance(anInstance: AnyObject, subLevels: Int) {
+        startNewTrace(subLevels: subLevels).instanceFilter = autoBitCast(anInstance)
+        lastSwiftTrace.classFilter =  nil
+        traceInstances(ofClass: object_getClass(anInstance)!, subLevels: subLevels)
     }
 
     /**
@@ -282,7 +297,7 @@ open class SwiftTrace: NSObject {
                     var info = Dl_info()
                     for i in 0..<(vtableEnd - vtableStart) {
                         if var impl: IMP = autoBitCast(vtableStart[i]) {
-                            if let patch = Swizzle.originalSwizzle(for: impl) {
+                            if let patch = originalSwizzle(for: impl) {
                                 impl = patch.implementation
                             }
                             let voidPtr: UnsafeMutableRawPointer = autoBitCast(impl)
@@ -300,6 +315,21 @@ open class SwiftTrace: NSObject {
         }
 
         return stop
+    }
+
+    /** follow chain of Patches through to find original swizzle */
+    open class func originalSwizzle(for implementation: IMP) -> Swizzle? {
+        var implementation = implementation
+        var swizzle: Swizzle?
+        var trace: SwiftTrace? = Self.lastSwiftTrace
+        while trace != nil {
+            while trace!.activeSwizzles[implementation] != nil {
+                swizzle = trace!.activeSwizzles[implementation]
+                implementation = swizzle!.implementation
+            }
+            trace = trace?.previousSwiftTrace
+        }
+        return swizzle
     }
 
     /**
