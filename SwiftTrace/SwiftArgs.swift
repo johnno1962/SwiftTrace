@@ -19,13 +19,13 @@ extension SwiftTrace {
     open class Arguments: Swizzle {
 
         static let argumentParser =
-            NSRegularExpression(regexp: #":\s*([^,)]+)[,)]|\.setter : (.+)$"#)
+            NSRegularExpression(regexp: ":\\s*([^,)]+)[,)]|\\.setter : (.+)$")
 
         static let returnParser =
-            NSRegularExpression(regexp: #"\) -> (.+)$"#)
+            NSRegularExpression(regexp: "\\) -> (.+)$")
 
         lazy var argTypeRanges: [Range<String.Index>] = {
-            return ranges(in: signature, parser: Self.argumentParser)
+            return ranges(in: signature, parser: Arguments.argumentParser)
         }()
 
         open func ranges(in signature: String, parser: NSRegularExpression) -> [Range<String.Index>] {
@@ -50,7 +50,7 @@ extension SwiftTrace {
                                  floatArgs: &stack.floatArg1) :
                     swiftDecorate(signature: signature,
                                   invocation: invocation,
-                                  parser: Self.argumentParser,
+                                  parser: Arguments.argumentParser,
                                   intArgs: &stack.intArg1,
                                   floatArgs: &stack.floatArg1)
         }
@@ -64,7 +64,7 @@ extension SwiftTrace {
                              floatArgs: &stack.floatReturn1) :
                 swiftDecorate(signature: invocation.decorated ?? signature,
                               invocation: invocation,
-                              parser: Self.returnParser,
+                              parser: Arguments.returnParser,
                               intArgs: &stack.intReturn1,
                               floatArgs: &stack.floatReturn1)
         }
@@ -88,7 +88,7 @@ extension SwiftTrace {
             var position = signature.startIndex
             var output = ""
 
-            let typeRanges = parser === Self.argumentParser ?
+            let typeRanges = parser === Arguments.argumentParser ?
                 argTypeRanges : ranges(in: signature, parser: parser)
 
             LOOP:
@@ -186,7 +186,7 @@ extension SwiftTrace {
         func identify(id: AnyObject) -> String {
             let className = NSStringFromClass(object_getClass(id)!)
             return object_isClass(id) ? className :
-                String(format: Self.identifyFormat,
+                String(format: Arguments.identifyFormat,
                        className as NSString,
                        unsafeBitCast(id, to: uintptr_t.self))
         }

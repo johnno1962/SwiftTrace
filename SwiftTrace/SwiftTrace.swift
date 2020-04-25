@@ -77,7 +77,7 @@ open class SwiftTrace: NSObject {
     @discardableResult
     open class func startNewTrace(subLevels: Int) -> SwiftTrace {
         lastSwiftTrace.mutePreviousUnfiltered()
-        lastSwiftTrace = SwiftTrace(previous: Self.lastSwiftTrace, subLevels: subLevels)
+        lastSwiftTrace = SwiftTrace(previous: SwiftTrace.lastSwiftTrace, subLevels: subLevels)
         return lastSwiftTrace
     }
 
@@ -93,7 +93,9 @@ open class SwiftTrace: NSObject {
     /**
      default pattern of symbols to be excluded from tracing
      */
-    open class var defaultMethodExclusions: String { "\\.getter| (?:retain|_tryRetain|release|_isDeallocating|.cxx_destruct|dealloc|description| debugDescription)]|initWithCoder|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[UIView |UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|_UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose|RemoteCapture (?:capture0|subtractAndEncode:)" }
+    open class var defaultMethodExclusions: String {
+        return "\\.getter| (?:retain|_tryRetain|release|_isDeallocating|.cxx_destruct|dealloc|description| debugDescription)]|initWithCoder|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[UIView |UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|_UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose|RemoteCapture (?:capture0|subtractAndEncode:)"
+    }
 
     static var inclusionRegexp: NSRegularExpression?
     static var exclusionRegexp: NSRegularExpression? = NSRegularExpression(regexp: defaultMethodExclusions)
@@ -321,7 +323,7 @@ open class SwiftTrace: NSObject {
     open class func originalSwizzle(for implementation: IMP) -> Swizzle? {
         var implementation = implementation
         var swizzle: Swizzle?
-        var trace: SwiftTrace? = Self.lastSwiftTrace
+        var trace: SwiftTrace? = SwiftTrace.lastSwiftTrace
         while trace != nil {
             while trace!.activeSwizzles[implementation] != nil {
                 swizzle = trace!.activeSwizzles[implementation]
