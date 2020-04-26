@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#4 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#6 $
 //
 //  Add aspects to Swift methods
 //  ============================
@@ -18,10 +18,10 @@ extension SwiftTrace {
     public typealias ExitAspect = (_ swizzle: Swizzle, _ stack: inout ExitStack) -> Void
 
     /**
-        Add a closure aspect to be called before or after a "Patch" is called
+        Add a closure aspect to be called before or after a "Swizzle" is called
         - parameter methodName: - unmangled name of Method for aspect
-        - parameter onEntry: - closure to be called before "Patch" is called
-        - parameter onExit: - closure to be called after "Patch" returns
+        - parameter onEntry: - closure to be called before "Swizzle" is called
+        - parameter onExit: - closure to be called after "Swizzle" returns
      */
     open class func addAspect(methodName: String,
                               patchClass: Aspect.Type = Aspect.self,
@@ -36,11 +36,11 @@ extension SwiftTrace {
     }
 
     /**
-        Add a closure aspect to be called before or after a "Patch" is called
+        Add a closure aspect to be called before or after a "Swizzle" is called
         - parameter toClass: - specifying the class to add aspect is more efficient
         - parameter methodName: - unmangled name of Method for aspect
-        - parameter onEntry: - closure to be called before "Patch" is called
-        - parameter onExit: - closure to be called after "Patch" returns
+        - parameter onEntry: - closure to be called before "Swizzle" is called
+        - parameter onExit: - closure to be called after "Swizzle" returns
      */
     open class func addAspect(aClass: AnyClass, methodName: String,
                               patchClass: Aspect.Type = Aspect.self,
@@ -59,7 +59,7 @@ extension SwiftTrace {
     }
 
     /**
-        Add a closure aspect to be called before or after a "Patch" is called
+        Add a closure aspect to be called before or after a "Swizzle" is called
         - parameter methodName: - unmangled name of Method for aspect
      */
     @discardableResult
@@ -71,7 +71,7 @@ extension SwiftTrace {
     }
 
     /**
-        Add a closure aspect to be called before or after a "Patch" is called
+        Add a closure aspect to be called before or after a "Swizzle" is called
         - parameter toClass: - specifying the class to add aspect is more efficient
         - parameter methodName: - unmangled name of Method for aspect
      */
@@ -80,8 +80,8 @@ extension SwiftTrace {
         return iterateMethods(ofClass: aClass) {
             (name, vtableSlot, stop) in
             if name == methodName,
-                let patch = SwiftTrace.lastSwiftTrace.activeSwizzles[unsafeBitCast(vtableSlot.pointee, to: IMP.self)] {
-                patch.remove()
+                let swizzle = SwiftTrace.lastSwiftTrace.activeSwizzles[unsafeBitCast(vtableSlot.pointee, to: IMP.self)] {
+                swizzle.remove()
                 stop = true
             }
         }
@@ -90,7 +90,7 @@ extension SwiftTrace {
     /**
         Internal class used in the implementation of aspects
      */
-    open class Aspect: Arguments {
+    open class Aspect: Decorated {
 
         let entryAspect: EntryAspect?
         let exitAspect: ExitAspect?

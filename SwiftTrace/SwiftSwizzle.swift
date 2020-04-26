@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#12 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#15 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -17,7 +17,7 @@ import Foundation
 extension SwiftTrace {
 
    /**
-    Strace "info" instance used to store information about a patch on a method
+    Instances used to store information about a patch on a method
     */
    open class Swizzle: NSObject {
 
@@ -42,11 +42,14 @@ extension SwiftTrace {
        /** Number of times this method has beeen called */
        var invocationCount = 0
 
+       /** This Sizzle has been swizzled */
+       var reSwizzled = false
+
        /** Closure that can be called instead of original implementation */
        public let nullImplmentation: nullImplementationType?
 
        /**
-        Class used to create a specific "Invocation" of the "Patch" on entry
+        Class used to create a specific "Invocation" of the "Swizzle" on entry
         */
        open var invocationFactory: Invocation.Type {
            return defaultInvocationFactory
@@ -83,8 +86,8 @@ extension SwiftTrace {
            nullImplmentation = replaceWith
        }
 
-       /** Called from assembly code on entry to Patched method */
-       static var onEntry: @convention(c) (_ patch: Swizzle, _ returnAddress: UnsafeRawPointer,
+       /** Called from assembly code on entry to Swizzled method */
+       static var onEntry: @convention(c) (_ swizzle: Swizzle, _ returnAddress: UnsafeRawPointer,
            _ stackPointer: UnsafeMutablePointer<UInt64>) -> IMP? = {
                (swizzle, returnAddress, stackPointer) -> IMP? in
                let threadLocal = ThreadLocal.current()
@@ -94,7 +97,7 @@ extension SwiftTrace {
                invocation.saveLevelsTracing = threadLocal.levelsTracing
                threadLocal.invocationStack.append(invocation)
                swizzle.onEntry(stack: &invocation.entryStack.pointee)
-               if invocation.shouldTrace {
+               if invocation.shouldDecorate {
                     threadLocal.levelsTracing -= 1
                }
                return swizzle.nullImplmentation != nil ?
@@ -117,24 +120,32 @@ extension SwiftTrace {
        func forwardingImplementation() -> SIMP {
            /* create trampoline */
            let impl = imp_implementationForwardingToTracer(autoBitCast(self),
-                               autoBitCast(Swizzle.onEntry), autoBitCast(Swizzle.onExit))
-           SwiftTrace.lastSwiftTrace.activeSwizzles[impl] = self // track Patches by trampoline and retain them
+                       autoBitCast(Swizzle.onEntry), autoBitCast(Swizzle.onExit))
+           trace.activeSwizzles[impl] = self // track Swizzles by trampoline and retain them
+
+           var previousTrace: SwiftTrace? = trace.previousSwiftTrace
+           while previousTrace != nil {
+               if let previous = previousTrace!.activeSwizzles[implementation] {
+                   previous.reSwizzled = true
+               }
+               previousTrace = previousTrace!.previousSwiftTrace
+            }
            return autoBitCast(impl)
        }
 
        /**
-        method called before trampoline enters the target "Patch"
+        method called before trampoline enters the target "Swizzle"
         */
        open func onEntry(stack: inout EntryStack) {
        }
 
        /**
-        method called after trampoline exits the target "Patch"
+        method called after trampoline exits the target "Swizzle"
         */
        open func onExit(stack: inout ExitStack) {
            if let invocation = invocation() {
                let elapsed = Invocation.usecTime() - invocation.timeEntered
-               if invocation.shouldTrace {
+               if invocation.shouldDecorate {
                    print("\(String(repeating: "  ", count: invocation.stackDepth))\(traceMessage(stack: &stack)) \(String(format: "%.1fms", elapsed * 1000.0))")
                }
                totalElapsed += elapsed
@@ -201,7 +212,7 @@ extension SwiftTrace {
            /** Number of calls above this on the stack of the current thread */
            public let stackDepth: Int
 
-           /** "Patch" related to this call */
+           /** "Swizzle" related to this call */
            public let swizzle: Swizzle
 
            /** signature with arguments substituted in */
@@ -217,8 +228,8 @@ extension SwiftTrace {
            public var saveLevelsTracing = 0
 
            /** This invocation qualifies for tracing */
-           lazy public var shouldTrace: Bool = {
-                if ThreadLocal.current().levelsTracing > 0 {
+           lazy public var shouldDecorate: Bool = {
+                if ThreadLocal.current().levelsTracing > 0 && !swizzle.reSwizzled {
                     return true
                 }
                 if (swizzle.trace.instanceFilter == SwiftTrace.noFilter ||
@@ -259,7 +270,7 @@ extension SwiftTrace {
            /**
             designated initialiser
             - parameter stackDepth: number of calls that have been made on the stack
-            - parameter patch: associated Patch instance
+            - parameter swizzle: associated Swizzle instance
             - parameter returnAddress: adress in process trampoline was called from
             - parameter stackPointer: stack pointer of thread with saved registers
             */

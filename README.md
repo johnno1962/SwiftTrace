@@ -55,14 +55,14 @@ There is a default set of exclusions setup as a result of testing, tracing UIKit
 
 If you want to further process output you can define a custom tracing class:
 ```swift
-    class MyTracer: SwiftTrace.Patch {
+    class MyTracer: SwiftTrace.Swizzle {
 
         override func onEntry(stack: inout SwiftTrace.EntryStack) {
             print( ">> "+stack )
         }
     }
     
-    SwiftTrace.patchFactory = MyTracer.self
+    SwiftTrace.swizzleFactory = MyTracer.self
  ```   
 #### Aspects
 
@@ -74,10 +74,10 @@ You can add an aspect to a particular method using the method's de-mangled name:
                       onExit: { (_, _) in print("TWO") }))
  ```   
 This will print "ONE" when method "x" of TextClass is called and "TWO when it has exited. The
-two arguments are the patch which is an object representing the "Swizzle" and the entry or 
+two arguments are the Swizzle which is an object representing the "Swizzle" and the entry or 
 exit stack. The full signature for the entry closure is:
 ```swift
-       onEntry: { (patch: SwiftTrace.Patch, stack: inout SwiftTrace.EntryStack) in
+       onEntry: { (swizzle: SwiftTrace.Swizzle, stack: inout SwiftTrace.EntryStack) in
  ```   
 If you understand how [registers are allocated](https://github.com/apple/swift/blob/master/docs/ABI/RegisterUsage.md) to arguments it is possible to poke into the
 stack to modify the incoming arguments and, for the exit aspect closure you can replace
@@ -91,8 +91,8 @@ Replacing an input argument in the closure is relatively simple:
 Other types of argument a little more involved. They must be cast and String
 takes up two integer registers.
 ```swift
-    patch.rebind(&stack.intArg2).pointee = "Grief"
-    patch.rebind(&stack.intArg4).pointee = TestClass()
+    swizzle.rebind(&stack.intArg2).pointee = "Grief"
+    swizzle.rebind(&stack.intArg4).pointee = TestClass()
  ```
 In an exit aspect closure, setting the return type is easier as it is generic:
 ```swift
@@ -100,10 +100,13 @@ In an exit aspect closure, setting the return type is easier as it is generic:
  ```
 When a function throws you can access NSError objects.
 ```swift
-    print(patch.rebind(&stack.thrownError, to: NSError.self).pointee)
+    print(swizzle.rebind(&stack.thrownError, to: NSError.self).pointee)
  ```
 It is possible to set `stack.thrownError` to zero to cancel the throw but you will need to set
 the return value.
+
+If this seems complicated there is a property `swizzle.arguments` which can be used
+`onEntry` which contains the arguments as an `Array` containing elements of type `Any`.
 
 #### Invocation interface
 
@@ -119,10 +122,10 @@ using this function:
     print(SwiftTrace.methodNames(ofClass: TestClass.self))
  ```
 There are limitations to this abbreviated interface in that it only supports Double, Float,
-String, Int, Object and CGRect arguments. For other struct types that do not contain
-floating point values you can conform them to protocol `SwiftTraceArg` to be able to
-pass them on the argument list. These values and return values must fit into 32 bytes
-and not contain floats.
+String, Int, Object, CGRect, CGSize and CGPoint arguments. For other struct types that
+do not contain floating point values you can conform them to protocol `SwiftTraceArg`
+to be able to pass them on the argument list or `SwiftTraceFloatArg` if they contain
+only floats. These values and return values must fit into 32 bytes and not contain floats.
 
 #### How it works
                       
@@ -139,8 +142,8 @@ then restored and control is passed to the original function implementing the me
 Please file an issue if you encounter a project that doesn't work while tracing. It should
 be 100% reliable as it uses assembly language trampolines rather than Swizzling like Xtrace.
 Otherwise, the author can be contacted on Twitter [@Injection4Xcode](https://twitter.com/@Injection4Xcode). 
-Thanks to Oliver Letterer for [imp_implementationForwardingToSelector](https://github.com/OliverLetterer/imp_implementationForwardingToSelector)
-used to set up the trampolines. Thanks also  to [@twostraws](https://twitter.com/twostraws)'
+Thanks to Oliver Letterer for the [imp_implementationForwardingToSelector](https://github.com/OliverLetterer/imp_implementationForwardingToSelector) project adapted to set up the
+trampolines. Thanks also  to [@twostraws](https://twitter.com/twostraws)'
 [Unwrap](https://github.com/twostraws/Unwrap) and [@artsy](https://twitter.com/ArtsyOpenSource)'s
 [eidolon](https://github.com/artsy/eidolon) used extensively during testing.
 

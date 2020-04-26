@@ -68,15 +68,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
-        Self.swiftTraceExclude(NSObject.swiftTraceMethodExclusions())
+        Self.swiftTraceExclude(NSObject.swiftTraceDefaultMethodExclusions())
 //        SwiftTrace.patchFactory = MyTracer.self
 
+//        NSObject.swiftTraceInclude(".")
+
         let objcTester = ObjcTraceTester()
-        ObjcTraceTester.swiftTraceInstances(withSubLevels: 0)
-        objcTester.swiftTraceInstance(withSubLevels: 0)
+        objcTester.swiftTraceInstance(withSubLevels: 2)
         objcTester.a(44, i:45, b: 55, c: "66", o: self, s: Selector(("jjj:")))
 
-        NSObject.swiftTraceMainBundle(withSubLevels: 0)
+        TestClass.swiftTraceMainBundle(withSubLevels: 0)
+
+//        NSObject.swiftTraceClasses(matchingPattern: "Test", subLevels: 0)
 
         var a: P = TestClass()
         print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect(r1: __C.CGRect, r2: __C.CGRect) -> __C.CGRect", args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)) as NSRect)
@@ -91,6 +94,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         a.z( 88, f: 66, s: "$%^", g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
         print(a.arr(a: ["a", "b", "c"], b: [1, 2, 3]))
         print(a.c(c: { _ in }))
+        print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect(r1: __C.CGRect, r2: __C.CGRect) -> __C.CGRect", args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)) as NSRect)
+
+        NSObject.swiftTraceRemoveAllTraces()
+
         print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect(r1: __C.CGRect, r2: __C.CGRect) -> __C.CGRect", args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)) as NSRect)
     }
 

@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#47 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#49 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -180,15 +180,25 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 + (NSString *)defaultMethodExclusions;
 + (void)include:(NSString *)pattern;
 + (void)exclude:(NSString *)pattern;
-+ (void)traceClassesMatchingWithPattern:(NSString *)pattern subLevels:(intptr_t)subLevels;
++ (void)traceClassesMatchingPattern:(NSString *)pattern subLevels:(intptr_t)subLevels;
 + (NSArray<NSString *> *)methodNamesOfClass:(Class)aClass;
 + (void)traceWithAClass:(Class)aClass;
 + (void)traceInstancesOfClass:(Class)aClass subLevels:(intptr_t)subLevels;
 - (void)traceInstanceWithAnInstance:(id)instance subLevels:(intptr_t)subLevels;
-+ (void)removeAllSwizzles;
++ (BOOL)undoLastTrace;
++ (void)removeAllTraces;
 @end
 
 @implementation NSObject(SwiftTrace)
++ (NSString *)swiftTraceDefaultMethodExclusions {
+    return [SwiftTrace defaultMethodExclusions];
+}
++ (void)swiftTraceExclude:(NSString *)pattern {
+    [SwiftTrace exclude:pattern];
+}
++ (void)swiftTraceInclude:(NSString *)pattern {
+    [SwiftTrace include:pattern];
+}
 + (void)swiftTrace {
     [SwiftTrace traceWithAClass:self];
 }
@@ -204,29 +214,23 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 + (void)swiftTraceMainBundleWithSubLevels:(int)subLevels {
     [SwiftTrace traceMainBundleWithSubLevels:subLevels];
 }
-+ (NSString *)swiftTraceMethodExclusions {
-    return [SwiftTrace defaultMethodExclusions];
++ (void)swiftTraceClassesMatchingPattern:(NSString *)pattern {
+    [SwiftTrace traceClassesMatchingPattern:pattern subLevels:0];
 }
-+ (void)swiftTraceInclude:(NSString *)pattern {
-    [SwiftTrace include:pattern];
-}
-+ (void)swiftTraceExclude:(NSString *)pattern {
-    [SwiftTrace exclude:pattern];
++ (void)swiftTraceClassesMatchingPattern:(NSString *)pattern subLevels:(intptr_t)subLevels {
+    [SwiftTrace traceClassesMatchingPattern:pattern subLevels:subLevels];
 }
 + (NSArray<NSString *> *)swiftTraceMethodNames {
-    return [self switTraceMethodsOfClass:self];
+    return [SwiftTrace methodNamesOfClass:self];
 }
-+ (void)swiftTraceClassesMatching:(NSString *)pattern {
-    [SwiftTrace traceClassesMatchingWithPattern:pattern subLevels:0];
-}
-+ (void)swiftTraceClassesMatching:(NSString *)pattern subLevels:(intptr_t)subLevels {
-    [SwiftTrace traceClassesMatchingWithPattern:pattern subLevels:subLevels];
-}
-+ (NSArray<NSString *> *)switTraceMethodsOfClass:(Class)aClass {
++ (NSArray<NSString *> *)switTraceMethodsNamesOfClass:(Class)aClass {
     return [SwiftTrace methodNamesOfClass:aClass];
 }
-+ (void)swiftTraceReset {
-    [SwiftTrace removeAllSwizzles];
++ (BOOL)swiftTraceUndoLastTrace {
+    return [SwiftTrace undoLastTrace];
+}
++ (void)swiftTraceRemoveAllTraces {
+    [SwiftTrace removeAllTraces];
 }
 + (void)swiftTraceInstances {
     [SwiftTrace traceInstancesOfClass:self subLevels:0];

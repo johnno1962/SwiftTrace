@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#41 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#43 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -16,7 +16,7 @@ import Foundation
 
 extension SwiftTrace {
 
-    open class Arguments: Swizzle {
+    open class Decorated: Swizzle {
 
         static let argumentParser =
             NSRegularExpression(regexp: ":\\s*([^,)]+)[,)]|\\.setter : (.+)$")
@@ -25,7 +25,7 @@ extension SwiftTrace {
             NSRegularExpression(regexp: "\\) -> (.+)$")
 
         lazy var argTypeRanges: [Range<String.Index>] = {
-            return ranges(in: signature, parser: Arguments.argumentParser)
+            return ranges(in: signature, parser: Decorated.argumentParser)
         }()
 
         open func ranges(in signature: String, parser: NSRegularExpression) -> [Range<String.Index>] {
@@ -50,7 +50,7 @@ extension SwiftTrace {
                                  floatArgs: &stack.floatArg1) :
                     swiftDecorate(signature: signature,
                                   invocation: invocation,
-                                  parser: Arguments.argumentParser,
+                                  parser: Decorated.argumentParser,
                                   intArgs: &stack.intArg1,
                                   floatArgs: &stack.floatArg1)
         }
@@ -64,7 +64,7 @@ extension SwiftTrace {
                              floatArgs: &stack.floatReturn1) :
                 swiftDecorate(signature: invocation.decorated ?? signature,
                               invocation: invocation,
-                              parser: Arguments.returnParser,
+                              parser: Decorated.returnParser,
                               intArgs: &stack.intReturn1,
                               floatArgs: &stack.floatReturn1)
         }
@@ -81,14 +81,14 @@ extension SwiftTrace {
                                 parser: NSRegularExpression,
                                 intArgs: UnsafePointer<intptr_t>,
                                 floatArgs: UnsafePointer<Double>) -> String {
-            guard invocation.shouldTrace else {
+            guard invocation.shouldDecorate else {
                 return signature
             }
             var intSlot = 0, floatSlot = 0
             var position = signature.startIndex
             var output = ""
 
-            let typeRanges = parser === Arguments.argumentParser ?
+            let typeRanges = parser === Decorated.argumentParser ?
                 argTypeRanges : ranges(in: signature, parser: parser)
 
             LOOP:
@@ -181,12 +181,12 @@ extension SwiftTrace {
             return NSStringFromSelector(method_getName(objcMethod!))
         }()
 
-        static var identifyFormat = "<%@ %p>"
+        public static var identifyFormat = "<%@ %p>"
 
         func identify(id: AnyObject) -> String {
             let className = NSStringFromClass(object_getClass(id)!)
             return object_isClass(id) ? className :
-                String(format: Arguments.identifyFormat,
+                String(format: Decorated.identifyFormat,
                        className as NSString,
                        unsafeBitCast(id, to: uintptr_t.self))
         }
@@ -210,7 +210,7 @@ extension SwiftTrace {
                 invocation.swiftSelf = intArgs[1]
             }
             #endif
-            guard invocation.shouldTrace else {
+            guard invocation.shouldDecorate else {
                 return invocation.swizzle.signature
             }
             let objcSelf = unsafeBitCast(invocation.swiftSelf, to: AnyObject.self)
