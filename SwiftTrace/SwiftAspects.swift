@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#6 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#7 $
 //
 //  Add aspects to Swift methods
 //  ============================
@@ -72,7 +72,7 @@ extension SwiftTrace {
 
     /**
         Add a closure aspect to be called before or after a "Swizzle" is called
-        - parameter toClass: - specifying the class to add aspect is more efficient
+        - parameter aClass: - specifying the class to remove aspect is more efficient
         - parameter methodName: - unmangled name of Method for aspect
      */
     @discardableResult

@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#190 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#191 $
 //
 
 import Foundation
@@ -129,15 +129,17 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Intercepts and tracess all classes linked into the bundle containing a class.
-        - parameter containing: the class to specify the bundle
+     Intercepts and tracess all classes linked into the bundle containing a class.
+     - parameter theClass: the class to specify the bundle
+     - parameter subLevels: levels of unqualified traces to show
      */
     open class func traceBundle(containing theClass: AnyClass, subLevels: Int = 0) {
         trace(bundlePath: class_getImageName(theClass), subLevels: subLevels)
     }
 
     /**
-        Trace all user developed classes in the main bundle of an app
+     Trace all user developed classes in the main bundle of an app
+     - parameter subLevels: levels of unqualified traces to show
      */
     open class func traceMainBundle(subLevels: Int = 0) {
         let RTLD_MAIN_ONLY = UnsafeMutableRawPointer(bitPattern: -5)
@@ -152,7 +154,7 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Iterate over all known classes in the app
+     Iterate over all known classes in the app
      */
     @discardableResult
     open class func forAllClasses( callback: (_ aClass: AnyClass,
@@ -174,7 +176,9 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Trace a classes defined in a specific bundlePath (executable image)
+     Trace a classes defined in a specific bundlePath (executable image)
+     - parameter bundlePath: Path to bundle to trace
+     - parameter subLevels: levels of unqualified traces to show
      */
     class func trace(bundlePath: UnsafePointer<Int8>?, subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels)
@@ -195,7 +199,7 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Lists Swift classes in an app or framework.
+     Lists Swift classes not inheriting from NSObject in an app or framework.
      */
     open class func swiftClassList(bundlePath: UnsafePointer<Int8>) -> [AnyClass] {
         var classes = [AnyClass]()
@@ -206,8 +210,9 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Intercepts and tracess all classes with names matching regexp pattern
-        - parameter pattern: regexp patten to specify classes to trace
+     Intercepts and tracess all classes with names matching regexp pattern
+     - parameter pattern: regexp patten to specify classes to trace
+     - parameter subLevels: levels of unqualified traces to show
      */
     open class func traceClasses(matchingPattern pattern: String, subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels)
@@ -222,8 +227,8 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Specify an individual classs to trace
-        - parameter aClass: the class, the methods of which to trace
+     Underlying implementation of tracing an individual classs.
+     - parameter aClass: the class, the methods of which to trace
      */
     open class func trace(aClass: AnyClass) {
         let className = NSStringFromClass(aClass)
@@ -252,8 +257,9 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Specify an individual classs to trace
-        - parameter aClass: the class, the methods of which to trace
+     Trace instances of a particular class including methods of superclass
+     - parameter aClass: the class, the methods of which to trace
+     - parameter subLevels: levels of unqualified traces to show
      */
     open class func traceInstances(ofClass aClass: AnyClass, subLevels: Int) {
         startNewTrace(subLevels: subLevels).classFilter = aClass
@@ -265,8 +271,9 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Specify an individual classs to trace
-        - parameter aClass: the class, the methods of which to trace
+     Trace a particular instance only.
+     - parameter anInstance: the class, the methods of which to trace
+     - parameter subLevels: levels of unqualified traces to show
      */
     open class func traceInstance(anInstance: AnyObject, subLevels: Int) {
         traceInstances(ofClass: object_getClass(anInstance)!, subLevels: subLevels)
@@ -275,8 +282,8 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Iterate over all methods in the vtable that follows the class information
-        of a Swift class (TargetClassMetadata)
+     Iterate over all methods in the vtable that follows the class information
+     of a Swift class (TargetClassMetadata)
      */
     @discardableResult
     open class func iterateMethods(ofClass aClass: AnyClass,
@@ -337,8 +344,8 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Returns a list of all Swift methods as demangled symbols of a class
-        - parameter ofClass: - class to be dumped
+     Returns a list of all Swift methods as demangled symbols of a class
+     - parameter ofClass: - class to be dumped
      */
     open class func methodNames(ofClass: AnyClass) -> [String] {
         var names = [String]()
@@ -359,7 +366,7 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Remove all swizzles applied until now
+     Remove all swizzles applied until now
      */
     open class func removeAllTraces() {
         while undoLastTrace() {
@@ -367,7 +374,7 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Remove all swizzles for this trace
+     Remove all swizzles for this trace
      */
     open func removeSwizzles() {
         for (_, swizzle) in activeSwizzles {
@@ -376,9 +383,9 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Intercept Objective-C class' methods using swizzling
-        - parameter aClass: meta-class or class to be swizzled
-        - parameter which: "+" for class methods, "-" for instance methods
+     Intercept Objective-C class' methods using swizzling
+     - parameter aClass: meta-class or class to be swizzled
+     - parameter which: "+" for class methods, "-" for instance methods
      */
     class func trace(objcClass aClass: AnyClass, which: String) {
         var mc: UInt32 = 0
@@ -405,9 +412,9 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-        Legacy code intended to prevent property accessors from being traced
-        - parameter aClass: class of method
-        - parameter sel: selector of method being checked
+     Very old code intended to prevent property accessors from being traced
+     - parameter aClass: class of method
+     - parameter sel: selector of method being checked
      */
     class func dontSwizzleProperty(aClass: AnyClass, sel: Selector) -> Bool {
         var name = [Int8](repeating: 0, count: 5000)
@@ -428,7 +435,7 @@ open class SwiftTrace: NSObject {
 }
 
 /**
-    Convenience extension to trap regex errors and report them
+ Convenience extension to trap regex errors and report them
  */
 extension NSRegularExpression {
 
