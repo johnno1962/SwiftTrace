@@ -21,7 +21,7 @@ following line to it's Podfile:
  ```
 This project has been updated to Swift 5 from Xcode 10.2.:
 ```swift
-    pod 'SwiftTrace', '5.5.0'
+    pod 'SwiftTrace'
  ```
 Once the project has rebuilt, import SwiftTrace into the application's AppDelegate and add something like
 the following to the beginning of it's didFinishLaunchingWithOptions method:
