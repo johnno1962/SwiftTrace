@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
     s.name        = "SwiftTrace"
-    s.version     = "5.5.0"
+    s.version     = "6.0.0"
     s.summary     = "Log Swift or Objective-C method invocations"
     s.homepage    = "https://github.com/johnno1962/SwiftTrace"
     s.social_media_url = "https://twitter.com/Injection4Xcode"
@@ -8,9 +8,9 @@ Pod::Spec.new do |s|
     s.license     = { :type => "MIT" }
     s.authors     = { "johnno1962" => "swifttrace@johnholdsworth.com" }
 
-    s.osx.deployment_target = "10.9"
-    s.ios.deployment_target = "8.0"
+    s.osx.deployment_target = "10.10"
+    s.ios.deployment_target = "11.4"
     s.source   = { :git => "https://github.com/johnno1962/SwiftTrace.git", :tag => s.version }
     s.source_files = "SwiftTrace/*.{swift,h,mm,s}"
-    s.swift_versions = ["5.0", "4.2", "4.0"]
+    s.swift_versions = ["5.2", "5.0", "4.2", "4.0"]
 end
