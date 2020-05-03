@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#9 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#10 $
 //
 //  Invocation interface for Swift
 //  ==============================
@@ -70,8 +70,10 @@ extension SwiftTrace {
                 if floatArgNumber + registers > EntryStack.maxFloatArgs {
                     fatalError("Too many float args for SwiftTrace.Call")
                 }
-                rebind(rebind(&input.floatArg1, to: T.self).advanced(by: floatArgNumber))
-                    .pointee = arg
+                withUnsafeMutablePointer(to: &input.floatArg1) {
+                    rebind($0.advanced(by: floatArgNumber), to: T.self)
+                        .pointee = arg
+                }
                 floatArgNumber += registers
                 return
             }
@@ -81,8 +83,10 @@ extension SwiftTrace {
                 if intArgNumber + registers > EntryStack.maxIntArgs {
                     fatalError("Too many int args for SwiftTrace.Call")
                 }
-                rebind(rebind(&input.intArg1, to: Int.self).advanced(by: intArgNumber))
-                    .pointee = arg
+                withUnsafeMutablePointer(to: &input.intArg1) {
+                    rebind($0.advanced(by: intArgNumber), to: T.self)
+                        .pointee = arg
+                }
                 intArgNumber += registers
             }
         }

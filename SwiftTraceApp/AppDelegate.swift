@@ -78,7 +78,7 @@ public class TestClass: P, SwiftTraceArg {
     }
 }
 
-class MyTracer: SwiftTrace.Arguments {
+class MyTracer: SwiftTrace.Decorated {
 
     override func onEntry(stack: inout SwiftTrace.EntryStack) {
         print(arguments)
@@ -219,7 +219,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.str3(strs: SwiftTwaceApp.Strings) -> SwiftTwaceApp.Strings", args: strings) as Strings)
         print(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.x() -> ()", args: strings) as Void)
 
-        SwiftTrace.removeAllSwizzles()
+        SwiftTrace.removeAllTraces()
 
         let x = Benchmark()
 

@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#43 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#44 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -90,9 +90,9 @@ extension SwiftTrace {
 
             let typeRanges = parser === Decorated.argumentParser ?
                 argTypeRanges : ranges(in: signature, parser: parser)
+            var hasSeenUnknownArgumentType = false
 
-            LOOP:
-            for range in typeRanges {
+            for range in typeRanges where !hasSeenUnknownArgumentType {
                 output += signature[position ..< range.lowerBound]
                 var value: String?
 
@@ -158,11 +158,12 @@ extension SwiftTrace {
                 case "Swift.UInt16": intValue(type: UInt16.self)
                 case "Swift.Int8":   intValue(type: Int8.self)
                 case "Swift.UInt8":  intValue(type: UInt8.self)
+                case "()":           value = "Void"
                 default:
                     if NSClassFromString(type) != nil {
                         intValue(type: AnyObject.self)
                     } else {
-                        break LOOP
+                        hasSeenUnknownArgumentType = true
                     }
                 }
 
@@ -238,44 +239,42 @@ extension SwiftTrace {
                         let slotsRequired = (MemoryLayout<Type>.size +
                             MemoryLayout<Slot>.size - 1) /
                             MemoryLayout<Slot>.size
-                        if slot + slotsRequired <= maxSlots {
-                            (registers + slot)
-                                .withMemoryRebound(to: Type.self, capacity: 1) {
+                        defer { slot += slotsRequired }
+                        guard slot + slotsRequired <= maxSlots &&
+                            !hasSeenUnknownArgumentType else { return }
 
-                                if hasSeenUnknownArgumentType {
-                                    return
-                                } else if Type.self == AnyObject?.self {
-                                    if let id = unsafeBitCast($0.pointee,
-                                                              to: AnyObject?.self) {
-                                        let describing = thread.describing
-                                        thread.describing = true
-                                        if id.isKind(of: NSString.self) {
-                                            value = "@\"\(id)\""
-                                        } else {
-                                            value = describing ? identify(id: id) : "\(id)"
-                                        }
-                                        thread.describing = describing
+                        (registers + slot)
+                            .withMemoryRebound(to: Type.self, capacity: 1) {
+
+                            if Type.self == AnyObject?.self {
+                                if let id = unsafeBitCast($0.pointee,
+                                                          to: AnyObject?.self) {
+                                    let describing = thread.describing
+                                    thread.describing = true
+                                    if id.isKind(of: NSString.self) {
+                                        value = "@\"\(id)\""
                                     } else {
-                                        value = "nil"
+                                        value = describing ? identify(id: id) : "\(id)"
                                     }
-                                } else if Type.self == UnsafePointer<UInt8>.self {
-                                    let str = unsafeBitCast($0.pointee,
-                                                            to: UnsafePointer<UInt8>.self)
-                                    value = "\"\(String(cString: str))\""
-                                } else if Type.self == UnsafeRawPointer.self {
-                                    value = String(format: "%p", unsafeBitCast($0.pointee, to: uintptr_t.self))
-                                } else if Type.self == Selector.self {
-                                    let SEL = unsafeBitCast($0.pointee, to: Selector.self)
-                                    value = "@selector(\(NSStringFromSelector(SEL)))"
+                                    thread.describing = describing
                                 } else {
-                                    value = "\($0.pointee)"
+                                    value = "nil"
                                 }
-
-                                invocation.arguments.append($0.pointee)
+                            } else if Type.self == UnsafePointer<UInt8>.self {
+                                let str = unsafeBitCast($0.pointee,
+                                                        to: UnsafePointer<UInt8>.self)
+                                value = "\"\(String(cString: str))\""
+                            } else if Type.self == UnsafeRawPointer.self {
+                                value = String(format: "%p", unsafeBitCast($0.pointee, to: uintptr_t.self))
+                            } else if Type.self == Selector.self {
+                                let SEL = unsafeBitCast($0.pointee, to: Selector.self)
+                                value = "@selector(\(NSStringFromSelector(SEL)))"
+                            } else {
+                                value = "\($0.pointee)"
                             }
-                        }
 
-                        slot += slotsRequired
+                            invocation.arguments.append($0.pointee)
+                        }
                     }
 
                     func intValue<Type>(type: Type.Type) {
