@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#191 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#193 $
 //
 
 import Foundation
@@ -76,7 +76,9 @@ open class SwiftTrace: NSObject {
 
     @discardableResult
     open class func startNewTrace(subLevels: Int) -> SwiftTrace {
-        lastSwiftTrace.mutePreviousUnfiltered()
+        if subLevels != 0 {
+            lastSwiftTrace.mutePreviousUnfiltered()
+        }
         lastSwiftTrace = SwiftTrace(previous: SwiftTrace.lastSwiftTrace, subLevels: subLevels)
         return lastSwiftTrace
     }
@@ -94,7 +96,7 @@ open class SwiftTrace: NSObject {
      default pattern of symbols to be excluded from tracing
      */
     open class var defaultMethodExclusions: String {
-        return "\\.getter| (?:retain|_tryRetain|release|_isDeallocating|.cxx_destruct|dealloc|description| debugDescription)]|initWithCoder|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[UIView |UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|_UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose|RemoteCapture (?:capture0|subtractAndEncode:)"
+        return "\\.getter| (?:retain|_tryRetain|release|_isDeallocating|.cxx_destruct|dealloc|description| debugDescription)]|initWithCoder|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[(UIView|RemoteCapture) |UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|_UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose"
     }
 
     static var exclusionRegexp: NSRegularExpression? =
