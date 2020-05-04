@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#10 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#11 $
 //
 //  Invocation interface for Swift
 //  ==============================
@@ -173,4 +173,5 @@ extension Float: SwiftTraceFloatArg {}
 extension OSRect: SwiftTraceFloatArg {}
 extension OSPoint: SwiftTraceFloatArg {}
 extension OSSize: SwiftTraceFloatArg {}
+extension CGFloat: SwiftTraceFloatArg {}
 #endif

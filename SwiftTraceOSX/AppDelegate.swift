@@ -12,7 +12,7 @@ public protocol P {
     var i: Int { get set }
     func x()
     func y() -> Float
-    func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int )
+    func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: CGFloat, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int )
     func rect(r1: NSRect, r2: NSRect) -> NSRect
     func arr(a: [String], b: [Int]) -> [String]
     func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> ()
@@ -31,7 +31,7 @@ open class TestClass: NSObject, P {
         return -9.0
     }
 
-    open func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: Double, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int ) {
+    open func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: CGFloat, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int ) {
         print( "open func z( \(i) \(d) \(e) \(f) \(String(describing: s)) \(g) \(h) \(f1) \(g1) \(h1) \(f2) \(g2) \(h2) )" )
     }
 

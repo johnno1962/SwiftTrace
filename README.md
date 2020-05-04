@@ -95,8 +95,20 @@ If you want to further process output you can define your own custom tracing sub
  non-zero subLevels parameter all previous traces are inhibited unless they are being
  made up to subLevels inside a method in the most recent trace or if they where filtered
  anyway by a class or instance (traceInstances(ofClass:) and trace(anInstance:)).
- 
- These API's are also available as a extension of NSObject which is useful
+
+If you would like  to extend SwiftTrace to be able to log one of your struct types
+there are two steps. First, extend the type to conform to SwiftTraceArg if it contains
+only non-float types or SwiftTraceFloatArg of it contains only float types.
+```Swift
+extension TestStruct: SwiftTraceArg {}
+```
+Then, before the trace is called add a handler for the type which takes the following form:
+```Swift
+    SwiftTrace.Decorated.swiftTypeHandlers["SwiftTwaceApp.TestStruct"] = {
+        SwiftTrace.Decorated.handleArg(invocation: $0, isReturn: $1, type: TestStruct.self)
+    }
+```
+ Many of these API's are also available as a extension of NSObject which is useful
  when SwiftTrace is made available by dynamically loading bundle as in
  (InjectionIII)[https://github.com/johnno1962/InjectionIII].
  ```Swift
