@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#46 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#47 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -107,7 +107,7 @@ extension SwiftTrace {
                 } else if NSClassFromString(type) != nil {
                     value = Decorated.handleArg(invocation: invocation,
                                                 isReturn: isReturn,
-                                                type: AnyObject.self)
+                                                type: AnyObject?.self)
                 } else {
                     hasSeenUnknownArgumentType = true
                 }
@@ -241,7 +241,7 @@ extension SwiftTrace {
             "f": { handleArg(invocation: $0, isReturn: $1, type: Float.self) },
             "d": { handleArg(invocation: $0, isReturn: $1, type: Double.self) },
             "B": { handleArg(invocation: $0, isReturn: $1, type: Bool.self) },
-            "*": { handleArg(invocation: $0, isReturn: $1, type: UnsafePointer<UInt8>.self) },
+            "*": { handleArg(invocation: $0, isReturn: $1, type: UnsafePointer<UInt8>?.self) },
             ":": { handleArg(invocation: $0, isReturn: $1, type: Selector.self) },
             "{_NSRange=QQ}":
                 { handleArg(invocation: $0, isReturn: $1, type: NSRange.self) },
@@ -304,10 +304,13 @@ extension SwiftTrace {
                     return "nil"
                 }
             }
-            else if Type.self == UnsafePointer<UInt8>.self {
-                let str = unsafeBitCast(argPointer.pointee,
-                                        to: UnsafePointer<UInt8>.self)
-                return "\"\(String(cString: str))\""
+            else if Type.self == UnsafePointer<UInt8>?.self {
+                if let str = unsafeBitCast(argPointer.pointee,
+                                           to: UnsafePointer<UInt8>?.self) {
+                    return "\"\(String(cString: str))\""
+                } else {
+                    return "NULL"
+                }
             } else if Type.self == UnsafeRawPointer.self {
                 return String(format: "%p", unsafeBitCast(argPointer.pointee, to: uintptr_t.self))
             } else if Type.self == Selector.self {
