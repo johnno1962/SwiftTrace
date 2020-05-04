@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#15 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#16 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -226,6 +226,13 @@ extension SwiftTrace {
 
            /** levelsTracing on entry for restore */
            public var saveLevelsTracing = 0
+
+           /** levelsTracing on entry for restore */
+           public var intArgumentOffset = 0
+
+           /** levelsTracing on entry for restore */
+           public var floatArgumentOffset = 0
+
 
            /** This invocation qualifies for tracing */
            lazy public var shouldDecorate: Bool = {
