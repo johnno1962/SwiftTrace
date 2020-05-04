@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#196 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#197 $
 //
 
 import Foundation
@@ -284,7 +284,7 @@ open class SwiftTrace: NSObject {
      - parameter anInstance: the class, the methods of which to trace
      - parameter subLevels: levels of unqualified traces to show
      */
-    open class func traceInstance(anInstance: AnyObject, subLevels: Int = 0) {
+    open class func trace(anInstance: AnyObject, subLevels: Int = 0) {
         traceInstances(ofClass: object_getClass(anInstance)!, subLevels: subLevels)
         lastSwiftTrace.instanceFilter = autoBitCast(anInstance)
         lastSwiftTrace.classFilter =  nil

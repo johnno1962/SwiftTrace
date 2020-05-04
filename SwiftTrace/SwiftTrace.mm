@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#49 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#50 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -184,7 +184,7 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 + (NSArray<NSString *> *)methodNamesOfClass:(Class)aClass;
 + (void)traceWithAClass:(Class)aClass;
 + (void)traceInstancesOfClass:(Class)aClass subLevels:(intptr_t)subLevels;
-- (void)traceInstanceWithAnInstance:(id)instance subLevels:(intptr_t)subLevels;
+- (void)traceWithAnInstance:(id)instance subLevels:(intptr_t)subLevels;
 + (BOOL)undoLastTrace;
 + (void)removeAllTraces;
 @end
@@ -239,10 +239,10 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
     [SwiftTrace traceInstancesOfClass:self subLevels:subLevels];
 }
 - (void)swiftTraceInstance {
-    [SwiftTrace traceInstanceWithAnInstance:self subLevels:0];
+    [SwiftTrace traceWithAnInstance:self subLevels:0];
 }
 - (void)swiftTraceInstanceWithSubLevels:(int)subLevels {
-    [SwiftTrace traceInstanceWithAnInstance:self subLevels:subLevels];
+    [SwiftTrace traceWithAnInstance:self subLevels:subLevels];
 }
 @end
 

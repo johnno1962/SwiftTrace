@@ -4,7 +4,7 @@ Trace Swift and Objective-C method invocations of non-final classes in an app bu
 Think [Xtrace](https://github.com/johnno1962/Xtrace) but for Swift and Objective-C. You can also 
 add "aspects" to member functions of non-final Swift classes to have a closure called before or after
 a function implementation executes which in turn can modify incoming arguments or the return value!
-Apart from the loggin functionality, with binary distribution of Swift frameworks on the horizon perhaps
+Apart from the logging functionality, with binary distribution of Swift frameworks on the horizon perhaps
 this will be of use in the same way "Swizzling" was in days of yore.
 
 ![SwiftTrace Example](SwiftTrace.gif)
@@ -16,10 +16,6 @@ class' vtable.
 
 SwiftTrace is most easily used as a CocoaPod and can be added to your project by temporarily adding the
 following line to it's Podfile:
-```swift
-    pod 'SwiftTrace'
- ```
-This project has been updated to Swift 5 from Xcode 10.2.:
 ```swift
     pod 'SwiftTrace'
  ```
@@ -37,25 +33,43 @@ This gives output in the Xcode debug console such as that above.
 
 To trace a system framework such as UIKit you can trace classes using a pattern:
 ```swift
-    SwiftTrace.traceClassesMatching(pattern:"^UI")
+    SwiftTrace.traceClasses(matchingPattern:"^UI")
  ```
 Individual classes can be traced using the underlying api:
 ```swift
     SwiftTrace.trace(aClass: MyClass.self)
 ```
-Output can be filtered using method name inclusion and exclusion regexps. 
+Or to trace all methods of instances of a particular class including those of their superclasses
+use the following:
+```Swift
+    SwiftTrace.traceInstances(ofClass: aClass)
+```
+Or to trace only a particular instance use the following:
+```Swift
+    SwiftTrace.trace(anInstance: anObject)
+```
+Which traces are applied can be filtered using method name inclusion and exclusion regexps. 
 ```swift
     SwiftTrace.include(pattern: "TestClass")
     SwiftTrace.exclude(pattern: "\\.getter")
 ```
 These methods must be called before you start the trace as they are applied during the "Swizzle" phase.
-There is a default set of exclusions setup as a result of testing, tracing UIKit.
+There is a default set of exclusions setup as a result of testing by tracing UIKit.
                       
-    public let swiftTraceDefaultExclusions = "\\.getter|retain]|_tryRetain]|_isDeallocating]|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[UIView |UIButton _defaultBackgroundImageForType:andState:|RxSwift.ScheduledDisposable.dispose"
+    open class var defaultMethodExclusions: String {
+        return """
+            \\.getter| (?:retain|_tryRetain|release|_isDeallocating|.cxx_destruct|dealloc|description| debugDescription)]|initWithCoder|\
+            ^\\+\\[(?:Reader_Base64|UI(?:NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |\
+            ^.\\[(?:UIView|RemoteCapture) |UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|\
+            UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|\
+            _UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|\
+            UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose| ns(?:li|is)_
+            """
+    }
 
-If you want to further process output you can define a custom tracing class:
+If you want to further process output you can define your own custom tracing sub class:
 ```swift
-    class MyTracer: SwiftTrace.Swizzle {
+    class MyTracer: SwiftTrace.Decorated {
 
         override func onEntry(stack: inout SwiftTrace.EntryStack) {
             print( ">> "+stack )
@@ -64,6 +78,44 @@ If you want to further process output you can define a custom tracing class:
     
     SwiftTrace.swizzleFactory = MyTracer.self
  ```   
+ As the amount of of data logged can quickly get out of hand you can control what is
+ logged by combing traces with the optional `subLevels` parameter to the above functions.
+ For example, the following puts a trace on all of UIKit but will only log calls to methods
+ of the target instance and up to three levels of calls those method make:
+ ```Swift
+     SwiftTrace.traceBundle(containing: UIView.self)
+     SwiftTrace.trace(anInstance: anObject, subLevels: 3)
+ ```
+ Or, the following will log methods of the application and calls to RxSwift they make:
+ ```Swift
+     SwiftTrace.traceBundle(containing: RxSwift.DisposeBase.self)
+     SwiftTrace.traceMainBundle(subLevels: 3)
+ ```
+ If this seems arbitrary the rules are reasonably simple. When you add a trace with a
+ non-zero subLevels parameter all previous traces are inhibited unless they are being
+ made up to subLevels inside a method in the most recent trace or if they where filtered
+ anyway by a class or instance (traceInstances(ofClass:) and trace(anInstance:)).
+ 
+ These API's are also available as a extension of NSObject which is useful
+ when SwiftTrace is made available by dynamically loading bundle as in
+ (InjectionIII)[https://github.com/johnno1962/InjectionIII].
+ ```Swift
+     SwiftTrace.traceBundle(containing: UIView.class)
+     // becomes
+     UIView.traceBundle()
+     
+     SwiftTrace.trace(inInstance: anObject)
+     // becomes
+     anObject.swiftTraceInstance()
+ ```
+ This is useful when SwiftTrace is made available by dynamically loading a bundle
+ such as when using (InjectionIII)[https://github.com/johnno1962/InjectionIII]. Rather
+ than having to include a CocoaPod, all you need to do is add SwiftTrace.h in the
+ InjectionIII application's bundle to your bridging header and dynamically load the bundle.
+ ```Swift
+    Bundle(path: "/Applications/InjectionIII.app/Contents/Resources/iOSInjection.bundle")?.load()
+ ```
+ 
 #### Aspects
 
 You can add an aspect to a particular method using the method's de-mangled name:
@@ -81,7 +133,7 @@ exit stack. The full signature for the entry closure is:
  ```   
 If you understand how [registers are allocated](https://github.com/apple/swift/blob/master/docs/ABI/RegisterUsage.md) to arguments it is possible to poke into the
 stack to modify the incoming arguments and, for the exit aspect closure you can replace
-the return value and on a good day prevent (and log) an error being thrown.
+the return value and on a good day log (and prevent) an error being thrown.
 
 Replacing an input argument in the closure is relatively simple:
 ```swift
@@ -106,7 +158,8 @@ It is possible to set `stack.thrownError` to zero to cancel the throw but you wi
 the return value.
 
 If this seems complicated there is a property `swizzle.arguments` which can be used
-`onEntry` which contains the arguments as an `Array` containing elements of type `Any`.
+`onEntry` which contains the arguments as an `Array` containing elements of type `Any`
+which can be cast to the expected type.
 
 #### Invocation interface
 
@@ -116,7 +169,7 @@ Now we have a trampoline infrastructure, it is possible to implement an invocati
         methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: Swift.Double, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String",
         args: 777, 101.0, Float(102.0), "2-2", 103.0, Float(104.0), 105.0, 106.0, Float(107.0), 108.0, 888, 999, TestClass()))
  ```
-In order to determine the mangled name of a method you can get the list for a class 
+In order to determine the mangled name of a method you can get the full list for a class 
 using this function:
 ```swift
     print(SwiftTrace.methodNames(ofClass: TestClass.self))
@@ -130,8 +183,8 @@ only floats. These values and return values must fit into 32 bytes and not conta
 #### How it works
                       
 A Swift `AnyClass` instance has a layout similar to an Objective-C class with some
-additional data documented in the `ClassMetadataSwift` in SwiftTrace.swift. After this data
-there is a vtable of pointers to the class and instance member functions of the class up to
+additional data documented in the `ClassMetadataSwift` in SwiftMeta.swift. After this data
+there is the vtable of pointers to the class and instance member functions of the class up to
 the size of the class instance. SwiftTrace replaces these function pointers with a pointer
 to a unique assembly language "trampoline" entry point which has destination function and
 data pointers associated with it. Registers are saved and this function is called passing
