@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#16 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#17 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -15,6 +15,11 @@
 import Foundation
 
 extension SwiftTrace {
+
+   /**
+    Format for ms of time spend in method
+    */
+   public static var timeFormat = " %.1fms"
 
    /**
     Instances used to store information about a patch on a method
@@ -146,7 +151,7 @@ extension SwiftTrace {
            if let invocation = invocation() {
                let elapsed = Invocation.usecTime() - invocation.timeEntered
                if invocation.shouldDecorate {
-                   print("\(String(repeating: "  ", count: invocation.stackDepth))\(traceMessage(stack: &stack)) \(String(format: "%.1fms", elapsed * 1000.0))")
+                   print("\(String(repeating: "  ", count: invocation.stackDepth))\(traceMessage(stack: &stack))\(String(format: SwiftTrace.timeFormat, elapsed * 1000.0))")
                }
                totalElapsed += elapsed
                invocationCount += 1

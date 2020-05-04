@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#45 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#46 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -15,6 +15,8 @@
 import Foundation
 
 extension SwiftTrace {
+
+    public static var identifyFormat = "<%@ %p>"
 
     open class Decorated: Swizzle {
 
@@ -99,7 +101,7 @@ extension SwiftTrace {
                 var value: String?
 
                 let type = String(signature[range])
-                if let typeHandler = Decorated.argTypeHandlers[type],
+                if let typeHandler = Decorated.swiftTypeHandlers[type],
                     let handled = typeHandler(invocation, isReturn) {
                     value = handled
                 } else if NSClassFromString(type) != nil {
@@ -117,6 +119,30 @@ extension SwiftTrace {
             return output + signature[position ..< signature.endIndex]
         }
 
+        public static var swiftTypeHandlers: [String: (Invocation, Bool) -> String?] = [
+            "Swift.Int": { handleArg(invocation: $0, isReturn: $1, type: Int.self) },
+            "Swift.String": { handleArg(invocation: $0, isReturn: $1, type: String.self) },
+            "Swift.Array<Swift.Int>": { handleArg(invocation: $0, isReturn: $1, type: [Int].self) },
+            "Swift.Array<Swift.String>": { handleArg(invocation: $0, isReturn: $1, type: [String].self) },
+            "Swift.Optional<Swift.String>": { handleArg(invocation: $0, isReturn: $1, type: String?.self) },
+            "Swift.Float": { handleArg(invocation: $0, isReturn: $1, type: Float.self) },
+            "Swift.Double": { handleArg(invocation: $0, isReturn: $1, type: Double.self) },
+            "Swift.Bool": { handleArg(invocation: $0, isReturn: $1, type: Bool.self) },
+            "__C.CGRect": { handleArg(invocation: $0, isReturn: $1, type: OSRect.self) },
+            "__C.CGPoint": { handleArg(invocation: $0, isReturn: $1, type: OSPoint.self) },
+            "__C.CGSize": { handleArg(invocation: $0, isReturn: $1, type: OSSize.self) },
+            "Swift.UInt": { handleArg(invocation: $0, isReturn: $1, type: UInt.self) },
+            "Swift.Int64": { handleArg(invocation: $0, isReturn: $1, type: Int64.self) },
+            "Swift.UInt64": { handleArg(invocation: $0, isReturn: $1, type: UInt64.self) },
+            "Swift.Int32": { handleArg(invocation: $0, isReturn: $1, type: Int32.self) },
+            "Swift.UInt32": { handleArg(invocation: $0, isReturn: $1, type: UInt32.self) },
+            "Swift.Int16": { handleArg(invocation: $0, isReturn: $1, type: Int16.self) },
+            "Swift.UInt16": { handleArg(invocation: $0, isReturn: $1, type: UInt16.self) },
+            "Swift.Int8": { handleArg(invocation: $0, isReturn: $1, type: Int8.self) },
+            "Swift.UInt8": { handleArg(invocation: $0, isReturn: $1, type: UInt8.self) },
+            "()": { _,_  in return "Void" },
+        ]
+
         lazy var methodSignature: Any? = {
             return method_getSignature(self.objcMethod!)
         }()
@@ -124,8 +150,6 @@ extension SwiftTrace {
         lazy var selector: String = {
             return NSStringFromSelector(method_getName(objcMethod!))
         }()
-
-        public static var identifyFormat = "<%@ %p>"
 
         static func identify(id: AnyObject) -> String {
             let className = NSStringFromClass(object_getClass(id)!)
@@ -179,7 +203,7 @@ extension SwiftTrace {
                         String(cString: sig_argumentType(methodSignature!, UInt(index)))
 
                     if !hasSeenUnknownArgumentType {
-                        if let typeHandler = Decorated.argTypeHandlers[type],
+                        if let typeHandler = Decorated.objcTypeHandlers[type],
                             let handled = typeHandler(invocation, isReturn) {
                             value = handled
                         } else if type.hasPrefix("^") {
@@ -200,6 +224,36 @@ extension SwiftTrace {
 
             return output + (isReturn ? "" : "]")
         }
+
+        public static var objcTypeHandlers: [String: (Invocation, Bool) -> String?] = [
+            "@": { handleArg(invocation: $0, isReturn: $1, type: AnyObject?.self) },
+            "#": { handleArg(invocation: $0, isReturn: $1, type: AnyObject?.self) },
+            "c": { handleArg(invocation: $0, isReturn: $1, type: Int8.self) },
+            "i": { handleArg(invocation: $0, isReturn: $1, type: Int32.self) },
+            "s": { handleArg(invocation: $0, isReturn: $1, type: Int16.self) },
+            "l": { handleArg(invocation: $0, isReturn: $1, type: Int32.self) },
+            "q": { handleArg(invocation: $0, isReturn: $1, type: Int64.self) },
+            "C": { handleArg(invocation: $0, isReturn: $1, type: UInt8.self) },
+            "I": { handleArg(invocation: $0, isReturn: $1, type: UInt32.self) },
+            "S": { handleArg(invocation: $0, isReturn: $1, type: UInt16.self) },
+            "L": { handleArg(invocation: $0, isReturn: $1, type: UInt32.self) },
+            "Q": { handleArg(invocation: $0, isReturn: $1, type: UInt64.self) },
+            "f": { handleArg(invocation: $0, isReturn: $1, type: Float.self) },
+            "d": { handleArg(invocation: $0, isReturn: $1, type: Double.self) },
+            "B": { handleArg(invocation: $0, isReturn: $1, type: Bool.self) },
+            "*": { handleArg(invocation: $0, isReturn: $1, type: UnsafePointer<UInt8>.self) },
+            ":": { handleArg(invocation: $0, isReturn: $1, type: Selector.self) },
+            "{_NSRange=QQ}":
+                { handleArg(invocation: $0, isReturn: $1, type: NSRange.self) },
+            "{CGRect={CGPoint=dd}{CGSize=dd}}":
+                { handleArg(invocation: $0, isReturn: $1, type: OSRect.self) },
+            "{CGPoint=dd}":
+                { handleArg(invocation: $0, isReturn: $1, type: OSPoint.self) },
+            "{CGSize=dd}":
+                { handleArg(invocation: $0, isReturn: $1, type: OSSize.self) },
+            "@?": { _,_  in return "^{}" },
+            "v": { _,_  in return "Void" }
+        ]
 
         public static func handleArg<Type>(invocation: Invocation,
                                            isReturn: Bool, type: Type.Type) -> String? {
@@ -265,60 +319,5 @@ extension SwiftTrace {
                 return "\(argPointer.pointee)"
             }
         }
-
-        public static var argTypeHandlers: [String: (Invocation, Bool) -> String?] = [
-
-            "Swift.Int": { handleArg(invocation: $0, isReturn: $1, type: Int.self) },
-            "Swift.String": { handleArg(invocation: $0, isReturn: $1, type: String.self) },
-            "Swift.Array<Swift.Int>": { handleArg(invocation: $0, isReturn: $1, type: [Int].self) },
-            "Swift.Array<Swift.String>": { handleArg(invocation: $0, isReturn: $1, type: [String].self) },
-            "Swift.Optional<Swift.String>": { handleArg(invocation: $0, isReturn: $1, type: String?.self) },
-            "Swift.Float": { handleArg(invocation: $0, isReturn: $1, type: Float.self) },
-            "Swift.Double": { handleArg(invocation: $0, isReturn: $1, type: Double.self) },
-            "Swift.Bool": { handleArg(invocation: $0, isReturn: $1, type: Bool.self) },
-            "__C.CGRect": { handleArg(invocation: $0, isReturn: $1, type: OSRect.self) },
-            "__C.CGPoint": { handleArg(invocation: $0, isReturn: $1, type: OSPoint.self) },
-            "__C.CGSize": { handleArg(invocation: $0, isReturn: $1, type: OSSize.self) },
-            "Swift.UInt": { handleArg(invocation: $0, isReturn: $1, type: UInt.self) },
-            "Swift.Int64": { handleArg(invocation: $0, isReturn: $1, type: Int64.self) },
-            "Swift.UInt64": { handleArg(invocation: $0, isReturn: $1, type: UInt64.self) },
-            "Swift.Int32": { handleArg(invocation: $0, isReturn: $1, type: Int32.self) },
-            "Swift.UInt32": { handleArg(invocation: $0, isReturn: $1, type: UInt32.self) },
-            "Swift.Int16": { handleArg(invocation: $0, isReturn: $1, type: Int16.self) },
-            "Swift.UInt16": { handleArg(invocation: $0, isReturn: $1, type: UInt16.self) },
-            "Swift.Int8": { handleArg(invocation: $0, isReturn: $1, type: Int8.self) },
-            "Swift.UInt8": { handleArg(invocation: $0, isReturn: $1, type: UInt8.self) },
-            "()": { _,_  in return "Void" },
-
-            // Objective-C type encodings
-            "@": { handleArg(invocation: $0, isReturn: $1, type: AnyObject?.self) },
-            "#": { handleArg(invocation: $0, isReturn: $1, type: AnyObject?.self) },
-            "c": { handleArg(invocation: $0, isReturn: $1, type: Int8.self) },
-            "i": { handleArg(invocation: $0, isReturn: $1, type: Int32.self) },
-            "s": { handleArg(invocation: $0, isReturn: $1, type: Int16.self) },
-            "l": { handleArg(invocation: $0, isReturn: $1, type: Int32.self) },
-            "q": { handleArg(invocation: $0, isReturn: $1, type: Int64.self) },
-            "C": { handleArg(invocation: $0, isReturn: $1, type: UInt8.self) },
-            "I": { handleArg(invocation: $0, isReturn: $1, type: UInt32.self) },
-            "S": { handleArg(invocation: $0, isReturn: $1, type: UInt16.self) },
-            "L": { handleArg(invocation: $0, isReturn: $1, type: UInt32.self) },
-            "Q": { handleArg(invocation: $0, isReturn: $1, type: UInt64.self) },
-            "f": { handleArg(invocation: $0, isReturn: $1, type: Float.self) },
-            "d": { handleArg(invocation: $0, isReturn: $1, type: Double.self) },
-            "B": { handleArg(invocation: $0, isReturn: $1, type: Bool.self) },
-            "*": { handleArg(invocation: $0, isReturn: $1, type: UnsafePointer<UInt8>.self) },
-            ":": { handleArg(invocation: $0, isReturn: $1, type: Selector.self) },
-            "{_NSRange=QQ}":
-                { handleArg(invocation: $0, isReturn: $1, type: NSRange.self) },
-            "{CGRect={CGPoint=dd}{CGSize=dd}}":
-                { handleArg(invocation: $0, isReturn: $1, type: OSRect.self) },
-            "{CGPoint=dd}":
-                { handleArg(invocation: $0, isReturn: $1, type: OSPoint.self) },
-            "{CGSize=dd}":
-                { handleArg(invocation: $0, isReturn: $1, type: OSSize.self) },
-            "@?": { _,_  in return "^{}" },
-            "v": { _,_  in return "Void" }
-
-        ]
     }
 }
