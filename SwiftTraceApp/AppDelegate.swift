@@ -27,7 +27,7 @@ public struct Strings: SwiftTraceArg {
 
 public protocol P {
     var i: Int { get set }
-    func x()
+    func x() -> TestClass?
     func y() -> CGRect
     @discardableResult
     func zzz( _ d: Int, f: Double, g: Float, h: String, f1: CGFloat, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int, ff: Int, o: TestClass ) throws -> String
@@ -40,8 +40,9 @@ public class TestClass: P, SwiftTraceArg {
 
     public var i = 999
 
-    public func x() {
+    public func x() -> TestClass? {
         print( "TestClass.x() self.i: \(i)" )
+        return self
     }
 
     public func y() -> CGRect {
@@ -169,13 +170,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         }))
 
         var a: P = TestClass()
-        a.x()
+        _ = a.x()
 
         print( a.y() )
         print(SwiftTrace.removeAspect(aClass: TestClass.self, methodName: "SwiftTwaceApp.TestClass.y() -> __C.CGRect"))
         print( a.y() )
 
-        a.x()
+        _ = a.x()
         a.i = 888
 
         print(try! a.zzz( 123, f: 66, g: 55, h: "4-4", f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77, ff: 11, o: TestClass()))
@@ -211,22 +212,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             print("!!!!!! "+call.getReturn())
         }
 
+        SwiftTrace.swizzleFactory = SwiftTrace.Decorated.self
+        SwiftTrace.trace(anInstance: b)
+
         print("!!!!!!!!!!!! "+SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: CoreGraphics.CGFloat, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String", args: 777, 101.0, Float(102.0), "2-2", CGFloat(103.0), Float(104.0), 105.0, 106.0, Float(107.0), 108.0, 888, 999, b))
         print("!!!!!!!!!!!! "+SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: CoreGraphics.CGFloat, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String", args: 777, 101.0, Float(102.0), "2-2", CGFloat(103.0), Float(104.0), 105.0, 106.0, Float(107.0), 108.0, 888, 999, b))
 
         SwiftTrace.Decorated.swiftTypeHandlers["SwiftTwaceApp.TestStruct"] = {
             SwiftTrace.Decorated.handleArg(invocation: $0, isReturn: $1, type: TestStruct.self)
         }
-        SwiftTrace.swizzleFactory = SwiftTrace.Decorated.self
-        SwiftTrace.trace(anInstance: b)
         print("!!!!!!!!!!!! \(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.ssssss(a: SwiftTwaceApp.TestStruct) -> SwiftTwaceApp.TestStruct", args: TestStruct()) as TestStruct)")
 
         print(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.rect(r: __C.CGRect) -> __C.CGRect", args: CGRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0)) as CGRect)
 
         var strings = Strings()
         print(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.str2(strs: inout SwiftTwaceApp.Strings) -> SwiftTwaceApp.Strings", args: call.rebind(&strings, to: Strings.self)) as Strings)
-        print(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.str3(strs: SwiftTwaceApp.Strings) -> SwiftTwaceApp.Strings", args: strings) as Strings)
-        print(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.x() -> ()", args: strings) as Void)
+        print("invoke TestClass.str3: ", SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.str3(strs: SwiftTwaceApp.Strings) -> SwiftTwaceApp.Strings", args: strings) as Strings)
+        print("invoke TestClass.x: ", SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.x() -> Swift.Optional<SwiftTwaceApp.TestClass>", args: strings) as TestClass? ?? "nil")
 
         SwiftTrace.removeAllTraces()
 

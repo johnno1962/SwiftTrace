@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#49 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#50 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -113,6 +113,16 @@ extension SwiftTrace {
                     value = Decorated.handleArg(invocation: invocation,
                                                 isReturn: isReturn,
                                                 type: AnyObject?.self)
+                } else if type.hasPrefix("Swift.Optional<") {
+                    let optional = type[type.index(type.startIndex, offsetBy: 15) ..<
+                                        type.index(type.endIndex, offsetBy: -1)]
+                    if NSClassFromString(String(optional)) != nil {
+                        value = Decorated.handleArg(invocation: invocation,
+                                                    isReturn: isReturn,
+                                                    type: AnyObject?.self)
+                    } else {
+                        hasSeenUnknownArgumentType = true
+                    }
                 } else {
                     hasSeenUnknownArgumentType = true
                 }

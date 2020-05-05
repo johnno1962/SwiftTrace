@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#197 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#198 $
 //
 
 import Foundation
@@ -99,7 +99,7 @@ open class SwiftTrace: NSObject {
         return """
             \\.getter| (?:retain|_tryRetain|release|_isDeallocating|.cxx_destruct|dealloc|description| debugDescription)]|initWithCoder|\
             ^\\+\\[(?:Reader_Base64|UI(?:NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |\
-            ^.\\[(?:UIView|RemoteCapture) |UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|\
+            ^.\\[(?:UIView|RemoteCapture|BCEvent) |UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|\
             UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|\
             _UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|\
             UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose| ns(?:li|is)_
