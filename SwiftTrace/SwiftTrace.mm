@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#51 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#52 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -209,7 +209,7 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
     [SwiftTrace traceBundleWithContaining:self subLevels:subLevels];
 }
 + (void)swiftTraceMainBundle {
-    [SwiftTrace traceMainBundleWithSubLevels:0];
+    [self swiftTraceMainBundleWithSubLevels:0];
 }
 + (void)swiftTraceMainBundleWithSubLevels:(int)subLevels {
     [SwiftTrace traceMainBundleWithSubLevels:subLevels];
