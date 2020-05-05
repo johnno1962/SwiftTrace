@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#26 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.h#27 $
 //
 
 #import <Foundation/Foundation.h>
@@ -45,11 +45,13 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
 /**
  Provide an alternative regular expression to exclude methods.
  */
-+ (void)swiftTraceExclude:(NSString * _Nonnull)pattern;
++ (NSString *_Nullable)swiftTraceExclusionPattern;
++ (void)swiftTraceSetExclusionPattern:(NSString *_Nullable)pattern;
 /**
  Optional filter of methods to be included in subsequent traces.
  */
-+ (void)swiftTraceInclude:(NSString * _Nonnull)pattern;
++ (NSString *_Nullable)swiftTraceInclusionPattern;
++ (void)swiftTraceSetInclusionPattern:(NSString *_Nullable)pattern;
 /**
  Class will be traced (as opposed to swiftTraceInstances which
  will trace methods declared in super classes as well and only

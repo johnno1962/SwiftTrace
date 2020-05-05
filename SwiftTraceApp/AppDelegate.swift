@@ -142,6 +142,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
         // any inclusions or exlusions need to come before trace enabled
 
+//        SwiftTrace.methodExclusionPattern = "ObjcTraceTester |"+SwiftTrace.defaultMethodExclusions
+
         SwiftTrace.swiftTraceBundle()
         ObjcTraceTester().a(44, i:45, b: 55, c: "66", o: self, s: Selector(("jjj:")))
 
@@ -215,13 +217,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         SwiftTrace.swizzleFactory = SwiftTrace.Decorated.self
         SwiftTrace.trace(anInstance: b)
 
-        print("!!!!!!!!!!!! "+SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: CoreGraphics.CGFloat, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String", args: 777, 101.0, Float(102.0), "2-2", CGFloat(103.0), Float(104.0), 105.0, 106.0, Float(107.0), 108.0, 888, 999, b))
-        print("!!!!!!!!!!!! "+SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: CoreGraphics.CGFloat, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String", args: 777, 101.0, Float(102.0), "2-2", CGFloat(103.0), Float(104.0), 105.0, 106.0, Float(107.0), 108.0, 888, 999, b))
+        print("SwiftTwaceApp.TestClass.zzz: "+SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: CoreGraphics.CGFloat, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String", args: 777, 101.0, Float(102.0), "2-2", CGFloat(103.0), Float(104.0), 105.0, 106.0, Float(107.0), 108.0, 888, 999, b))
+        print("SwiftTwaceApp.TestClass.zzz: "+SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: CoreGraphics.CGFloat, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String", args: 777, 101.0, Float(102.0), "2-2", CGFloat(103.0), Float(104.0), 105.0, 106.0, Float(107.0), 108.0, 888, 999, b))
 
         SwiftTrace.Decorated.swiftTypeHandlers["SwiftTwaceApp.TestStruct"] = {
             SwiftTrace.Decorated.handleArg(invocation: $0, isReturn: $1, type: TestStruct.self)
         }
-        print("!!!!!!!!!!!! \(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.ssssss(a: SwiftTwaceApp.TestStruct) -> SwiftTwaceApp.TestStruct", args: TestStruct()) as TestStruct)")
+        print("SwiftTwaceApp.TestClass.ssssss: \(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.ssssss(a: SwiftTwaceApp.TestStruct) -> SwiftTwaceApp.TestStruct", args: TestStruct()) as TestStruct)")
 
         print(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.rect(r: __C.CGRect) -> __C.CGRect", args: CGRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0)) as CGRect)
 
@@ -252,6 +254,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         }
         print(Date.timeIntervalSinceReferenceDate - start2)
 
+        SwiftTrace.methodExclusionPattern = " allocWithZone:| colorSpaceName|"+SwiftTrace.defaultMethodExclusions
+
+        let originalFilter = SwiftTrace.methodFilter
+        SwiftTrace.methodFilter = {
+            (symbol) in
+            if let factory = originalFilter(symbol) {
+                return factory
+            }
+//            print("Excluding:", symbol)
+            return nil
+        }
+
+        UIColor.swiftTraceBundle()
+        print(UIColor.systemBlue)
+
+        SwiftTrace.removeAllTraces()
         return true
     }
 

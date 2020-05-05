@@ -50,8 +50,8 @@ Or to trace only a particular instance use the following:
 ```
 Which traces are applied can be filtered using method name inclusion and exclusion regexps. 
 ```swift
-    SwiftTrace.include(pattern: "TestClass")
-    SwiftTrace.exclude(pattern: "\\.getter")
+    SwiftTrace.methodInclusionPattern = "TestClass"
+    SwiftTrace.methodExclusionPattern = "init|"+SwiftTrace.defaultMethodExclusions
 ```
 These methods must be called before you start the trace as they are applied during the "Swizzle" phase.
 There is a default set of exclusions setup as a result of testing by tracing UIKit.

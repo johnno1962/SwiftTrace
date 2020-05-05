@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#52 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#53 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -172,32 +172,151 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
     return implementation;
 }
 
-// From here on added to the original code for use by "SwiftTrace".
+// From here on additions to the original code for use by "SwiftTrace".
 
-@interface SwiftTrace
-+ (void)traceMainBundleWithSubLevels:(intptr_t)subLevels;
-+ (void)traceBundleWithContaining:(Class)aClass subLevels:(intptr_t)subLevels;
-+ (NSString *)defaultMethodExclusions;
-+ (void)include:(NSString *)pattern;
-+ (void)exclude:(NSString *)pattern;
-+ (void)traceClassesMatchingPattern:(NSString *)pattern subLevels:(intptr_t)subLevels;
-+ (NSArray<NSString *> *)methodNamesOfClass:(Class)aClass;
-+ (void)traceWithAClass:(Class)aClass;
-+ (void)traceInstancesOfClass:(Class)aClass subLevels:(intptr_t)subLevels;
-- (void)traceWithAnInstance:(id)instance subLevels:(intptr_t)subLevels;
+@class Swizzle;
+@interface SwiftTrace : NSObject
+/// Format for ms of time spend in method
+@property (nonatomic, class, copy) NSString * _Nonnull timeFormat;
++ (NSString * _Nonnull)timeFormat ;
++ (void)setTimeFormat:(NSString * _Nonnull)value;
+/// Format for idenifying class instance
+@property (nonatomic, class, copy) NSString * _Nonnull identifyFormat;
++ (NSString * _Nonnull)identifyFormat ;
++ (void)setIdentifyFormat:(NSString * _Nonnull)value;
+/// Indentation amogst different call levels on the stack
+@property (nonatomic, class, copy) NSString * _Nonnull traceIndent;
++ (NSString * _Nonnull)traceIndent ;
++ (void)setTraceIndent:(NSString * _Nonnull)value;
+/// Class used to create “Sizzle” instances representing a member function
+@property (nonatomic, class) Swizzle *_Nonnull swizzleFactory;
++ (Swizzle * _Nonnull)swizzleFactory ;
++ (void)setSwizzleFactory:(Swizzle * _Nonnull)value;
+@property (nonatomic, class, strong) SwiftTrace * _Nonnull lastSwiftTrace;
++ (SwiftTrace * _Nonnull)lastSwiftTrace ;
++ (void)setLastSwiftTrace:(SwiftTrace * _Nonnull)value;
+/// Linked list of previous traces
+@property (nonatomic, readonly, strong) SwiftTrace * _Nullable previousSwiftTrace;
+/// Trace only instances of a particular class
+@property (nonatomic) Class _Nullable classFilter;
+/// Trace only a particular instance
+@property (nonatomic) intptr_t instanceFilter;
+/// Trace only a particular instance
+@property (nonatomic, readonly) NSInteger subLevels;
+- (nonnull instancetype)initWithPrevious:(SwiftTrace * _Nullable)previous subLevels:(NSInteger)subLevels;
++ (SwiftTrace * _Nonnull)startNewTraceWithSubLevels:(NSInteger)subLevels;
+@property (nonatomic, class, readonly) NSInteger noFilter;
++ (NSInteger)noFilter;
+@property (nonatomic, class, readonly) NSInteger noObject;
++ (NSInteger)noObject;
+- (void)mutePreviousUnfiltered;
+/// default pattern of symbols to be excluded from tracing
+@property (nonatomic, class, readonly, copy) NSString * _Nonnull defaultMethodExclusions;
++ (NSString * _Nonnull)defaultMethodExclusions;
+@property (nonatomic, class, strong) NSRegularExpression * _Nullable exclusionRegexp;
++ (NSRegularExpression * _Nullable)exclusionRegexp;
++ (void)setExclusionRegexp:(NSRegularExpression * _Nullable)value;
+@property (nonatomic, class, strong) NSRegularExpression * _Nullable inclusionRegexp;
++ (NSRegularExpression * _Nullable)inclusionRegexp;
++ (void)setInclusionRegexp:(NSRegularExpression * _Nullable)value;
+/// Exclude symbols matching this pattern. If not specified
+/// a default pattern in swiftTraceDefaultExclusions is used.
+/// \param pattern regexp for symbols to exclude
+///
+@property (nonatomic, class, copy) NSString * _Nullable methodExclusionPattern;
++ (NSString * _Nullable)methodExclusionPattern;
++ (void)setMethodExclusionPattern:(NSString * _Nullable)newValue;
+/// Include symbols matching pattern only
+/// \param pattern regexp for symbols to include
+///
+@property (nonatomic, class, copy) NSString * _Nullable methodInclusionPattern;
++ (NSString * _Nullable)methodInclusionPattern;
++ (void)setMethodInclusionPattern:(NSString * _Nullable)newValue;
+/// in order to be traced, symbol must be included and not excluded
+/// \param symbol String representation of method
+///
+@property (nonatomic, class, copy) Swizzle *_Nullable (^ _Nonnull methodFilter)(NSString * _Nonnull);
++ (Swizzle *_Nullable (^ _Nonnull)(NSString * _Nonnull))methodFilter;
+/// Intercepts and tracess all classes linked into the bundle containing a class.
+/// \param theClass the class to specify the bundle
+///
+/// \param subLevels levels of unqualified traces to show
+///
++ (void)traceBundleWithContaining:(Class _Nonnull)theClass subLevels:(NSInteger)subLevels;
+/// Trace all user developed classes in the main bundle of an app
+/// \param subLevels levels of unqualified traces to show
+///
++ (void)traceMainBundleWithSubLevels:(NSInteger)subLevels;
+/// Trace a classes defined in a specific bundlePath (executable image)
+/// \param bundlePath Path to bundle to trace
+///
+/// \param subLevels levels of unqualified traces to show
+///
++ (void)traceWithBundlePath:(int8_t const * _Nullable)bundlePath subLevels:(NSInteger)subLevels;
+/// Lists Swift classes not inheriting from NSObject in an app or framework.
++ (NSArray<Class> * _Nonnull)swiftClassListWithBundlePath:(int8_t const * _Nonnull)bundlePath;
+/// Intercepts and tracess all classes with names matching regexp pattern
+/// \param pattern regexp patten to specify classes to trace
+///
+/// \param subLevels levels of unqualified traces to show
+///
++ (void)traceClassesMatchingPattern:(NSString * _Nonnull)pattern subLevels:(NSInteger)subLevels;
+/// Underlying implementation of tracing an individual classs.
+/// \param aClass the class, the methods of which to trace
+///
++ (void)traceWithAClass:(Class _Nonnull)aClass;
+/// Trace instances of a particular class including methods of superclass
+/// \param aClass the class, the methods of which to trace
+///
+/// \param subLevels levels of unqualified traces to show
+///
++ (void)traceInstancesOfClass:(Class _Nonnull)aClass subLevels:(NSInteger)subLevels;
+/// Trace a particular instance only.
+/// \param anInstance the class, the methods of which to trace
+///
+/// \param subLevels levels of unqualified traces to show
+///
++ (void)traceWithAnInstance:(id _Nonnull)anInstance subLevels:(NSInteger)subLevels;
+/// follow chain of Sizzles through to find original implementataion
++ (Swizzle * _Nullable)originalSwizzleFor:(IMP _Nonnull)implementation;
+/// Returns a list of all Swift methods as demangled symbols of a class
+/// \param ofClass - class to be dumped
+///
++ (NSArray<NSString *> * _Nonnull)methodNamesOfClass:(Class _Nonnull)ofClass;
 + (BOOL)undoLastTrace;
+/// Remove all swizzles applied until now
 + (void)removeAllTraces;
+/// Remove all swizzles for this trace
+- (void)removeSwizzles;
+/// Intercept Objective-C class’ methods using swizzling
+/// \param aClass meta-class or class to be swizzled
+///
+/// \param which “+” for class methods, “-” for instance methods
+///
++ (void)traceWithObjcClass:(Class _Nonnull)aClass which:(NSString * _Nonnull)which;
+/// Very old code intended to prevent property accessors from being traced
+/// \param aClass class of method
+///
+/// \param sel selector of method being checked
+///
++ (BOOL)dontSwizzlePropertyWithAClass:(Class _Nonnull)aClass sel:(SEL _Nonnull)sel;
 @end
 
 @implementation NSObject(SwiftTrace)
 + (NSString *)swiftTraceDefaultMethodExclusions {
     return [SwiftTrace defaultMethodExclusions];
 }
-+ (void)swiftTraceExclude:(NSString *)pattern {
-    [SwiftTrace exclude:pattern];
++ (NSString *)swiftTraceExclusionPattern {
+    return [SwiftTrace methodExclusionPattern];
 }
-+ (void)swiftTraceInclude:(NSString *)pattern {
-    [SwiftTrace include:pattern];
++ (void)swiftTraceSetExclusionPattern:(NSString *)pattern {
+    [SwiftTrace setMethodExclusionPattern:pattern];
+}
++ (NSString *)swiftTraceInclusionPattern {
+    return [SwiftTrace methodInclusionPattern];
+}
++ (void)swiftTraceSetInclusionPattern:(NSString *)pattern {
+    [SwiftTrace setMethodInclusionPattern:pattern];
 }
 + (void)swiftTrace {
     [SwiftTrace traceWithAClass:self];

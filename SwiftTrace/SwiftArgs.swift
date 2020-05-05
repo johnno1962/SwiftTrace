@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#50 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#57 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -16,20 +16,33 @@ import Foundation
 
 extension SwiftTrace {
 
-    public static var identifyFormat = "<%@ %p>"
-
+    /**
+     Swizze subclas that decorates signature with argument/return values
+     */
     open class Decorated: Swizzle {
 
+        /**
+         Basic Swift argument type detector
+         */
         static let argumentParser =
             NSRegularExpression(regexp: ":\\s*([^,)]+)[,)]|\\.setter : (.+)$")
 
+        /**
+         Very basic return valuue type detector
+         */
         static let returnParser =
             NSRegularExpression(regexp: "\\) -> (.+)$")
 
+        /**
+         Cache of positions in signature of arguments
+         */
         lazy var argTypeRanges: [Range<String.Index>] = {
             return ranges(in: signature, parser: Decorated.argumentParser)
         }()
 
+        /**
+         Ranges of arguments in signature
+         */
         open func ranges(in signature: String, parser: NSRegularExpression) -> [Range<String.Index>] {
             return parser.matches(in: signature,
                     range: NSRange(signature.startIndex ..<
@@ -39,55 +52,52 @@ extension SwiftTrace {
             }
         }
 
-        open override func onEntry(stack: inout EntryStack) {
-            entryDecorate(stack: &stack)
-        }
-
-        open func entryDecorate(stack: inout EntryStack) {
+        /**
+         substitute argguament values into signature on method entry
+         */
+        open override func entryDecorate(stack: inout EntryStack) -> String {
             let invocation = self.invocation()!
-                invocation.decorated = objcMethod != nil ?
-                    objcDecorate(signature: nil,
-                                 invocation: invocation,
-                                 intArgs: &stack.intArg1,
-                                 floatArgs: &stack.floatArg1) :
-                    swiftDecorate(signature: signature,
-                                  invocation: invocation,
-                                  parser: Decorated.argumentParser,
-                                  intArgs: &stack.intArg1,
-                                  floatArgs: &stack.floatArg1)
+            return objcMethod != nil ?
+                objcDecorate(signature: nil,
+                             invocation: invocation) :
+                swiftDecorate(signature: signature,
+                              invocation: invocation,
+                              parser: Decorated.argumentParser)
         }
 
-        open override func traceMessage(stack: inout ExitStack) -> String {
+        /**
+         Determine return value on method exit
+         */
+        open override func exitDecorate(stack: inout ExitStack) -> String {
             let invocation = self.invocation()!
             return objcMethod != nil ?
                 objcDecorate(signature: invocation.decorated ?? signature,
-                             invocation: invocation,
-                             intArgs: &stack.intReturn1,
-                             floatArgs: &stack.floatReturn1) :
+                             invocation: invocation) :
                 swiftDecorate(signature: invocation.decorated ?? signature,
                               invocation: invocation,
-                              parser: Decorated.returnParser,
-                              intArgs: &stack.intReturn1,
-                              floatArgs: &stack.floatReturn1)
+                              parser: Decorated.returnParser)
         }
 
+        /**
+         Array of argument values as 'Any'
+         */
         open var arguments: [Any] {
             let invocation = self.invocation()!
             if invocation.arguments.isEmpty {
-                entryDecorate(stack: &invocation.entryStack.pointee)
+                _ = entryDecorate(stack: &invocation.entryStack.pointee)
             }
             return invocation.arguments
         }
 
+        /**
+         Argument decorator for Sift signatures
+         */
         open func swiftDecorate(signature: String, invocation: Invocation,
-                                parser: NSRegularExpression,
-                                intArgs: UnsafePointer<intptr_t>,
-                                floatArgs: UnsafePointer<Double>) -> String {
+                                parser: NSRegularExpression) -> String {
             guard invocation.shouldDecorate else {
                 return signature
             }
             let isReturn = !(parser === Decorated.argumentParser)
-            var position = signature.startIndex
             var output = ""
 
             if !isReturn {
@@ -98,6 +108,8 @@ extension SwiftTrace {
             var hasSeenUnknownArgumentType = false
             let typeRanges = !isReturn ? argTypeRanges :
                 ranges(in: signature, parser: parser)
+            var position = isReturn ? typeRanges.last?.lowerBound ??
+                signature.startIndex : signature.startIndex
             invocation.floatArgumentOffset = 0
             invocation.intArgumentOffset = 0
 
@@ -131,9 +143,14 @@ extension SwiftTrace {
                 position = range.upperBound
             }
 
-            return output + signature[position ..< signature.endIndex]
+            let endIndex = isReturn && typeRanges.isEmpty ?
+                signature.startIndex : signature.endIndex
+            return output + signature[position ..< endIndex]
         }
 
+        /**
+         Mapping of Swift type names to handler for that concrete type
+         */
         public static var swiftTypeHandlers: [String: (Invocation, Bool) -> String?] = [
             "Swift.Int": { handleArg(invocation: $0, isReturn: $1, type: Int.self) },
             "Swift.UInt": { handleArg(invocation: $0, isReturn: $1, type: UInt.self) },
@@ -156,17 +173,22 @@ extension SwiftTrace {
             "__C.CGRect": { handleArg(invocation: $0, isReturn: $1, type: OSRect.self) },
             "__C.CGPoint": { handleArg(invocation: $0, isReturn: $1, type: OSPoint.self) },
             "__C.CGSize": { handleArg(invocation: $0, isReturn: $1, type: OSSize.self) },
+            "__C.NSEdgeInsets": { handleArg(invocation: $0, isReturn: $1, type: OSEdgeInsets.self) },
+            "CoreGraphics.UIEdgeInsets": { handleArg(invocation: $0, isReturn: $1, type: OSEdgeInsets.self) },
+
             "()": { _,_  in return "Void" },
         ]
 
-        lazy var methodSignature: Any? = {
-            return method_getSignature(self.objcMethod!)
-        }()
-
+        /**
+         Selector name for objc method
+         */
         lazy var selector: String = {
             return NSStringFromSelector(method_getName(objcMethod!))
         }()
 
+        /**
+         Identify an instance for trace output
+         */
         static func identify(id: AnyObject) -> String {
             let className = NSStringFromClass(object_getClass(id)!)
             return object_isClass(id) ? className :
@@ -174,25 +196,15 @@ extension SwiftTrace {
                        unsafeBitCast(id, to: uintptr_t.self))
         }
 
-        open func objcDecorate(signature: String?, invocation: Invocation,
-                               intArgs: UnsafePointer<intptr_t>,
-                               floatArgs: UnsafePointer<Double>) -> String {
+        /**
+         Build up selector notate with argument values for objc
+         */
+        open func objcDecorate(signature: String?, invocation: Invocation) -> String {
             guard methodSignature != nil else {
                 return signature ?? invocation.swizzle.signature }
             let isReturn = signature != nil
-            let returnType = String(cString: sig_returnType(methodSignature!))
-            // Is method returning a struct?
-            // If so there is an implicit argument which is the address
-            // to write the struct into (even if the registers are used.)
-            #if arch(arm64)
-            let isStret = false
-            #else
-            let isStret = returnType.hasPrefix("{") &&
-                !returnType.hasSuffix("=dd}") && !returnType.hasSuffix("=QQ}")
-            if isStret && !isReturn {
-                invocation.swiftSelf = intArgs[1]
-            }
-            #endif
+            let isStret = objcAdjustStret(invocation: invocation, isReturn: isReturn,
+                                          intArgs: &invocation.entryStack.pointee.intArg1)
             guard invocation.shouldDecorate else {
                 return invocation.swizzle.signature
             }
@@ -200,7 +212,7 @@ extension SwiftTrace {
             if !isReturn {
                 invocation.arguments.append(objcSelf)
             }
-            var output = isReturn ? signature! + " -> " :
+            var output = isReturn ? "" :
                 "\(object_isClass(objcSelf) ? "+" : "-")[\(Decorated.identify(id: objcSelf)) "
             // /\(ThreadLocal.current().levelsTracing)/\(trace.instanceFilter)/\(trace.classFilter)
             // (Objective-)C methods have two implict arguments: self and _cmd;
@@ -218,7 +230,7 @@ extension SwiftTrace {
 
                 for arg in selector.components(separatedBy: ":").dropLast() {
                     var value: String?
-                    let type = isReturn ? returnType :
+                    let type = isReturn ? String(cString: sig_returnType(methodSignature!)) :
                         String(cString: sig_argumentType(methodSignature!, UInt(index)))
 
                     if !hasSeenUnknownArgumentType {
@@ -244,6 +256,9 @@ extension SwiftTrace {
             return output + (isReturn ? "" : "]")
         }
 
+        /**
+         Mapping of objc type encodings to handlers for that concrete type
+         */
         public static var objcTypeHandlers: [String: (Invocation, Bool) -> String?] = [
             "@": { handleArg(invocation: $0, isReturn: $1, type: AnyObject?.self) },
             "#": { handleArg(invocation: $0, isReturn: $1, type: AnyObject?.self) },
@@ -270,10 +285,17 @@ extension SwiftTrace {
                 { handleArg(invocation: $0, isReturn: $1, type: OSPoint.self) },
             "{CGSize=dd}":
                 { handleArg(invocation: $0, isReturn: $1, type: OSSize.self) },
+            "{UIEdgeInsets=dddd}":
+                { handleArg(invocation: $0, isReturn: $1, type: OSEdgeInsets.self) },
+            "{NSEdgeInsets=dddd}":
+                { handleArg(invocation: $0, isReturn: $1, type: OSEdgeInsets.self) },
             "@?": { _,_  in return "^{}" },
             "v": { _,_  in return "Void" }
         ]
 
+        /**
+         Generic argument handler given an invoction and the concrete type
+         */
         public static func handleArg<Type>(invocation: Invocation,
                                            isReturn: Bool, type: Type.Type) -> String? {
             let slot: Int
