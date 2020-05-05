@@ -82,10 +82,10 @@ public class TestClass: P, SwiftTraceArg {
 class MyTracer: SwiftTrace.Decorated {
 
     override func onEntry(stack: inout SwiftTrace.EntryStack) {
-        print("MyTracer.onEntry: ", arguments)
         //print(stack)
+        print("MyTracer.onEntry, arguments: ", arguments)
         if signature == "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: CoreGraphics.CGFloat, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String" {
-            print("onEntry: \(stack.intArg1) \(rebind(&stack.intArg2, to: String.self).pointee) \(stack.floatArg1) \(rebind(&stack.floatArg5, to: Float.self).pointee) \(rebind(&stack.intArg6, to: TestClass.self).pointee.i) \((getSelf() as TestClass).i)")
+            print("MyTracer.onEntry, zzz: \(stack.intArg1) \(rebind(&stack.intArg2, to: String.self).pointee) \(stack.floatArg1) \(rebind(&stack.floatArg5, to: Float.self).pointee) \(rebind(&stack.intArg6, to: TestClass.self).pointee.i) \((getSelf() as TestClass).i)")
         }
     }
 
@@ -144,19 +144,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         SwiftTrace.swiftTraceBundle()
         ObjcTraceTester().a(44, i:45, b: 55, c: "66", o: self, s: Selector(("jjj:")))
 
-        let b = TestClass()
-        SwiftTrace.trace(anInstance: b)
-
         SwiftTrace.swizzleFactory = MyTracer.self
         type(of: self).swiftTraceBundle()
         SwiftTrace.trace(aClass: type(of: self))
 
         print(SwiftTrace.swiftClassList(bundlePath: Bundle.main.executablePath!))
         print(SwiftTrace.methodNames(ofClass: TestClass.self))
-
-        SwiftTrace.Decorated.swiftTypeHandlers["SwiftTwaceApp.TestStruct"] = {
-            SwiftTrace.Decorated.handleArg(invocation: $0, isReturn: $1, type: TestStruct.self)
-        }
 
         print(SwiftTrace.addAspect(aClass: TestClass.self, methodName: "SwiftTwaceApp.TestClass.x() -> ()",
            onEntry: { (patch: SwiftTrace.Swizzle, stack: inout SwiftTrace.EntryStack) in
@@ -194,6 +187,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print(">>>> AH \(a.str())")
         print(">>>> AH \(a.str())")
 
+        let b = TestClass()
 
         let call = SwiftTrace.Call(target: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: CoreGraphics.CGFloat, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String")!
 
@@ -220,6 +214,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print("!!!!!!!!!!!! "+SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: CoreGraphics.CGFloat, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String", args: 777, 101.0, Float(102.0), "2-2", CGFloat(103.0), Float(104.0), 105.0, 106.0, Float(107.0), 108.0, 888, 999, b))
         print("!!!!!!!!!!!! "+SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: CoreGraphics.CGFloat, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String", args: 777, 101.0, Float(102.0), "2-2", CGFloat(103.0), Float(104.0), 105.0, 106.0, Float(107.0), 108.0, 888, 999, b))
 
+        SwiftTrace.Decorated.swiftTypeHandlers["SwiftTwaceApp.TestStruct"] = {
+            SwiftTrace.Decorated.handleArg(invocation: $0, isReturn: $1, type: TestStruct.self)
+        }
+        SwiftTrace.swizzleFactory = SwiftTrace.Decorated.self
+        SwiftTrace.trace(anInstance: b)
         print("!!!!!!!!!!!! \(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.ssssss(a: SwiftTwaceApp.TestStruct) -> SwiftTwaceApp.TestStruct", args: TestStruct()) as TestStruct)")
 
         print(SwiftTrace.invoke(target: b, methodName: "SwiftTwaceApp.TestClass.rect(r: __C.CGRect) -> __C.CGRect", args: CGRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0)) as CGRect)

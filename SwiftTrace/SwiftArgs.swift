@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#48 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#49 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -89,6 +89,11 @@ extension SwiftTrace {
             let isReturn = !(parser === Decorated.argumentParser)
             var position = signature.startIndex
             var output = ""
+
+            if !isReturn {
+                invocation.arguments
+                    .append(unsafeBitCast(invocation.swiftSelf, to: AnyObject.self))
+            }
 
             var hasSeenUnknownArgumentType = false
             let typeRanges = !isReturn ? argTypeRanges :
@@ -182,6 +187,9 @@ extension SwiftTrace {
                 return invocation.swizzle.signature
             }
             let objcSelf = unsafeBitCast(invocation.swiftSelf, to: AnyObject.self)
+            if !isReturn {
+                invocation.arguments.append(objcSelf)
+            }
             var output = isReturn ? signature! + " -> " :
                 "\(object_isClass(objcSelf) ? "+" : "-")[\(Decorated.identify(id: objcSelf)) "
             // /\(ThreadLocal.current().levelsTracing)/\(trace.instanceFilter)/\(trace.classFilter)

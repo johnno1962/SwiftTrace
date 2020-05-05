@@ -171,7 +171,7 @@ the return value.
 
 If this seems complicated there is a property `swizzle.arguments` which can be used
 `onEntry` which contains the arguments as an `Array` containing elements of type `Any`
-which can be cast to the expected type.
+which can be cast to the expected type. Element 0 is `self`.
 
 #### Invocation interface
 
