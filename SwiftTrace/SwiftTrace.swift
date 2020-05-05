@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#193 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#197 $
 //
 
 import Foundation
@@ -96,7 +96,14 @@ open class SwiftTrace: NSObject {
      default pattern of symbols to be excluded from tracing
      */
     open class var defaultMethodExclusions: String {
-        return "\\.getter| (?:retain|_tryRetain|release|_isDeallocating|.cxx_destruct|dealloc|description| debugDescription)]|initWithCoder|^\\+\\[(Reader_Base64|UI(NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |^.\\[(UIView|RemoteCapture) |UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|_UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose"
+        return """
+            \\.getter| (?:retain|_tryRetain|release|_isDeallocating|.cxx_destruct|dealloc|description| debugDescription)]|initWithCoder|\
+            ^\\+\\[(?:Reader_Base64|UI(?:NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |\
+            ^.\\[(?:UIView|RemoteCapture) |UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|\
+            UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|\
+            _UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|\
+            UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose| ns(?:li|is)_
+            """
     }
 
     static var exclusionRegexp: NSRegularExpression? =
@@ -263,7 +270,7 @@ open class SwiftTrace: NSObject {
      - parameter aClass: the class, the methods of which to trace
      - parameter subLevels: levels of unqualified traces to show
      */
-    open class func traceInstances(ofClass aClass: AnyClass, subLevels: Int) {
+    open class func traceInstances(ofClass aClass: AnyClass, subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels).classFilter = aClass
         var tClass: AnyClass? = aClass
         while tClass != NSObject.self && tClass != nil {
@@ -277,7 +284,7 @@ open class SwiftTrace: NSObject {
      - parameter anInstance: the class, the methods of which to trace
      - parameter subLevels: levels of unqualified traces to show
      */
-    open class func traceInstance(anInstance: AnyObject, subLevels: Int) {
+    open class func trace(anInstance: AnyObject, subLevels: Int = 0) {
         traceInstances(ofClass: object_getClass(anInstance)!, subLevels: subLevels)
         lastSwiftTrace.instanceFilter = autoBitCast(anInstance)
         lastSwiftTrace.classFilter =  nil

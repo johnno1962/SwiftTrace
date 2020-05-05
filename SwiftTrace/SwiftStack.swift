@@ -154,25 +154,15 @@ extension SwiftTrace.ExitStack {
     public var invocation: SwiftTrace.Swizzle.Invocation! {
         return SwiftTrace.Swizzle.Invocation.current
     }
-    mutating func genericReturn<T>(swizzle: SwiftTrace.Swizzle? = nil) -> UnsafeMutablePointer<T> {
+    public mutating func genericReturn<T>(swizzle: SwiftTrace.Swizzle? = nil,
+                                          to: Any.Type = T.self) -> UnsafeMutablePointer<T> {
         if MemoryLayout<T>.size > MemoryLayout<intptr_t>.size * SwiftTrace.ExitStack.returnRegs {
             resyncStructReturn()
             return invocation.structReturn!.assumingMemoryBound(to: T.self)
         }
         else {
             let swizzle = swizzle ?? invocation!.swizzle
-            #if os(macOS) || os(iOS) || os(tvOS)
-            if T.self is OSRect.Type {
-                return swizzle.rebind(&floatReturn1)
-            }
-            if T.self is OSPoint.Type {
-                return swizzle.rebind(&floatReturn1)
-            }
-            if T.self is OSSize.Type {
-                return swizzle.rebind(&floatReturn1)
-            }
-            #endif
-            if T.self is Double.Type || T.self is Float.Type {
+            if T.self is SwiftTraceFloatArg.Type {
                 return swizzle.rebind(&floatReturn1)
             }
             else {
