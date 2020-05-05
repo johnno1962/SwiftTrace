@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#50 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#51 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -39,22 +39,18 @@ extension SwiftTrace {
             }
         }
 
-        open override func onEntry(stack: inout EntryStack) {
-            entryDecorate(stack: &stack)
-        }
-
-        open func entryDecorate(stack: inout EntryStack) {
+        open override func entryDecorate(stack: inout EntryStack) -> String {
             let invocation = self.invocation()!
-                invocation.decorated = objcMethod != nil ?
-                    objcDecorate(signature: nil,
-                                 invocation: invocation,
-                                 intArgs: &stack.intArg1,
-                                 floatArgs: &stack.floatArg1) :
-                    swiftDecorate(signature: signature,
-                                  invocation: invocation,
-                                  parser: Decorated.argumentParser,
-                                  intArgs: &stack.intArg1,
-                                  floatArgs: &stack.floatArg1)
+            return objcMethod != nil ?
+                objcDecorate(signature: nil,
+                             invocation: invocation,
+                             intArgs: &stack.intArg1,
+                             floatArgs: &stack.floatArg1) :
+                swiftDecorate(signature: signature,
+                              invocation: invocation,
+                              parser: Decorated.argumentParser,
+                              intArgs: &stack.intArg1,
+                              floatArgs: &stack.floatArg1)
         }
 
         open override func traceMessage(stack: inout ExitStack) -> String {
@@ -74,7 +70,7 @@ extension SwiftTrace {
         open var arguments: [Any] {
             let invocation = self.invocation()!
             if invocation.arguments.isEmpty {
-                entryDecorate(stack: &invocation.entryStack.pointee)
+                _ = entryDecorate(stack: &invocation.entryStack.pointee)
             }
             return invocation.arguments
         }
@@ -87,7 +83,6 @@ extension SwiftTrace {
                 return signature
             }
             let isReturn = !(parser === Decorated.argumentParser)
-            var position = signature.startIndex
             var output = ""
 
             if !isReturn {
@@ -98,6 +93,8 @@ extension SwiftTrace {
             var hasSeenUnknownArgumentType = false
             let typeRanges = !isReturn ? argTypeRanges :
                 ranges(in: signature, parser: parser)
+            var position = isReturn ? typeRanges.last?.lowerBound ??
+                signature.startIndex : signature.startIndex
             invocation.floatArgumentOffset = 0
             invocation.intArgumentOffset = 0
 
@@ -131,7 +128,9 @@ extension SwiftTrace {
                 position = range.upperBound
             }
 
-            return output + signature[position ..< signature.endIndex]
+            let endIndex = isReturn && typeRanges.isEmpty ?
+                signature.startIndex : signature.endIndex
+            return output + signature[position ..< endIndex]
         }
 
         public static var swiftTypeHandlers: [String: (Invocation, Bool) -> String?] = [
@@ -200,7 +199,7 @@ extension SwiftTrace {
             if !isReturn {
                 invocation.arguments.append(objcSelf)
             }
-            var output = isReturn ? signature! + " -> " :
+            var output = isReturn ? "" :
                 "\(object_isClass(objcSelf) ? "+" : "-")[\(Decorated.identify(id: objcSelf)) "
             // /\(ThreadLocal.current().levelsTracing)/\(trace.instanceFilter)/\(trace.classFilter)
             // (Objective-)C methods have two implict arguments: self and _cmd;

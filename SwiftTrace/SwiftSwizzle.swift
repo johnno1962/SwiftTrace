@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#17 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#18 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -138,10 +138,24 @@ extension SwiftTrace {
            return autoBitCast(impl)
        }
 
+       open func entryDecorate(stack: inout EntryStack) -> String {
+           return signature
+       }
+
+       open func subLogging() -> Bool {
+           return ThreadLocal.current().caller()?.subLogged == true
+       }
+
        /**
         method called before trampoline enters the target "Swizzle"
         */
        open func onEntry(stack: inout EntryStack) {
+           if let invocation = invocation() {
+               if invocation.shouldDecorate {
+                ThreadLocal.current().caller()?.subLogged = true
+                print("\(subLogging() ? "\n" : "")\(String(repeating: "  ", count: invocation.stackDepth))\(entryDecorate(stack: &stack))", terminator: "")
+               }
+           }
        }
 
        /**
@@ -151,7 +165,7 @@ extension SwiftTrace {
            if let invocation = invocation() {
                let elapsed = Invocation.usecTime() - invocation.timeEntered
                if invocation.shouldDecorate {
-                   print("\(String(repeating: "  ", count: invocation.stackDepth))\(traceMessage(stack: &stack))\(String(format: SwiftTrace.timeFormat, elapsed * 1000.0))")
+                print("\(invocation.subLogged ? "\n" + String(repeating: "  ", count: invocation.stackDepth) + "<-" : objcMethod != nil ? " ->" : "") \(traceMessage(stack: &stack))\(String(format: SwiftTrace.timeFormat, elapsed * 1000.0))", terminator: subLogging() ? "" : "\n")
                }
                totalElapsed += elapsed
                invocationCount += 1
@@ -238,6 +252,8 @@ extension SwiftTrace {
            /** levelsTracing on entry for restore */
            public var floatArgumentOffset = 0
 
+           /** levelsTracing on entry for restore */
+           public var subLogged = false
 
            /** This invocation qualifies for tracing */
            lazy public var shouldDecorate: Bool = {
@@ -358,6 +374,13 @@ extension SwiftTrace {
                    }
                    return unmanaged.takeUnretainedValue()
                }
+           }
+
+           public func caller() -> Invocation? {
+                if invocationStack.count > 1 {
+                    return invocationStack[invocationStack.count - 2]
+                }
+                return nil
            }
        }
    }
