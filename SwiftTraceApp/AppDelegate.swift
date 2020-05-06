@@ -252,6 +252,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         }
         print(Date.timeIntervalSinceReferenceDate - start2)
 
+        UIColor.swiftTraceBundle()
+        _ = UIColor.systemBlue
+
+        SwiftTrace.removeAllTraces()
         return true
     }
 

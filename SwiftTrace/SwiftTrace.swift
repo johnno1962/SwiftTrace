@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#198 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#201 $
 //
 
 import Foundation
@@ -34,6 +34,21 @@ func autoBitCast<IN,OUT>(_ arg: IN) -> OUT {
 @objc(SwiftTrace)
 @objcMembers
 open class SwiftTrace: NSObject {
+
+    /**
+     Format for ms of time spend in method
+     */
+    public static var timeFormat = " %.1fms"
+
+    /**
+     Format for idenifying class instance
+     */
+    public static var identifyFormat = "<%@ %p>"
+
+    /**
+     Indentation amogst different call levels on the stack
+     */
+    public static var traceIndent = "  "
 
     /**
         Class used to create "Sizzle" instances representing a member function
@@ -83,7 +98,7 @@ open class SwiftTrace: NSObject {
         return lastSwiftTrace
     }
 
-    static let noFilter = -1, noObject = -2
+    static let noFilter = 0, noObject = -1
 
     func mutePreviousUnfiltered() {
         if instanceFilter == SwiftTrace.noFilter && classFilter == nil {
@@ -123,8 +138,8 @@ open class SwiftTrace: NSObject {
      Include symbols matching pattern only
      - parameter pattern: regexp for symbols to include
      */
-    open class func include(_ pattern: String) {
-        inclusionRegexp = NSRegularExpression(regexp: pattern)
+    open class func include(_ pattern: String?) {
+        inclusionRegexp = pattern != nil ? NSRegularExpression(regexp: pattern!) : nil
     }
 
     /**

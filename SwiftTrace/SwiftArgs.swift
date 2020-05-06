@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#51 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#53 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -15,8 +15,6 @@
 import Foundation
 
 extension SwiftTrace {
-
-    public static var identifyFormat = "<%@ %p>"
 
     open class Decorated: Swizzle {
 
@@ -53,7 +51,7 @@ extension SwiftTrace {
                               floatArgs: &stack.floatArg1)
         }
 
-        open override func traceMessage(stack: inout ExitStack) -> String {
+        open override func exitDecorate(stack: inout ExitStack) -> String {
             let invocation = self.invocation()!
             return objcMethod != nil ?
                 objcDecorate(signature: invocation.decorated ?? signature,

@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#18 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#20 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -15,11 +15,6 @@
 import Foundation
 
 extension SwiftTrace {
-
-   /**
-    Format for ms of time spend in method
-    */
-   public static var timeFormat = " %.1fms"
 
    /**
     Instances used to store information about a patch on a method
@@ -138,14 +133,6 @@ extension SwiftTrace {
            return autoBitCast(impl)
        }
 
-       open func entryDecorate(stack: inout EntryStack) -> String {
-           return signature
-       }
-
-       open func subLogging() -> Bool {
-           return ThreadLocal.current().caller()?.subLogged == true
-       }
-
        /**
         method called before trampoline enters the target "Swizzle"
         */
@@ -153,9 +140,23 @@ extension SwiftTrace {
            if let invocation = invocation() {
                if invocation.shouldDecorate {
                 ThreadLocal.current().caller()?.subLogged = true
-                print("\(subLogging() ? "\n" : "")\(String(repeating: "  ", count: invocation.stackDepth))\(entryDecorate(stack: &stack))", terminator: "")
+                print("\(subLogging() ? "\n" : "")\(String(repeating: SwiftTrace.traceIndent, count: invocation.stackDepth))\(entryDecorate(stack: &stack))", terminator: "")
                }
            }
+       }
+
+       /**
+        decorate funcitoni signature with argument values
+        */
+       open func entryDecorate(stack: inout EntryStack) -> String {
+           return signature
+       }
+
+       /**
+        Is this method being called from one in the middle of logging
+        */
+       open func subLogging() -> Bool {
+           return ThreadLocal.current().caller()?.subLogged == true
        }
 
        /**
@@ -165,7 +166,8 @@ extension SwiftTrace {
            if let invocation = invocation() {
                let elapsed = Invocation.usecTime() - invocation.timeEntered
                if invocation.shouldDecorate {
-                print("\(invocation.subLogged ? "\n" + String(repeating: "  ", count: invocation.stackDepth) + "<-" : objcMethod != nil ? " ->" : "") \(traceMessage(stack: &stack))\(String(format: SwiftTrace.timeFormat, elapsed * 1000.0))", terminator: subLogging() ? "" : "\n")
+                let returnValue = exitDecorate(stack: &stack)
+                print("\(invocation.subLogged ? "\n\(String(repeating: "  ", count: invocation.stackDepth))<-" : objcMethod != nil ? " ->" : "") \(returnValue)\(String(format: SwiftTrace.timeFormat, elapsed * 1000.0))", terminator: subLogging() ? "" : "\n")
                }
                totalElapsed += elapsed
                invocationCount += 1
@@ -173,9 +175,9 @@ extension SwiftTrace {
        }
 
        /**
-        Provide message for trace
+        Provide the return value
         */
-       open func traceMessage(stack: inout ExitStack) -> String {
+       open func exitDecorate(stack: inout ExitStack) -> String {
            return signature
        }
 
@@ -246,13 +248,13 @@ extension SwiftTrace {
            /** levelsTracing on entry for restore */
            public var saveLevelsTracing = 0
 
-           /** levelsTracing on entry for restore */
+           /** Offset through argument frame of saved registers */
            public var intArgumentOffset = 0
 
-           /** levelsTracing on entry for restore */
+           /** Offset through return value frame of saved registers */
            public var floatArgumentOffset = 0
 
-           /** levelsTracing on entry for restore */
+           /** Has a trace taken place during this invocation */
            public var subLogged = false
 
            /** This invocation qualifies for tracing */
