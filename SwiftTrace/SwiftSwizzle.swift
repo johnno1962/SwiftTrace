@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#22 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#24 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -107,7 +107,7 @@ extension SwiftTrace {
        /** Called from assembly code when Patched method returns */
        static var onExit: @convention(c) () -> UnsafeRawPointer = {
            let threadLocal = ThreadLocal.current()
-           let invocation = Invocation.current!
+           let invocation = threadLocal.invocationStack.last!
            invocation.swizzle.onExit(stack: &invocation.exitStack.pointee)
            threadLocal.levelsTracing = invocation.saveLevelsTracing
            return threadLocal.invocationStack.removeLast().returnAddress
@@ -147,31 +147,8 @@ extension SwiftTrace {
            }
        }
 
-        lazy var methodSignature: Any? = {
-            return method_getSignature(self.objcMethod!)
-        }()
-
-        open func objcAdjustStret(invocation: Invocation, isReturn: Bool,
-                                  intArgs: UnsafePointer<intptr_t>) -> Bool {
-            // Is method returning a struct?
-            // If so there is an implicit argument which is the address
-            // to write the struct into (even if the registers are used.)
-            #if arch(arm64)
-            return false
-            #else
-            guard objcMethod != nil else { return false }
-            let returnType = String(cString: sig_returnType(methodSignature!))
-            let isStret = returnType.hasPrefix("{") &&
-                !returnType.hasSuffix("=dd}") && !returnType.hasSuffix("=QQ}")
-            if isStret && !isReturn {
-                invocation.swiftSelf = intArgs[1]
-            }
-            return isStret
-            #endif
-        }
-
        /**
-        decorate funcitoni signature with argument values
+        decorate funcition signature with argument values
         */
        open func entryDecorate(stack: inout EntryStack) -> String {
            return signature
@@ -206,8 +183,40 @@ extension SwiftTrace {
            return signature
        }
 
+        /**
+         Use NSMethodSignature to know argument types of method
+         */
+        lazy var methodSignature: Any? = {
+            return method_getSignature(self.objcMethod!)
+        }()
+
+        /**
+         Special handling of methods that return a struct that
+         doesn't fit into registers on x86_64 architectures.
+         Argument register for `self` is offset by one.
+         */
+        open func objcAdjustStret(invocation: Invocation, isReturn: Bool,
+                                  intArgs: UnsafePointer<intptr_t>) -> Bool {
+            // Is method returning a struct?
+            // If so there is an implicit argument which is the address
+            // to write the struct into (even if the registers are used.)
+            #if arch(arm64)
+            return false
+            #else
+            guard objcMethod != nil && !isReturn else { return false }
+            let returnType = methodSignature == nil ? "UNDECODABLE" :
+                String(cString: sig_returnType(methodSignature!))
+            let isStret = returnType.hasPrefix("{") &&
+                !returnType.hasSuffix("=dd}") && !returnType.hasSuffix("=QQ}")
+            if isStret && !isReturn {
+                invocation.swiftSelf = intArgs[1]
+            }
+            return isStret
+            #endif
+        }
+
        /**
-           Remove this patch
+           Remove this swizzle
         */
        open func remove() {
            if let vtableSlot = vtableSlot {
@@ -290,7 +299,7 @@ extension SwiftTrace {
                 if (swizzle.trace.instanceFilter == nil ||
                     swizzle.trace.instanceFilter == swiftSelf) &&
                     (swizzle.trace.classFilter == nil ||
-                        swizzle.trace.classFilter === swizzle.getClass()) {
+                     swizzle.trace.classFilter === swizzle.getClass()) {
                     ThreadLocal.current().levelsTracing = swizzle.trace.subLevels
                     return true
                 }
