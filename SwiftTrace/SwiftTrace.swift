@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#201 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#205 $
 //
 
 import Foundation
@@ -75,7 +75,7 @@ open class SwiftTrace: NSObject {
     var classFilter: AnyClass?
 
     /** Trace only a particular instance */
-    var instanceFilter: intptr_t = SwiftTrace.noFilter
+    var instanceFilter: intptr_t?
 
     /** Trace only a particular instance */
     let subLevels: Int
@@ -98,11 +98,11 @@ open class SwiftTrace: NSObject {
         return lastSwiftTrace
     }
 
-    static let noFilter = 0, noObject = -1
+    static let neverMatches = -1
 
     func mutePreviousUnfiltered() {
-        if instanceFilter == SwiftTrace.noFilter && classFilter == nil {
-            instanceFilter = SwiftTrace.noObject
+        if instanceFilter == nil && classFilter == nil {
+            instanceFilter = SwiftTrace.neverMatches
         }
         previousSwiftTrace?.mutePreviousUnfiltered()
     }
@@ -130,26 +130,45 @@ open class SwiftTrace: NSObject {
      a default pattern in swiftTraceDefaultExclusions is used.
      - parameter pattern: regexp for symbols to exclude
      */
-    open class func exclude(_ pattern: String) {
-        exclusionRegexp = NSRegularExpression(regexp: pattern)
+    open class var methodExclusionPattern: String? {
+        get { return exclusionRegexp?.pattern }
+        set(newValue) {
+            exclusionRegexp = newValue == nil ? nil :
+                NSRegularExpression(regexp: newValue!)
+        }
     }
 
     /**
      Include symbols matching pattern only
      - parameter pattern: regexp for symbols to include
      */
-    open class func include(_ pattern: String?) {
-        inclusionRegexp = pattern != nil ? NSRegularExpression(regexp: pattern!) : nil
+    open class var methodInclusionPattern: String? {
+        get { return inclusionRegexp?.pattern }
+        set(newValue) {
+            inclusionRegexp = newValue == nil ? nil :
+                NSRegularExpression(regexp: newValue!)
+        }
+    }
+
+    /**
+     Default implementation for method filter
+     - parameter symbol: String representation of method
+     */
+    static var _methodFilter: (_ symbol: String) -> Swizzle.Type? = {
+        (symbol) in
+        return
+            (inclusionRegexp?.matches(symbol) != false) &&
+            (exclusionRegexp?.matches(symbol) != true) ?
+            swizzleFactory : nil
     }
 
     /**
      in order to be traced, symbol must be included and not excluded
      - parameter symbol: String representation of method
      */
-    class func included(symbol: String) -> Bool {
-        return
-            (inclusionRegexp?.matches(symbol) != false) &&
-            (exclusionRegexp?.matches(symbol) != true)
+    open class var methodFilter: (_ symbol: String) -> Swizzle.Type? {
+        get { return _methodFilter }
+        set(newValue) { _methodFilter = newValue }
     }
 
     /**
@@ -273,8 +292,8 @@ open class SwiftTrace: NSObject {
 
         iterateMethods(ofClass: aClass) {
             (name, vtableSlot, stop) in
-            if included(symbol: name),
-                let swizzle = swizzleFactory.init(name: name, vtableSlot: vtableSlot) {
+            if let factory = methodFilter(name),
+                let swizzle = factory.init(name: name, vtableSlot: vtableSlot) {
                 vtableSlot.pointee = swizzle.forwardingImplementation()
             }
         }
@@ -301,7 +320,7 @@ open class SwiftTrace: NSObject {
      */
     open class func trace(anInstance: AnyObject, subLevels: Int = 0) {
         traceInstances(ofClass: object_getClass(anInstance)!, subLevels: subLevels)
-        lastSwiftTrace.instanceFilter = autoBitCast(anInstance)
+        lastSwiftTrace.instanceFilter = unsafeBitCast(anInstance, to: intptr_t.self)
         lastSwiftTrace.classFilter =  nil
     }
 
@@ -420,13 +439,13 @@ open class SwiftTrace: NSObject {
                 let type = method_getTypeEncoding(method)
                 let name = "\(which)[\(aClass) \(selName)] -> \(String(cString: type!))"
 
-                if !included(symbol: name) || (which == "+" ?
-                        selName.hasPrefix("shared") :
-                    dontSwizzleProperty(aClass: aClass, sel:sel)) {
+                if which == "+" ? selName.hasPrefix("shared") :
+                    dontSwizzleProperty(aClass: aClass, sel:sel) {
                     continue
                 }
 
-                if let swizzle = swizzleFactory.init(name: name, objcMethod: method) {
+                if let factory = methodFilter(name),
+                    let swizzle = factory.init(name: name, objcMethod: method) {
                     class_replaceMethod(aClass, sel,
                             autoBitCast(swizzle.forwardingImplementation()), type)
                 }

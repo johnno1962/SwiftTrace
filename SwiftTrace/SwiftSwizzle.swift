@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#20 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#22 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -138,12 +138,37 @@ extension SwiftTrace {
         */
        open func onEntry(stack: inout EntryStack) {
            if let invocation = invocation() {
+               _ = objcAdjustStret(invocation: invocation, isReturn: false,
+                                   intArgs: &invocation.entryStack.pointee.intArg1)
                if invocation.shouldDecorate {
                 ThreadLocal.current().caller()?.subLogged = true
                 print("\(subLogging() ? "\n" : "")\(String(repeating: SwiftTrace.traceIndent, count: invocation.stackDepth))\(entryDecorate(stack: &stack))", terminator: "")
                }
            }
        }
+
+        lazy var methodSignature: Any? = {
+            return method_getSignature(self.objcMethod!)
+        }()
+
+        open func objcAdjustStret(invocation: Invocation, isReturn: Bool,
+                                  intArgs: UnsafePointer<intptr_t>) -> Bool {
+            // Is method returning a struct?
+            // If so there is an implicit argument which is the address
+            // to write the struct into (even if the registers are used.)
+            #if arch(arm64)
+            return false
+            #else
+            guard objcMethod != nil else { return false }
+            let returnType = String(cString: sig_returnType(methodSignature!))
+            let isStret = returnType.hasPrefix("{") &&
+                !returnType.hasSuffix("=dd}") && !returnType.hasSuffix("=QQ}")
+            if isStret && !isReturn {
+                invocation.swiftSelf = intArgs[1]
+            }
+            return isStret
+            #endif
+        }
 
        /**
         decorate funcitoni signature with argument values
@@ -262,7 +287,7 @@ extension SwiftTrace {
                 if ThreadLocal.current().levelsTracing > 0 && !swizzle.reSwizzled {
                     return true
                 }
-                if (swizzle.trace.instanceFilter == SwiftTrace.noFilter ||
+                if (swizzle.trace.instanceFilter == nil ||
                     swizzle.trace.instanceFilter == swiftSelf) &&
                     (swizzle.trace.classFilter == nil ||
                         swizzle.trace.classFilter === swizzle.getClass()) {

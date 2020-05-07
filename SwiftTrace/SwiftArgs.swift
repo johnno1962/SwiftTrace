@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#53 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#54 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -156,10 +156,6 @@ extension SwiftTrace {
             "()": { _,_  in return "Void" },
         ]
 
-        lazy var methodSignature: Any? = {
-            return method_getSignature(self.objcMethod!)
-        }()
-
         lazy var selector: String = {
             return NSStringFromSelector(method_getName(objcMethod!))
         }()
@@ -177,19 +173,8 @@ extension SwiftTrace {
             guard methodSignature != nil else {
                 return signature ?? invocation.swizzle.signature }
             let isReturn = signature != nil
-            let returnType = String(cString: sig_returnType(methodSignature!))
-            // Is method returning a struct?
-            // If so there is an implicit argument which is the address
-            // to write the struct into (even if the registers are used.)
-            #if arch(arm64)
-            let isStret = false
-            #else
-            let isStret = returnType.hasPrefix("{") &&
-                !returnType.hasSuffix("=dd}") && !returnType.hasSuffix("=QQ}")
-            if isStret && !isReturn {
-                invocation.swiftSelf = intArgs[1]
-            }
-            #endif
+            let isStret = objcAdjustStret(invocation: invocation,
+                                          isReturn: isReturn, intArgs: intArgs)
             guard invocation.shouldDecorate else {
                 return invocation.swizzle.signature
             }
@@ -215,7 +200,7 @@ extension SwiftTrace {
 
                 for arg in selector.components(separatedBy: ":").dropLast() {
                     var value: String?
-                    let type = isReturn ? returnType :
+                    let type = isReturn ? String(cString: sig_returnType(methodSignature!)) :
                         String(cString: sig_argumentType(methodSignature!, UInt(index)))
 
                     if !hasSeenUnknownArgumentType {

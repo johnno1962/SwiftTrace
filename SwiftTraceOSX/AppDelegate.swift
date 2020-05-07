@@ -18,7 +18,7 @@ public protocol P {
     func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> ()
 }
 
-open class TestClass: NSObject, P {
+open class TestClass: P {
 
     public var i = 999
 
@@ -68,23 +68,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
-        Self.swiftTraceExclude(NSObject.swiftTraceDefaultMethodExclusions())
+        Self.swiftTraceSetExclusionPattern(NSObject.swiftTraceDefaultMethodExclusions())
+        NSObject.swiftTraceSetInclusionPattern(".")
 //        SwiftTrace.patchFactory = MyTracer.self
 
-//        NSObject.swiftTraceInclude(".")
 
         let objcTester = ObjcTraceTester()
+
         objcTester.swiftTraceInstance(withSubLevels: 2)
         objcTester.a(44, i:45, b: 55, c: "66", o: self, s: Selector(("jjj:")))
 
-        TestClass.swiftTraceMainBundle(withSubLevels: 0)
+        NSObject.swiftTraceClasses(matchingPattern: "Test", subLevels: 2)
 
-//        NSObject.swiftTraceClasses(matchingPattern: "Test", subLevels: 0)
+        objcTester.a(44, i:45, b: 55, c: "66", o: self, s: Selector(("jjj:")))
+
 
         var a: P = TestClass()
         print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect(r1: __C.CGRect, r2: __C.CGRect) -> __C.CGRect", args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)) as NSRect)
 
-        print(TestClass.swiftTraceMethodNames())
+        print(SwiftTrace.methodNames(ofClass: TestClass.self))
 
         a.i = 888
         print(a.i)
