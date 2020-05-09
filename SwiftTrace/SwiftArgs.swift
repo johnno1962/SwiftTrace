@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#57 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#58 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================

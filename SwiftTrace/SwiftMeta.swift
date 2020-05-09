@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#3 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#4 $
 //
 //  Assumptions made about Swift MetaData
 //  =====================================
