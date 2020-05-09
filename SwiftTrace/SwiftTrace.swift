@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#208 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#213 $
 //
 
 import Foundation
@@ -239,7 +239,7 @@ open class SwiftTrace: NSObject {
             }
         }
         /* This should pick up and Pure Swift classes */
-        findPureSwiftClasses(bundlePath, { aClass in
+        findSwiftSymbols(bundlePath, "CN", { aClass in
             if !registered.contains(aClass) {
                 trace(aClass: autoBitCast(aClass))
             }
@@ -249,9 +249,9 @@ open class SwiftTrace: NSObject {
     /**
      Lists Swift classes not inheriting from NSObject in an app or framework.
      */
-    open class func swiftClassList(bundlePath: UnsafePointer<Int8>) -> [AnyClass] {
+    open class func swiftClassList(bundlePath: UnsafePointer<Int8>? = nil) -> [AnyClass] {
         var classes = [AnyClass]()
-        findPureSwiftClasses(bundlePath, { aClass in
+        findSwiftSymbols(bundlePath, "CN", { aClass in
             classes.append(autoBitCast(aClass))
         })
         return classes
@@ -374,6 +374,40 @@ open class SwiftTrace: NSObject {
         }
 
         return stop
+    }
+
+    /**
+     Trace the protocol witnesses for a bundle containg the specified class
+     */
+    open class func traceProtocolsInBundle(containing aClass: AnyClass?, matching pattern: String? = nil, subLevels: Int = 0) {
+        startNewTrace(subLevels: subLevels)
+        let regex = pattern != nil ? NSRegularExpression(regexp: pattern!) : nil
+        findSwiftSymbols(aClass != nil ? class_getImageName(aClass) : nil, "WP") {
+            (address: UnsafeMutableRawPointer) in
+            let witnessTable = address.assumingMemoryBound(to: SIMP.self)
+            var info = Dl_info()
+            // The start of a witness table is always the protocol descriptor
+            // then the functions defined by that protocol in turn followed by
+            // pointers to the witness tables of the protocols the protocol
+            // conforms to. This means it is possible to scan qualified by the
+            // demangled symbol name the slot points to being a protocol witness
+            // entry (a pointer to function for that conformance for a type.)
+            for slot in 1..<1000 {
+                if fast_dladdr(autoBitCast(witnessTable[slot]),
+                               &info) != 0 && info.dli_sname != nil,
+                    let demangled = demangle(symbol: info.dli_sname),
+                    demangled.hasPrefix("protocol witness for ") &&
+                        !demangled.contains("SwiftTrace."),
+                    regex == nil || regex!.matches(demangled) {
+                    if let factory = methodFilter(demangled),
+                        let swizzle = factory.init(name: demangled, vtableSlot: &witnessTable[slot]) {
+                        witnessTable[slot] = swizzle.forwardingImplementation()
+                    }
+                } else {
+                    break
+                }
+            }
+        }
     }
 
     /** follow chain of Sizzles through to find original implementataion */

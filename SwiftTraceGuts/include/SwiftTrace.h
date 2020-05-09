@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#1 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#3 $
 //
 
 #import <Foundation/Foundation.h>
@@ -122,7 +122,15 @@ in the Swift class provided.
  */
 - (void)swiftTraceInstanceWithSubLevels:(int)subLevels;
 /**
- Remove all tracing swizles.
+ Trace all protocols contained in the bundle ownig the receiver class
+ */
++ (void)swiftTraceProtocolsInBundle;
+/**
+ Trace protocols in bundle with qualifications
+ */
++ (void)traceProtocolsInBundleWithContaining:(NSString * _Nullable)pattern subLevels:(int)subLevels;
+/**
+ Remove most recent trace
  */
 + (BOOL)swiftTraceUndoLastTrace;
 /**
@@ -142,7 +150,7 @@ extern "C" {
     NSMethodSignature * _Nullable method_getSignature(Method _Nonnull Method);
     const char * _Nonnull sig_argumentType(id _Nonnull signature, NSUInteger index);
     const char * _Nonnull sig_returnType(id _Nonnull signature);
-    void findPureSwiftClasses(const char * _Nullable path, void (^ _Nonnull callback)(void * _Nonnull symbol));
+    void findSwiftSymbols(const char * _Nullable path, const char * _Nonnull suffix, void (^ _Nonnull callback)(void * _Nonnull symbol));
     int fast_dladdr(const void * _Nonnull, Dl_info * _Nonnull);
 #ifdef __cplusplus
 }

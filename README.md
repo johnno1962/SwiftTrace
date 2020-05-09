@@ -12,7 +12,9 @@ this will be of use in the same way "Swizzling" was in days of yore.
 Note: none of these features will work on a class or method that is final or internal in 
 a module compiled with whole module optimisation as the dispatch of the method
 will be "direct" i.e. linked to a symbol at the call site rather than going through the
-class' vtable.
+class' vtable. As such it is possible to trace calls to methods of a struct but only
+if they are referenced through a protocol as they use a `witness table` which
+can be patched.
 
 SwiftTrace can be used with the Swift Package Manager or as a CocoaPod by
 adding the following to your project's Podfile:
@@ -47,6 +49,14 @@ use the following:
 Or to trace only a particular instance use the following:
 ```Swift
     SwiftTrace.trace(anInstance: anObject)
+```
+It is possible to trace methods of a structs or other types if they are messaged through
+protools as this would then be indirect via what is called a `witness table`. Tracing
+protocols is available at the bundle level where the bundle being traced is specified
+using a class instance. They can be further filtered by an optional regular expression. 
+For exmaple, the following:
+```Swift
+SwiftTrace.traceProtocolsInBundle(containing: AClassInTheBundle.self, pattern: "regexp")
 ```
 Which traces are applied can be filtered using method name inclusion and exclusion regexps. 
 ```swift

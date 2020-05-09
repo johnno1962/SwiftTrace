@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#1 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#3 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -279,6 +279,8 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 + (void)traceWithAnInstance:(id _Nonnull)anInstance subLevels:(NSInteger)subLevels;
 /// follow chain of Sizzles through to find original implementataion
 + (Swizzle * _Nullable)originalSwizzleFor:(IMP _Nonnull)implementation;
+/// Trace the protocol witnesses for a bundle containg the specified class
++ (void)traceProtocolsInBundleWithContaining:(Class _Nonnull)aClass matching:(NSString * _Nullable)pattern subLevels:(NSInteger)subLevels;
 /// Returns a list of all Swift methods as demangled symbols of a class
 /// \param ofClass - class to be dumped
 ///
@@ -360,6 +362,12 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 - (void)swiftTraceInstance {
     [self swiftTraceInstanceWithSubLevels:0];
 }
++ (void)swiftTraceProtocolsInBundle {
+    [SwiftTrace traceProtocolsInBundleWithContaining:self matching:nil subLevels:0];
+}
++ (void)traceProtocolsInBundleWithContaining:(NSString *)pattern subLevels:(int)subLevels {
+    [SwiftTrace traceProtocolsInBundleWithContaining:self matching:pattern subLevels:subLevels];
+}
 - (void)swiftTraceInstanceWithSubLevels:(int)subLevels {
     [SwiftTrace traceWithAnInstance:self subLevels:subLevels];
 }
@@ -430,47 +438,50 @@ typedef struct segment_command segment_command_t;
 typedef struct nlist nlist_t;
 #endif
 
-void findPureSwiftClasses(const char *path, void (^callback)(void *aClass)) {
+void findSwiftSymbols(const char *bundlePath, const char *suffix,
+                      void (^callback)(void *aClass)) {
     for (int32_t i = _dyld_image_count(); i >= 0 ; i--) {
         const mach_header_t *header = (const mach_header_t *)_dyld_get_image_header(i);
         const char *imageName = _dyld_get_image_name(i);
-        if (imageName && (imageName == path || strcmp(imageName, path) == 0)) {
-            segment_command_t *seg_linkedit = NULL;
-            segment_command_t *seg_text = NULL;
-            struct symtab_command *symtab = NULL;
+        if (!(imageName && (!bundlePath || imageName == bundlePath || strcmp(imageName, bundlePath) == 0)))
+            continue;
 
-            struct load_command *cmd = (struct load_command *)((intptr_t)header + sizeof(mach_header_t));
-            for (uint32_t i = 0; i < header->ncmds; i++, cmd = (struct load_command *)((intptr_t)cmd + cmd->cmdsize))
+        segment_command_t *seg_linkedit = nullptr;
+        segment_command_t *seg_text = nullptr;
+        struct symtab_command *symtab = nullptr;
+
+        struct load_command *cmd = (struct load_command *)((intptr_t)header + sizeof(mach_header_t));
+        for (uint32_t i = 0; i < header->ncmds; i++, cmd = (struct load_command *)((intptr_t)cmd + cmd->cmdsize))
+        {
+            switch(cmd->cmd)
             {
-                switch(cmd->cmd)
-                {
-                    case LC_SEGMENT:
-                    case LC_SEGMENT_64:
-                        if (!strcmp(((segment_command_t *)cmd)->segname, SEG_TEXT))
-                            seg_text = (segment_command_t *)cmd;
-                        else if (!strcmp(((segment_command_t *)cmd)->segname, SEG_LINKEDIT))
-                            seg_linkedit = (segment_command_t *)cmd;
-                        break;
+                case LC_SEGMENT:
+                case LC_SEGMENT_64:
+                    if (!strcmp(((segment_command_t *)cmd)->segname, SEG_TEXT))
+                        seg_text = (segment_command_t *)cmd;
+                    else if (!strcmp(((segment_command_t *)cmd)->segname, SEG_LINKEDIT))
+                        seg_linkedit = (segment_command_t *)cmd;
+                    break;
 
-                    case LC_SYMTAB: {
-                        symtab = (struct symtab_command *)cmd;
-                        intptr_t file_slide = ((intptr_t)seg_linkedit->vmaddr - (intptr_t)seg_text->vmaddr) - seg_linkedit->fileoff;
-                        const char *strings = (const char *)header + (symtab->stroff + file_slide);
-                        nlist_t *sym = (nlist_t *)((intptr_t)header + (symtab->symoff + file_slide));
+                case LC_SYMTAB: {
+                    symtab = (struct symtab_command *)cmd;
+                    intptr_t file_slide = ((intptr_t)seg_linkedit->vmaddr - (intptr_t)seg_text->vmaddr) - seg_linkedit->fileoff;
+                    const char *strings = (const char *)header + (symtab->stroff + file_slide);
+                    nlist_t *sym = (nlist_t *)((intptr_t)header + (symtab->symoff + file_slide));
 
-                        for (uint32_t i = 0; i < symtab->nsyms; i++, sym++) {
-                            const char *sptr = strings + sym->n_un.n_strx;
-                            void *aClass;
-                            if (sym->n_type == 0xf &&
-                                strncmp(sptr, "_$s", 3) == 0 &&
-                                strcmp(sptr+strlen(sptr)-2, "CN") == 0 &&
-                                (aClass = (void *)(sym->n_value + (intptr_t)header - (intptr_t)seg_text->vmaddr))) {
-                                callback(aClass);
-                            }
+                    for (uint32_t i = 0; i < symtab->nsyms; i++, sym++) {
+                        const char *sptr = strings + sym->n_un.n_strx;
+                        void *aClass;
+                        if (sym->n_type == 0xf &&
+                            strncmp(sptr, "_$s", 3) == 0 &&
+                            strcmp(sptr+strlen(sptr)-strlen(suffix), suffix) == 0 &&
+                            (aClass = (void *)(sym->n_value + (intptr_t)header - (intptr_t)seg_text->vmaddr))) {
+                            callback(aClass);
                         }
-
-                        return;
                     }
+
+                    if (bundlePath)
+                        return;
                 }
             }
         }

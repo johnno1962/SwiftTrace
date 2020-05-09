@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#58 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#60 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -34,7 +34,7 @@ extension SwiftTrace {
          Very basic return valuue type detector
          */
         static let returnParser =
-            NSRegularExpression(regexp: "\\) -> (.+)$")
+            NSRegularExpression(regexp: "\\) -> (.+?)( in conformance .+)?$")
 
         /**
          Cache of positions in signature of arguments
@@ -92,6 +92,10 @@ extension SwiftTrace {
             return invocation.arguments
         }
 
+        lazy var isProtocolTrace: Bool = {
+            return signature.hasPrefix("protocol witness for ")
+        }()
+
         /**
          Argument decorator for Sift signatures
          */
@@ -103,7 +107,7 @@ extension SwiftTrace {
             let isReturn = !(parser === Decorated.argumentParser)
             var output = ""
 
-            if !isReturn {
+            if !isReturn && !isProtocolTrace {
                 invocation.arguments
                     .append(unsafeBitCast(invocation.swiftSelf, to: AnyObject.self))
             }
@@ -146,8 +150,11 @@ extension SwiftTrace {
                 position = range.upperBound
             }
 
-            let endIndex = isReturn && typeRanges.isEmpty ?
-                signature.startIndex : signature.endIndex
+            let endIndex = isReturn ?
+                typeRanges.isEmpty ? signature.startIndex :
+                    isProtocolTrace && !typeRanges.isEmpty ?
+                    typeRanges[0].upperBound : signature.endIndex :
+                signature.endIndex
             return output + signature[position ..< endIndex]
         }
 

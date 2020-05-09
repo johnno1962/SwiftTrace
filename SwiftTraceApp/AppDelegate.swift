@@ -153,6 +153,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
         print(SwiftTrace.swiftClassList(bundlePath: Bundle.main.executablePath!))
         print(SwiftTrace.methodNames(ofClass: TestClass.self))
+        print(SwiftTrace.swiftClassList(bundlePath: class_getImageName(TestClass.self)))
 
         print(SwiftTrace.addAspect(aClass: TestClass.self, methodName: "SwiftTwaceApp.TestClass.x() -> ()",
            onEntry: { (patch: SwiftTrace.Swizzle, stack: inout SwiftTrace.EntryStack) in
