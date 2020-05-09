@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#53 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.mm#54 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -380,8 +380,15 @@ NSArray<Class> *objc_classArray() {
         for (int i=0; i<nc; i++) {
             if (class_getSuperclass(classes[i]))
                 [array addObject:classes[i]];
-            else
-                printf("%s\n", class_getName(classes[i]));
+            else {
+                const char *name = class_getName(classes[i]);
+                printf("%s\n", name);
+                if (strcmp(name, "JSExport") && strcmp(name, "_NSZombie_") &&
+                    strcmp(name, "__NSMessageBuilder") && strcmp(name, "__NSAtom") &&
+                    strcmp(name, "__ARCLite__") && strcmp(name, "__NSGenericDeallocHandler") &&
+                    strcmp(name, "CNZombie") && strcmp(name, "_CNZombie_"))
+                    [array addObject:classes[i]];
+            }
         }
     return array;
 }

@@ -13,6 +13,9 @@
 //
 
 import Foundation
+#if SWIFT_PACKAGE
+import SwiftTraceGuts
+#endif
 
 extension SwiftTrace {
 

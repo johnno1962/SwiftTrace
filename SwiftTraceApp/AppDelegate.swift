@@ -254,7 +254,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         }
         print(Date.timeIntervalSinceReferenceDate - start2)
 
-        SwiftTrace.methodExclusionPattern = " allocWithZone:| colorSpaceName|"+SwiftTrace.defaultMethodExclusions
+//        SwiftTrace.methodExclusionPattern = " allocWithZone:| colorSpaceName|"+SwiftTrace.defaultMethodExclusions
 
         let originalFilter = SwiftTrace.methodFilter
         SwiftTrace.methodFilter = {

@@ -2022,5 +2022,6 @@ nop
 nop
 nop
 _xt_forwarding_trampolines_end:
+nop
 
 #endif

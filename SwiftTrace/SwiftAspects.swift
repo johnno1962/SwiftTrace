@@ -12,6 +12,8 @@
 //  ============================
 //
 
+import Foundation
+
 extension SwiftTrace {
 
     public typealias EntryAspect = (_ swizzle: Swizzle, _ stack: inout EntryStack) -> Void

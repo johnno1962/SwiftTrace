@@ -9,6 +9,8 @@
 //  ========================================
 //
 
+import Foundation
+
 extension SwiftTrace {
 
     #if arch(arm64)

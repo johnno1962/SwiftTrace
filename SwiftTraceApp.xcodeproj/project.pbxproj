@@ -42,7 +42,6 @@
 		BBC3D1EB1D0A43B300520F38 /* SwiftTrace.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BBC3D1E31D0A43B200520F38 /* SwiftTrace.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		BBC3D1F31D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F01D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s */; };
 		BBC3D1F41D0A43E800520F38 /* xt_forwarding_trampoline_x64.s in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F11D0A43E800520F38 /* xt_forwarding_trampoline_x64.s */; };
-		BBC3D1F51D0A43E800520F38 /* xt_forwarding_trampoline_x86.s in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F21D0A43E800520F38 /* xt_forwarding_trampoline_x86.s */; };
 		BBC3D1F71D0A442F00520F38 /* SwiftTrace.mm in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F61D0A442F00520F38 /* SwiftTrace.mm */; };
 		BBC3D1F91D0A445D00520F38 /* SwiftTrace.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F81D0A445D00520F38 /* SwiftTrace.swift */; };
 		BBC3D1FF1D0A928000520F38 /* SwiftTrace.podspec in Resources */ = {isa = PBXBuildFile; fileRef = BBC3D1FE1D0A928000520F38 /* SwiftTrace.podspec */; };
@@ -50,7 +49,6 @@
 		BBCDA3771D0E60C7007222D3 /* SwiftTraceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCDA3761D0E60C7007222D3 /* SwiftTraceTests.swift */; };
 		BBCDA3791D0E60C7007222D3 /* SwiftTrace.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BBC3D1E31D0A43B200520F38 /* SwiftTrace.framework */; };
 		BBCDA3861D0E64AC007222D3 /* SwiftTraceXTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCDA3851D0E64AC007222D3 /* SwiftTraceXTests.swift */; };
-		BBF6EC621D0C174900C5A202 /* xt_forwarding_trampoline_arm7.s in Sources */ = {isa = PBXBuildFile; fileRef = BBF6EC611D0C174900C5A202 /* xt_forwarding_trampoline_arm7.s */; };
 		BBF6EC6E1D0E54F100C5A202 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBF6EC6D1D0E54F100C5A202 /* AppDelegate.swift */; };
 		BBF6EC701D0E54F100C5A202 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BBF6EC6F1D0E54F100C5A202 /* Assets.xcassets */; };
 		BBF6EC731D0E54F100C5A202 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = BBF6EC711D0E54F100C5A202 /* MainMenu.xib */; };
@@ -123,10 +121,9 @@
 		BBC3D1E31D0A43B200520F38 /* SwiftTrace.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftTrace.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBC3D1E51D0A43B200520F38 /* SwiftTrace.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftTrace.h; sourceTree = "<group>"; };
 		BBC3D1E71D0A43B300520F38 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		BBC3D1F01D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = xt_forwarding_trampoline_arm64.s; sourceTree = "<group>"; };
-		BBC3D1F11D0A43E800520F38 /* xt_forwarding_trampoline_x64.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = xt_forwarding_trampoline_x64.s; sourceTree = "<group>"; };
-		BBC3D1F21D0A43E800520F38 /* xt_forwarding_trampoline_x86.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = xt_forwarding_trampoline_x86.s; sourceTree = "<group>"; };
-		BBC3D1F61D0A442F00520F38 /* SwiftTrace.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SwiftTrace.mm; sourceTree = "<group>"; };
+		BBC3D1F01D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; name = xt_forwarding_trampoline_arm64.s; path = ../SwiftTraceGuts/xt_forwarding_trampoline_arm64.s; sourceTree = "<group>"; };
+		BBC3D1F11D0A43E800520F38 /* xt_forwarding_trampoline_x64.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; name = xt_forwarding_trampoline_x64.s; path = ../SwiftTraceGuts/xt_forwarding_trampoline_x64.s; sourceTree = "<group>"; };
+		BBC3D1F61D0A442F00520F38 /* SwiftTrace.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = SwiftTrace.mm; path = ../SwiftTraceGuts/SwiftTrace.mm; sourceTree = "<group>"; };
 		BBC3D1F81D0A445D00520F38 /* SwiftTrace.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftTrace.swift; sourceTree = "<group>"; };
 		BBC3D1FC1D0A85E800520F38 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		BBC3D1FE1D0A928000520F38 /* SwiftTrace.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SwiftTrace.podspec; sourceTree = "<group>"; };
@@ -137,7 +134,6 @@
 		BBCDA3831D0E64AC007222D3 /* SwiftTraceXTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftTraceXTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBCDA3851D0E64AC007222D3 /* SwiftTraceXTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftTraceXTests.swift; sourceTree = "<group>"; };
 		BBCDA3871D0E64AC007222D3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		BBF6EC611D0C174900C5A202 /* xt_forwarding_trampoline_arm7.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = xt_forwarding_trampoline_arm7.s; sourceTree = "<group>"; };
 		BBF6EC6B1D0E54F100C5A202 /* SwiftTwaceOSX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftTwaceOSX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBF6EC6D1D0E54F100C5A202 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BBF6EC6F1D0E54F100C5A202 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -242,9 +238,7 @@
 				BB1C5CAC244C8E4700297908 /* SwiftArgs.swift */,
 				BB1C5CB3244D89F100297908 /* SwiftMeta.swift */,
 				BB1C5CB9244D8A6B00297908 /* SwiftStack.swift */,
-				BBC3D1F21D0A43E800520F38 /* xt_forwarding_trampoline_x86.s */,
 				BBC3D1F11D0A43E800520F38 /* xt_forwarding_trampoline_x64.s */,
-				BBF6EC611D0C174900C5A202 /* xt_forwarding_trampoline_arm7.s */,
 				BBC3D1F01D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s */,
 				BBC3D1E71D0A43B300520F38 /* Info.plist */,
 			);
@@ -509,7 +503,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BBF6EC621D0C174900C5A202 /* xt_forwarding_trampoline_arm7.s in Sources */,
 				BB1C5CB8244D8A2F00297908 /* SwiftInvoke.swift in Sources */,
 				BB1C5CD3244D94B300297908 /* SwiftSwizzle.swift in Sources */,
 				BB1C5CBA244D8A6B00297908 /* SwiftStack.swift in Sources */,
@@ -517,7 +510,6 @@
 				BBC3D1F71D0A442F00520F38 /* SwiftTrace.mm in Sources */,
 				BB1C5CBB244D8AD700297908 /* SwiftMeta.swift in Sources */,
 				BBC3D1F31D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s in Sources */,
-				BBC3D1F51D0A43E800520F38 /* xt_forwarding_trampoline_x86.s in Sources */,
 				BB1C5CB6244D8A1200297908 /* SwiftAspects.swift in Sources */,
 				BBC3D1F91D0A445D00520F38 /* SwiftTrace.swift in Sources */,
 				BB1C5CAD244C8E4700297908 /* SwiftArgs.swift in Sources */,
