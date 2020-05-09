@@ -11,5 +11,5 @@ Pod::Spec.new do |s|
     s.osx.deployment_target = "10.10"
     s.ios.deployment_target = "10.0"
     s.source   = { :git => "https://github.com/johnno1962/SwiftTrace.git", :tag => s.version }
-    s.source_files = "{SwiftTrace/*.swift,SwiftTraceGuts/*.{h,mm,s}}"
+    s.source_files = "{SwiftTrace,SwiftTraceGuts,SwiftTraceGuts/include}/*.{swift,h,mm,s}"
 end
