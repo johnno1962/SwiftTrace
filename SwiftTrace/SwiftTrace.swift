@@ -10,6 +10,9 @@
 //
 
 import Foundation
+#if SWIFT_PACKAGE
+import SwiftTraceGuts
+#endif
 
 #if os(macOS)
 import AppKit

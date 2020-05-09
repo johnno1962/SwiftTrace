@@ -8156,5 +8156,6 @@ mov x17, lr
 bl _xt_forwarding_trampoline;
 
 _xt_forwarding_trampolines_end:
+nop
 
 #endif

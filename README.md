@@ -14,8 +14,8 @@ a module compiled with whole module optimisation as the dispatch of the method
 will be "direct" i.e. linked to a symbol at the call site rather than going through the
 class' vtable.
 
-SwiftTrace is most easily used as a CocoaPod and can be added to your project by temporarily adding the
-following line to it's Podfile:
+SwiftTrace can be used with the Swift Package Manager or as a CocoaPod by
+adding the following to your project's Podfile:
 ```swift
     pod 'SwiftTrace'
  ```

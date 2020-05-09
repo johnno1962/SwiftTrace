@@ -12,6 +12,8 @@
 //  =====================================
 //
 
+import Foundation
+
 // Taken from stdlib, not public Swift3+
 @_silgen_name("swift_demangle")
 private
