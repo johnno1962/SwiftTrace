@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#5 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#7 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -439,7 +439,7 @@ typedef struct nlist nlist_t;
 #endif
 
 void findSwiftSymbols(const char *bundlePath, const char *suffix,
-                      void (^callback)(void *aClass)) {
+                      void (^callback)(void *aClass, void *typeref, void *typeend)) {
     for (int32_t i = _dyld_image_count(); i >= 0 ; i--) {
         const mach_header_t *header = (const mach_header_t *)_dyld_get_image_header(i);
         const char *imageName = _dyld_get_image_name(i);
@@ -449,6 +449,10 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
         segment_command_t *seg_linkedit = nullptr;
         segment_command_t *seg_text = nullptr;
         struct symtab_command *symtab = nullptr;
+        // to filter associated type witness entries
+        uint64_t typeref_size = 0;
+        char *typeref_start =
+            getsectdatafromheader_64(header, SEG_TEXT, "__swift5_typeref", &typeref_size);
 
         struct load_command *cmd = (struct load_command *)((intptr_t)header + sizeof(mach_header_t));
         for (uint32_t i = 0; i < header->ncmds; i++, cmd = (struct load_command *)((intptr_t)cmd + cmd->cmdsize))
@@ -476,7 +480,7 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
                             strncmp(sptr, "_$s", 3) == 0 &&
                             strcmp(sptr+strlen(sptr)-strlen(suffix), suffix) == 0 &&
                             (aClass = (void *)(sym->n_value + (intptr_t)header - (intptr_t)seg_text->vmaddr))) {
-                            callback(aClass);
+                            callback(aClass, typeref_start, typeref_start + typeref_size);
                         }
                     }
 

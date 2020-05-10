@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#60 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#62 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -34,7 +34,7 @@ extension SwiftTrace {
          Very basic return valuue type detector
          */
         static let returnParser =
-            NSRegularExpression(regexp: "\\) -> (.+?)( in conformance .+)?$")
+            NSRegularExpression(regexp: ".+\\) -> (.+?)( in conformance .+)?$")
 
         /**
          Cache of positions in signature of arguments
@@ -163,7 +163,11 @@ extension SwiftTrace {
          */
         public static var swiftTypeHandlers: [String: (Invocation, Bool) -> String?] = [
             "Swift.Int": { handleArg(invocation: $0, isReturn: $1, type: Int.self) },
+            "Swift.Array<Swift.Int>": { handleArg(invocation: $0, isReturn: $1, type: [Int].self) },
+            "Swift.Optional<Swift.Int>": { handleArg(invocation: $0, isReturn: $1, type: Int?.self) },
             "Swift.UInt": { handleArg(invocation: $0, isReturn: $1, type: UInt.self) },
+            "Swift.Array<Swift.UInt>": { handleArg(invocation: $0, isReturn: $1, type: [UInt].self) },
+            "Swift.Optional<Swift.UInt>": { handleArg(invocation: $0, isReturn: $1, type: UInt?.self) },
             "Swift.Int64": { handleArg(invocation: $0, isReturn: $1, type: Int64.self) },
             "Swift.UInt64": { handleArg(invocation: $0, isReturn: $1, type: UInt64.self) },
             "Swift.Int32": { handleArg(invocation: $0, isReturn: $1, type: Int32.self) },
@@ -173,13 +177,16 @@ extension SwiftTrace {
             "Swift.Int8": { handleArg(invocation: $0, isReturn: $1, type: Int8.self) },
             "Swift.UInt8": { handleArg(invocation: $0, isReturn: $1, type: UInt8.self) },
             "Swift.String": { handleArg(invocation: $0, isReturn: $1, type: String.self) },
-            "Swift.Array<Swift.Int>": { handleArg(invocation: $0, isReturn: $1, type: [Int].self) },
             "Swift.Array<Swift.String>": { handleArg(invocation: $0, isReturn: $1, type: [String].self) },
             "Swift.Optional<Swift.String>": { handleArg(invocation: $0, isReturn: $1, type: String?.self) },
             "Swift.Bool": { handleArg(invocation: $0, isReturn: $1, type: Bool.self) },
+            "Swift.Optional<Swift.Bool>": { handleArg(invocation: $0, isReturn: $1, type: Bool?.self) },
             "Swift.Float": { handleArg(invocation: $0, isReturn: $1, type: Float.self) },
+            "Swift.Optional<Swift.Float>": { handleArg(invocation: $0, isReturn: $1, type: Float?.self) },
             "Swift.Double": { handleArg(invocation: $0, isReturn: $1, type: Double.self) },
+            "Swift.Optional<Swift.Double>": { handleArg(invocation: $0, isReturn: $1, type: Double?.self) },
             "CoreGraphics.CGFloat": { handleArg(invocation: $0, isReturn: $1, type: CGFloat.self) },
+            "Swift.Optional<CoreGraphics.CGFloat>": { handleArg(invocation: $0, isReturn: $1, type: CGFloat?.self) },
             "__C.CGRect": { handleArg(invocation: $0, isReturn: $1, type: OSRect.self) },
             "__C.CGPoint": { handleArg(invocation: $0, isReturn: $1, type: OSPoint.self) },
             "__C.CGSize": { handleArg(invocation: $0, isReturn: $1, type: OSSize.self) },

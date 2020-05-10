@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#218 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#220 $
 //
 
 import Foundation
@@ -113,7 +113,7 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-     default pattern of symbols to be excluded from tracing
+     Default pattern of problematic symbols to be excluded from tracing
      */
     open class var defaultMethodExclusions: String {
         return """
@@ -133,7 +133,6 @@ open class SwiftTrace: NSObject {
     /**
      Exclude symbols matching this pattern. If not specified
      a default pattern in swiftTraceDefaultExclusions is used.
-     - parameter pattern: regexp for symbols to exclude
      */
     open class var methodExclusionPattern: String? {
         get { return exclusionRegexp?.pattern }
@@ -145,7 +144,6 @@ open class SwiftTrace: NSObject {
 
     /**
      Include symbols matching pattern only
-     - parameter pattern: regexp for symbols to include
      */
     open class var methodInclusionPattern: String? {
         get { return inclusionRegexp?.pattern }
@@ -156,8 +154,7 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-     Default implementation for method filter
-     - parameter symbol: String representation of method
+     Default/current implementation for method filter
      */
     static var _methodFilter: (_ symbol: String) -> Swizzle.Type? = {
         (symbol) in
@@ -168,7 +165,7 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-     in order to be traced, symbol must be included and not excluded
+     In order to be traced, symbol must be included and not excluded
      - parameter symbol: String representation of method
      */
     open class var methodFilter: (_ symbol: String) -> Swizzle.Type? {
@@ -178,7 +175,7 @@ open class SwiftTrace: NSObject {
 
     /**
      Intercepts and tracess all classes linked into the bundle containing a class.
-     - parameter theClass: the class to specify the bundle
+     - parameter containing: the class to specify the bundle, nil implies caller bundle
      - parameter subLevels: levels of unqualified traces to show
      */
     open class func traceBundle(containing theClass: AnyClass? = nil, subLevels: Int = 0) {
@@ -240,7 +237,7 @@ open class SwiftTrace: NSObject {
             }
         }
         /* This should pick up and Pure Swift classes */
-        findSwiftSymbols(bundlePath, "CN", { aClass in
+        findSwiftSymbols(bundlePath, "CN", { aClass,  _, _ in
             if !registered.contains(aClass) {
                 trace(aClass: autoBitCast(aClass))
             }
@@ -252,7 +249,7 @@ open class SwiftTrace: NSObject {
      */
     open class func swiftClassList(bundlePath: UnsafePointer<Int8>? = nil) -> [AnyClass] {
         var classes = [AnyClass]()
-        findSwiftSymbols(bundlePath, "CN", { aClass in
+        findSwiftSymbols(bundlePath, "CN", { aClass, _, _ in
             classes.append(autoBitCast(aClass))
         })
         return classes
@@ -333,6 +330,8 @@ open class SwiftTrace: NSObject {
     /**
      Iterate over all methods in the vtable that follows the class information
      of a Swift class (TargetClassMetadata)
+     - parameter aClass: the class, the methods of which to trace
+     - parameter callback: per method callback
      */
     @discardableResult
     open class func iterateMethods(ofClass aClass: AnyClass,
@@ -379,28 +378,36 @@ open class SwiftTrace: NSObject {
 
     /**
      Trace the protocol witnesses for a bundle containg the specified class
+     - parameter aClass: the class, the methods of which to trace
+     - parameter matchingPattern: regex pattern to match entries against
+     - parameter subLevels: subLevels to log of previous traces to trace
      */
     open class func traceProtocolsInBundle(containing aClass: AnyClass? = nil, matchingPattern: String? = nil, subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels)
         let regex = matchingPattern != nil ?
             NSRegularExpression(regexp: matchingPattern!) : nil
-        findSwiftSymbols(aClass != nil ?
-            class_getImageName(aClass) : callerBundle(), "WP") {
-            (address: UnsafeMutableRawPointer) in
+        findSwiftSymbols(aClass == nil ? callerBundle() :
+            aClass == NSObject.self ? nil : class_getImageName(aClass), "WP") {
+            (address: UnsafeMutableRawPointer, typeref, typeend) in
             let witnessTable = address.assumingMemoryBound(to: SIMP.self)
             var info = Dl_info()
             // The start of a witness table is always the protocol descriptor
+            // then the associated types, always in section `__swift5_typeref`
             // then the functions defined by that protocol in turn followed by
             // pointers to the witness tables of the protocols the protocol
-            // conforms to. This means it is possible to scan qualified by the
+            // inherits from. This means it is possible to scan qualified by the
             // demangled symbol name the slot points to being a protocol witness
             // entry (a pointer to function for that conformance for a type.)
             for slot in 1..<1000 {
+                // skip associated type witness entries
+                if typeref <= autoBitCast(witnessTable[slot]) &&
+                    autoBitCast(witnessTable[slot]) < typeend {
+                    continue
+                }
                 if fast_dladdr(autoBitCast(witnessTable[slot]),
                                &info) != 0 && info.dli_sname != nil,
-                    let demangled = demangle(symbol: info.dli_sname),
-                    demangled.hasPrefix("protocol witness for ") &&
-                        !demangled.contains("SwiftTrace."),
+                    let demangled = demangle(symbol: info.dli_sname), demangled.hasPrefix("protocol witness for ") &&
+                            !demangled.contains("SwiftTrace."),
                     regex == nil || regex!.matches(demangled) {
                     if let factory = methodFilter(demangled),
                         let swizzle = factory.init(name: demangled, vtableSlot: &witnessTable[slot]) {

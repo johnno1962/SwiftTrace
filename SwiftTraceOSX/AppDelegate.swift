@@ -9,10 +9,12 @@
 import Cocoa
 
 public protocol P {
+    associatedtype myType
+    associatedtype myType2
     var i: Int { get set }
     func x()
     func y() -> Float
-    func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: CGFloat, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int )
+    func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: Double?, g1: Float, h1: Double, f2: Double, g2: Float, h2: myType?, e: myType2? )
     func rect(r1: NSRect, r2: NSRect) -> NSRect
     func arr(a: [String], b: [Int]) -> [String]
     func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> ()
@@ -31,8 +33,8 @@ open class TestClass: P {
         return -9.0
     }
 
-    open func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: CGFloat, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int ) {
-        print( "open func z( \(i) \(d) \(e) \(f) \(String(describing: s)) \(g) \(h) \(f1) \(g1) \(h1) \(f2) \(g2) \(h2) )" )
+    open func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: Double?, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double?, e: CGFloat? ) {
+        print( "open func z( \(i) \(d) \(String(describing: e)) \(f) \(String(describing: s)) \(g) \(h) \(String(describing: f1)) \(g1) \(h1) \(f2) \(g2) \(String(describing: h2)) )" )
     }
 
     public func rect(r1: NSRect, r2: NSRect) -> NSRect {
@@ -61,8 +63,8 @@ struct TestStruct: P {
         return -9.0
     }
 
-    public func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: CGFloat, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double, e: Int ) {
-        print( "open func z( \(i) \(d) \(e) \(f) \(String(describing: s)) \(g) \(h) \(f1) \(g1) \(h1) \(f2) \(g2) \(h2) )" )
+    public func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: Double?, g1: Float, h1: Double, f2: Double, g2: Float, h2: CGFloat?, e: Int? ) {
+        print( "open func z( \(i) \(d) \(String(describing: e)) \(f) \(String(describing: s)) \(g) \(h) \(String(describing: f1)) \(g1) \(h1) \(f2) \(g2) \(String(describing: h2)) )" )
     }
 
     public func rect(r1: NSRect, r2: NSRect) -> NSRect {
@@ -137,16 +139,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         #endif
 //        SwiftTrace.trace(aClass: TestClass.self)
 
-        ptest(p: TestClass())
+//        ptest(p: TestClass())
 
-        SwiftTrace.traceProtocolsInBundle(matchingPattern: "\(P.self)")
+        SwiftTrace.traceProtocolsInBundle(containing: Self.self)
 
         ptest(p: TestStruct())
         ptest(p: TestClass())
     }
 
-    func ptest(p: P) {
-        p.z( 88, f: 66, s: "$%^", g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
+    func ptest<T: P>(p: T) {
+        p.z( 88, f: 66, s: "$%^", g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44 as? T.myType, e: 77 as? T.myType2)
         print(p.rect(r1: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), r2: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0)))
     }
 
