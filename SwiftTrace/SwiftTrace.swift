@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#213 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#218 $
 //
 
 import Foundation
@@ -181,8 +181,9 @@ open class SwiftTrace: NSObject {
      - parameter theClass: the class to specify the bundle
      - parameter subLevels: levels of unqualified traces to show
      */
-    open class func traceBundle(containing theClass: AnyClass, subLevels: Int = 0) {
-        trace(bundlePath: class_getImageName(theClass), subLevels: subLevels)
+    open class func traceBundle(containing theClass: AnyClass? = nil, subLevels: Int = 0) {
+        trace(bundlePath: theClass != nil ?
+            class_getImageName(theClass) : callerBundle(), subLevels: subLevels)
     }
 
     /**
@@ -379,10 +380,12 @@ open class SwiftTrace: NSObject {
     /**
      Trace the protocol witnesses for a bundle containg the specified class
      */
-    open class func traceProtocolsInBundle(containing aClass: AnyClass?, matching pattern: String? = nil, subLevels: Int = 0) {
+    open class func traceProtocolsInBundle(containing aClass: AnyClass? = nil, matchingPattern: String? = nil, subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels)
-        let regex = pattern != nil ? NSRegularExpression(regexp: pattern!) : nil
-        findSwiftSymbols(aClass != nil ? class_getImageName(aClass) : nil, "WP") {
+        let regex = matchingPattern != nil ?
+            NSRegularExpression(regexp: matchingPattern!) : nil
+        findSwiftSymbols(aClass != nil ?
+            class_getImageName(aClass) : callerBundle(), "WP") {
             (address: UnsafeMutableRawPointer) in
             let witnessTable = address.assumingMemoryBound(to: SIMP.self)
             var info = Dl_info()

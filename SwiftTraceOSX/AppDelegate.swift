@@ -139,7 +139,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         ptest(p: TestClass())
 
-        SwiftTrace.traceProtocolsInBundle(containing: TestClass.self, matching: "\(P.self)")
+        SwiftTrace.traceProtocolsInBundle(matchingPattern: "\(P.self)")
 
         ptest(p: TestStruct())
         ptest(p: TestClass())

@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#3 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#4 $
 //
 
 #import <Foundation/Foundation.h>
@@ -151,6 +151,7 @@ extern "C" {
     const char * _Nonnull sig_argumentType(id _Nonnull signature, NSUInteger index);
     const char * _Nonnull sig_returnType(id _Nonnull signature);
     void findSwiftSymbols(const char * _Nullable path, const char * _Nonnull suffix, void (^ _Nonnull callback)(void * _Nonnull symbol));
+    const char * _Nullable callerBundle();
     int fast_dladdr(const void * _Nonnull, Dl_info * _Nonnull);
 #ifdef __cplusplus
 }

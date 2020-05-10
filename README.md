@@ -21,8 +21,8 @@ adding the following to your project's Podfile:
 ```swift
     pod 'SwiftTrace'
  ```
-Once the project has rebuilt, import SwiftTrace into the application's AppDelegate and add something like
-the following to the beginning of it's didFinishLaunchingWithOptions method:
+Once the project has rebuilt, import SwiftTrace into the application's AppDelegate and add something like the following to the beginning of
+it's didFinishLaunchingWithOptions method:
 ```swift
     SwiftTrace.traceBundle(containing: type(of: self))
  ```
@@ -56,7 +56,7 @@ protocols is available at the bundle level where the bundle being traced is spec
 using a class instance. They can be further filtered by an optional regular expression. 
 For exmaple, the following:
 ```Swift
-SwiftTrace.traceProtocolsInBundle(containing: AClassInTheBundle.self, pattern: "regexp")
+SwiftTrace.traceProtocolsInBundle(containing: AClassInTheBundle.self, matchingPattern: "regexp")
 ```
 Which traces are applied can be filtered using method name inclusion and exclusion regexps. 
 ```swift

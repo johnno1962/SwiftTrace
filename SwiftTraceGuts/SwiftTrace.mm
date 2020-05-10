@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#3 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#5 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -280,7 +280,7 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 /// follow chain of Sizzles through to find original implementataion
 + (Swizzle * _Nullable)originalSwizzleFor:(IMP _Nonnull)implementation;
 /// Trace the protocol witnesses for a bundle containg the specified class
-+ (void)traceProtocolsInBundleWithContaining:(Class _Nonnull)aClass matching:(NSString * _Nullable)pattern subLevels:(NSInteger)subLevels;
++ (void)traceProtocolsInBundleWithContaining:(Class _Nonnull)aClass matchingPattern:(NSString * _Nullable)pattern subLevels:(NSInteger)subLevels;
 /// Returns a list of all Swift methods as demangled symbols of a class
 /// \param ofClass - class to be dumped
 ///
@@ -363,10 +363,10 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
     [self swiftTraceInstanceWithSubLevels:0];
 }
 + (void)swiftTraceProtocolsInBundle {
-    [SwiftTrace traceProtocolsInBundleWithContaining:self matching:nil subLevels:0];
+    [SwiftTrace traceProtocolsInBundleWithContaining:self matchingPattern:nil subLevels:0];
 }
 + (void)traceProtocolsInBundleWithContaining:(NSString *)pattern subLevels:(int)subLevels {
-    [SwiftTrace traceProtocolsInBundleWithContaining:self matching:pattern subLevels:subLevels];
+    [SwiftTrace traceProtocolsInBundleWithContaining:self matchingPattern:pattern subLevels:subLevels];
 }
 - (void)swiftTraceInstanceWithSubLevels:(int)subLevels {
     [SwiftTrace traceWithAnInstance:self subLevels:subLevels];
@@ -488,6 +488,15 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
     }
 }
 
+const char *callerBundle() {
+    void *returnAddress = __builtin_return_address(1);
+    Dl_info info;
+    if (dladdr(returnAddress, &info))
+        return info.dli_fname;
+    return nullptr;
+}
+
+#if !TRY_TO_OPTIMISE_DLADDR
 #import <vector>
 #import <algorithm>
 
@@ -507,9 +516,9 @@ static bool operator < (Symbol s1, Symbol s2) {
 
 class Dylib {
     const mach_header_t *header;
-    segment_command_t *seg_linkedit = NULL;
-    segment_command_t *seg_text = NULL;
-    struct symtab_command *symtab = NULL;
+    segment_command_t *seg_linkedit = nullptr;
+    segment_command_t *seg_text = nullptr;
+    struct symtab_command *symtab = nullptr;
     vector<Symbol> symbols;
 
 public:
@@ -591,6 +600,7 @@ public:
 bool operator < (DylibPtr s1, DylibPtr s2) {
     return s1.start < s2.start;
 }
+#endif
 
 int fast_dladdr(const void *ptr, Dl_info *info) {
 #if !TRY_TO_OPTIMISE_DLADDR
