@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#220 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#224 $
 //
 
 import Foundation
@@ -113,11 +113,11 @@ open class SwiftTrace: NSObject {
     }
 
     /**
-     Default pattern of problematic symbols to be excluded from tracing
+     Default pattern of common/problematic symbols to be excluded from tracing
      */
     open class var defaultMethodExclusions: String {
         return """
-            \\.getter| (?:retain|_tryRetain|release|_isDeallocating|.cxx_destruct|dealloc|description| debugDescription)]|initWithCoder|\
+            \\.getter| (?:retain|_tryRetain|release|autorelease|_isDeallocating|.cxx_destruct|dealloc|description| debugDescription)]|initWithCoder|\
             ^\\+\\[(?:Reader_Base64|UI(?:NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |\
             ^.\\[(?:UIView|RemoteCapture|BCEvent) |UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|\
             UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|\
@@ -382,6 +382,7 @@ open class SwiftTrace: NSObject {
      - parameter matchingPattern: regex pattern to match entries against
      - parameter subLevels: subLevels to log of previous traces to trace
      */
+    #if swift(>=5.0)
     open class func traceProtocolsInBundle(containing aClass: AnyClass? = nil, matchingPattern: String? = nil, subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels)
         let regex = matchingPattern != nil ?
@@ -419,6 +420,7 @@ open class SwiftTrace: NSObject {
             }
         }
     }
+    #endif
 
     /** follow chain of Sizzles through to find original implementataion */
     open class func originalSwizzle(for implementation: IMP) -> Swizzle? {
