@@ -20,7 +20,7 @@ public protocol P {
     func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> ()
 }
 
-open class TestClass: P {
+open class TestClass: NSObject, P {
 
     public var i = 999
 
@@ -141,7 +141,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 //        ptest(p: TestClass())
 
-        SwiftTrace.traceProtocolsInBundle(containing: Self.self)
+        TestClass.traceProtocolsInBundle()
 
         ptest(p: TestStruct())
         ptest(p: TestClass())

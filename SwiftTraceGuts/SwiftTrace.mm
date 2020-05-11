@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#9 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#12 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -221,14 +221,10 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 + (void)setInclusionRegexp:(NSRegularExpression * _Nullable)value;
 /// Exclude symbols matching this pattern. If not specified
 /// a default pattern in swiftTraceDefaultExclusions is used.
-/// \param pattern regexp for symbols to exclude
-///
 @property (nonatomic, class, copy) NSString * _Nullable methodExclusionPattern;
 + (NSString * _Nullable)methodExclusionPattern;
 + (void)setMethodExclusionPattern:(NSString * _Nullable)newValue;
 /// Include symbols matching pattern only
-/// \param pattern regexp for symbols to include
-///
 @property (nonatomic, class, copy) NSString * _Nullable methodInclusionPattern;
 + (NSString * _Nullable)methodInclusionPattern;
 + (void)setMethodInclusionPattern:(NSString * _Nullable)newValue;
@@ -281,6 +277,10 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 + (Swizzle * _Nullable)originalSwizzleFor:(IMP _Nonnull)implementation;
 /// Trace the protocol witnesses for a bundle containg the specified class
 + (void)traceProtocolsInBundleWithContaining:(Class _Nonnull)aClass matchingPattern:(NSString * _Nullable)pattern subLevels:(NSInteger)subLevels;
+/// Accumulated amount of time spent in each swizzled method.
++ (NSDictionary<NSString *, NSNumber *> * _Nonnull)elapsedTimes;
+/// Numbers of times each swizzled method has been invoked.
++ (NSDictionary<NSString *, NSNumber *> * _Nonnull)invocationCounts;
 /// Returns a list of all Swift methods as demangled symbols of a class
 /// \param ofClass - class to be dumped
 ///
@@ -362,14 +362,26 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 - (void)swiftTraceInstance {
     [self swiftTraceInstanceWithSubLevels:0];
 }
-+ (void)swiftTraceProtocolsInBundle {
-    [SwiftTrace traceProtocolsInBundleWithContaining:self matchingPattern:nil subLevels:0];
-}
-+ (void)traceProtocolsInBundleWithContaining:(NSString *)pattern subLevels:(int)subLevels {
-    [SwiftTrace traceProtocolsInBundleWithContaining:self matchingPattern:pattern subLevels:subLevels];
-}
 - (void)swiftTraceInstanceWithSubLevels:(int)subLevels {
     [SwiftTrace traceWithAnInstance:self subLevels:subLevels];
+}
++ (void)swiftTraceProtocolsInBundle {
+    [self swiftTraceProtocolsInBundleWithMatchingPattern:nil subLevels:0];
+}
++ (void)swiftTraceProtocolsInBundleWithMatchingPattern:(NSString * _Nullable)pattern {
+    [self swiftTraceProtocolsInBundleWithMatchingPattern:pattern subLevels:0];
+}
++ (void)swiftTraceProtocolsInBundleWithSubLevels:(int)subLevels {
+    [self swiftTraceProtocolsInBundleWithMatchingPattern:nil subLevels:subLevels];
+}
++ (void)swiftTraceProtocolsInBundleWithMatchingPattern:(NSString *)pattern subLevels:(int)subLevels {
+    [SwiftTrace traceProtocolsInBundleWithContaining:self matchingPattern:pattern subLevels:subLevels];
+}
++ (NSDictionary<NSString *, NSNumber *> * _Nonnull)swiftTraceElapsedTimes {
+    return [SwiftTrace elapsedTimes];
+}
++ (NSDictionary<NSString *, NSNumber *> * _Nonnull)swiftTraceInvocationCounts {
+    return [SwiftTrace invocationCounts];
 }
 @end
 

@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#6 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#10 $
 //
 
 #import <Foundation/Foundation.h>
@@ -122,13 +122,15 @@ in the Swift class provided.
  */
 - (void)swiftTraceInstanceWithSubLevels:(int)subLevels;
 /**
- Trace all protocols contained in the bundle ownig the receiver class
+ Trace all protocols contained in the bundle declaring the receiver class
  */
 + (void)swiftTraceProtocolsInBundle;
 /**
  Trace protocols in bundle with qualifications
  */
-+ (void)traceProtocolsInBundleWithContaining:(NSString * _Nullable)pattern subLevels:(int)subLevels;
++ (void)swiftTraceProtocolsInBundleWithMatchingPattern:(NSString * _Nullable)pattern;
++ (void)swiftTraceProtocolsInBundleWithSubLevels:(int)subLevels;
++ (void)swiftTraceProtocolsInBundleWithMatchingPattern:(NSString * _Nullable)pattern subLevels:(int)subLevels;
 /**
  Remove most recent trace
  */
@@ -137,6 +139,14 @@ in the Swift class provided.
  Remove all tracing swizles.
  */
 + (void)swiftTraceRemoveAllTraces;
+/**
+ Total elapsed time by traced method.
+ */
++ (NSDictionary<NSString *, NSNumber *> * _Nonnull)swiftTraceElapsedTimes;
+/**
+ Invocation counts by traced method.
+ */
++ (NSDictionary<NSString *, NSNumber *> * _Nonnull)swiftTraceInvocationCounts;
 @end
 
 #import <objc/runtime.h>

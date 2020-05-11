@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import SwiftTrace
 
 class DetailViewController: UIViewController {
 
@@ -27,6 +28,8 @@ class DetailViewController: UIViewController {
                 label.text = detail.description
             }
         }
+        print(SwiftTrace.sortedElapsedTimes(onlyFirst: 10))
+        print(SwiftTrace.sortedInvocationCounts(onlyFirst: 10))
     }
 
     override func viewDidLoad() {

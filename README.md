@@ -54,7 +54,7 @@ It is possible to trace methods of a structs or other types if they are messaged
 protools as this would then be indirect via what is called a `witness table`. Tracing
 protocols is available at the bundle level where the bundle being traced is specified
 using a class instance. They can be further filtered by an optional regular expression. 
-For exmaple, the following:
+For example, the following:
 ```Swift
 SwiftTrace.traceProtocolsInBundle(containing: AClassInTheBundle.self, matchingPattern: "regexp")
 ```
@@ -137,7 +137,13 @@ Then, before the trace is called add a handler for the type which takes the foll
  ```Swift
     Bundle(path: "/Applications/InjectionIII.app/Contents/Resources/iOSInjection.bundle")?.load()
  ```
+ #### Benchmarking
  
+ To benchmark an app or framework, trace it's methods then you can use one of the following:
+ ```
+    SwiftTrace.sortedElapsedTimes(onlyFirst: 10))
+    SwiftTrace.sortedInvocationCounts(onlyFirst: 10))
+ ```
 #### Aspects
 
 You can add an aspect to a particular method using the method's de-mangled name:

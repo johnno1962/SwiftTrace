@@ -36,7 +36,7 @@ public protocol P {
     func rect(r: CGRect) -> CGRect
 }
 
-public class TestClass: P, SwiftTraceArg {
+public class TestClass: NSObject, P, SwiftTraceArg {
 
     public var i = 999
 
@@ -270,7 +270,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         UIColor.swiftTraceBundle()
         print(UIColor.systemBlue)
 
-        SwiftTrace.removeAllTraces()
+        TestClass.swiftTraceProtocolsInBundle(withSubLevels: 1)
         return true
     }
 
