@@ -141,7 +141,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 //        ptest(p: TestClass())
 
-        TestClass.traceProtocolsInBundle()
+        TestClass.swiftTraceProtocolsInBundle()
 
         ptest(p: TestStruct())
         ptest(p: TestClass())

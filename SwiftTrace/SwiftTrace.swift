@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#226 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#227 $
 //
 
 import Foundation
@@ -393,12 +393,12 @@ open class SwiftTrace: NSObject {
             let witnessTable = address.assumingMemoryBound(to: SIMP.self)
             var info = Dl_info()
             // The start of a witness table is always the protocol descriptor
-            // then the associated types, always in section `__swift5_typeref`
-            // then the functions defined by that protocol in turn followed by
-            // pointers to the witness tables of the protocols the protocol
-            // inherits from. This means it is possible to scan qualified by the
-            // demangled symbol name the slot points to being a protocol witness
-            // entry (a pointer to function for that conformance for a type.)
+            // then the associated types (always in section `__swift5_typeref`)
+            // followed by pointers to the witness tables of the protocols the
+            // protocol directly inherits from and finally pointers to the
+            // implementations of the functions defined by the original protocol.
+            // So it is possible to "safely" scan until the demangled symbol
+            // name is not an inherited protocol witness table or witness entry.
             for slot in 1..<1000 {
                 // skip associated type witness entries
                 if typeref <= autoBitCast(witnessTable[slot]) &&
@@ -407,16 +407,22 @@ open class SwiftTrace: NSObject {
                 }
                 if fast_dladdr(autoBitCast(witnessTable[slot]),
                                &info) != 0 && info.dli_sname != nil,
-                    let demangled = demangle(symbol: info.dli_sname), demangled.hasPrefix("protocol witness for ") &&
-                            !demangled.contains("SwiftTrace."),
-                    regex == nil || regex!.matches(demangled) {
-                    if let factory = methodFilter(demangled),
-                        let swizzle = factory.init(name: demangled, vtableSlot: &witnessTable[slot]) {
-                        witnessTable[slot] = swizzle.forwardingImplementation()
+                    let demangled = demangle(symbol: info.dli_sname) {
+                    if demangled.hasPrefix("protocol witness table for") {
+                        continue
                     }
-                } else {
-                    break
+                    if demangled.hasPrefix("protocol witness for ") &&
+                            !demangled.contains("SwiftTrace."),
+                        regex == nil || regex!.matches(demangled) {
+                        if let factory = methodFilter(demangled),
+                            let swizzle = factory.init(name: demangled,
+                                                       vtableSlot: &witnessTable[slot]) {
+                            witnessTable[slot] = swizzle.forwardingImplementation()
+                        }
+                        continue
+                    }
                 }
+                break
             }
         }
     }
