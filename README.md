@@ -58,6 +58,14 @@ For example, the following:
 ```Swift
 SwiftTrace.traceProtocolsInBundle(containing: AClassInTheBundle.self, matchingPattern: "regexp")
 ```
+For example, to trace internal calls made in the `SwiftUI` framework you can use the following:
+```Swift
+func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    SwiftTrace.traceProtocolsInBundle(containing: UIHostingController<HomeView>.self)
+    return true
+}
+```
+
 Which traces are applied can be filtered using method name inclusion and exclusion regexps. 
 ```swift
     SwiftTrace.methodInclusionPattern = "TestClass"
