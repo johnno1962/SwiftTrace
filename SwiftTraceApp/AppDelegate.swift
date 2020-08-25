@@ -144,6 +144,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
 //        SwiftTrace.methodExclusionPattern = "ObjcTraceTester |"+SwiftTrace.defaultMethodExclusions
 
+        SwiftTrace.interpose(aType: TestClass.self, methodName: "SwiftTwaceApp.TestClass.x() -> Swift.Optional<SwiftTwaceApp.TestClass>",
+            onEntry: { swizzle, stack in print("entry... \(stack)") },
+            onExit: { swizzle, stack in print("exit \(stack)") })
+
+        _ = TestClass().x()
+
         SwiftTrace.swiftTraceBundle()
         ObjcTraceTester().a(44, i:45, b: 55, c: "66", o: self, s: Selector(("jjj:")))
 

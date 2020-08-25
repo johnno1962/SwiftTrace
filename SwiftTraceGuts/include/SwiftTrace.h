@@ -160,12 +160,25 @@ extern "C" {
     NSMethodSignature * _Nullable method_getSignature(Method _Nonnull Method);
     const char * _Nonnull sig_argumentType(id _Nonnull signature, NSUInteger index);
     const char * _Nonnull sig_returnType(id _Nonnull signature);
-    void findSwiftSymbols(const char * _Nullable path, const char * _Nonnull suffix, void (^ _Nonnull callback)(void * _Nonnull symbol, void * _Nonnull typeref, void * _Nonnull typeend));
+    void findSwiftSymbols(const char * _Nullable path, const char * _Nonnull suffix, void (^ _Nonnull callback)(void * _Nonnull symbol, const char * _Nonnull symname, void * _Nonnull typeref, void * _Nonnull typeend));
+    void findImages(void (^ _Nonnull callback)(const char * _Nonnull imageName, const struct mach_header * _Nonnull header));
     const char * _Nullable callerBundle(void);
     int fast_dladdr(const void * _Nonnull, Dl_info * _Nonnull);
 #ifdef __cplusplus
 }
 #endif
+
+struct dyld_interpose_tuple {
+  const void * _Nonnull replacement;
+  const void * _Nonnull replacee;
+};
+
+/// Very handy albeit private API on dynamic loader.
+void dyld_dynamic_interpose(
+    const struct mach_header * _Nonnull mh,
+    const struct dyld_interpose_tuple array[_Nonnull],
+    size_t count) __attribute__((weak_import));
+
 
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 #import <CoreGraphics/CGGeometry.h>

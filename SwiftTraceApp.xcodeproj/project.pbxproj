@@ -725,6 +725,10 @@
 				DEVELOPMENT_TEAM = 9V5A8WE85E;
 				INFOPLIST_FILE = SwiftTraceApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				OTHER_LDFLAGS = (
+					"-Xlinker",
+					"-interposable",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.johnholdsworth.SwiftTraceApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -740,6 +744,10 @@
 				DEVELOPMENT_TEAM = 9V5A8WE85E;
 				INFOPLIST_FILE = SwiftTraceApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				OTHER_LDFLAGS = (
+					"-Xlinker",
+					"-interposable",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.johnholdsworth.SwiftTraceApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

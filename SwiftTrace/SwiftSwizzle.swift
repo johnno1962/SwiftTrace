@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#25 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#26 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -75,6 +75,7 @@ extension SwiftTrace {
         public required init?(name signature: String,
                               vtableSlot: UnsafeMutablePointer<SIMP>? = nil,
                               objcMethod: Method? = nil,
+                              original: OpaquePointer? = nil,
                               replaceWith: nullImplementationType? = nil) {
            self.trace = SwiftTrace.lastSwiftTrace
            self.signature = signature
@@ -83,8 +84,10 @@ extension SwiftTrace {
            if let vtableSlot = vtableSlot {
                implementation = autoBitCast(vtableSlot.pointee)
            }
-           else {
-               implementation = method_getImplementation(objcMethod!)
+           else if let objcMethod = objcMethod {
+               implementation = method_getImplementation(objcMethod)
+           } else {
+               implementation = original!
            }
            nullImplmentation = replaceWith
        }

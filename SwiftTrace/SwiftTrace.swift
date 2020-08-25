@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#227 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#228 $
 //
 
 import Foundation
@@ -237,7 +237,7 @@ open class SwiftTrace: NSObject {
             }
         }
         /* This should pick up and Pure Swift classes */
-        findSwiftSymbols(bundlePath, "CN", { aClass,  _, _ in
+        findSwiftSymbols(bundlePath, "CN", { aClass, _,  _, _ in
             if !registered.contains(aClass) {
                 trace(aClass: autoBitCast(aClass))
             }
@@ -249,7 +249,7 @@ open class SwiftTrace: NSObject {
      */
     open class func swiftClassList(bundlePath: UnsafePointer<Int8>? = nil) -> [AnyClass] {
         var classes = [AnyClass]()
-        findSwiftSymbols(bundlePath, "CN", { aClass, _, _ in
+        findSwiftSymbols(bundlePath, "CN", { aClass, _, _, _ in
             classes.append(autoBitCast(aClass))
         })
         return classes
@@ -389,7 +389,7 @@ open class SwiftTrace: NSObject {
             NSRegularExpression(regexp: matchingPattern!) : nil
         findSwiftSymbols(aClass == nil ? callerBundle() :
             aClass == NSObject.self ? nil : class_getImageName(aClass), "WP") {
-            (address: UnsafeMutableRawPointer, typeref, typeend) in
+            (address: UnsafeMutableRawPointer, _, typeref, typeend) in
             let witnessTable = address.assumingMemoryBound(to: SIMP.self)
             var info = Dl_info()
             // The start of a witness table is always the protocol descriptor

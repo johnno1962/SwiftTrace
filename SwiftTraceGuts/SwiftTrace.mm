@@ -455,11 +455,13 @@ typedef uint32_t sectsize_t;
 #endif
 
 void findSwiftSymbols(const char *bundlePath, const char *suffix,
-                      void (^callback)(void *aClass, void *typeref, void *typeend)) {
+                      void (^callback)(void *aClass, const char *symname, void *typeref, void *typeend)) {
     for (int32_t i = _dyld_image_count(); i >= 0 ; i--) {
         const mach_header_t *header = (const mach_header_t *)_dyld_get_image_header(i);
         const char *imageName = _dyld_get_image_name(i);
-        if (!(imageName && (!bundlePath || imageName == bundlePath || strcmp(imageName, bundlePath) == 0)))
+
+        if (!(imageName && (!bundlePath ||
+                imageName == bundlePath || strcmp(imageName, bundlePath) == 0)))
             continue;
 
         segment_command_t *seg_linkedit = nullptr;
@@ -491,12 +493,15 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
 
                     for (uint32_t i = 0; i < symtab->nsyms; i++, sym++) {
                         const char *sptr = strings + sym->n_un.n_strx;
-                        void *aClass;
+                        NSUInteger sufflen = strlen(suffix);
+                        void *location;
+
                         if (sym->n_type == 0xf &&
                             strncmp(sptr, "_$s", 3) == 0 &&
-                            strcmp(sptr+strlen(sptr)-strlen(suffix), suffix) == 0 &&
-                            (aClass = (void *)(sym->n_value + (intptr_t)header - (intptr_t)seg_text->vmaddr))) {
-                            callback(aClass, typeref_start, typeref_start + typeref_size);
+                            strcmp(sptr+strlen(sptr)-sufflen, suffix) == 0 &&
+                            (location = (void *)(sym->n_value + (intptr_t)header - (intptr_t)seg_text->vmaddr))) {
+                            callback(location, sptr+1, typeref_start,
+                                     typeref_start + typeref_size);
                         }
                     }
 
@@ -505,6 +510,17 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
                 }
             }
         }
+    }
+}
+
+void findImages(void (^callback)(const char *sym, const struct mach_header *)) {
+    for (int32_t i = _dyld_image_count()-1; i >= 0 ; i--) {
+        const char *imageName = _dyld_get_image_name(i);
+//        NSLog(@"findImages: %s", imageName);
+        if (strstr(imageName, "/Containers/") ||
+            strstr(imageName, ".app/Contents/MacOS/") ||
+            strstr(imageName, "/T/eval"))
+            callback(imageName, _dyld_get_image_header(i));
     }
 }
 
