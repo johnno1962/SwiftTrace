@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#62 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#63 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -93,7 +93,9 @@ extension SwiftTrace {
         }
 
         lazy var isProtocolTrace: Bool = {
-            return signature.hasPrefix("protocol witness for ")
+            return (vtableSlot == nil && objcMethod == nil) ||
+                signature.hasPrefix("protocol witness for ")
+
         }()
 
         /**

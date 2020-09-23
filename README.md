@@ -18,37 +18,51 @@ can be patched.
 
 SwiftTrace can be used with the Swift Package Manager or as a CocoaPod by
 adding the following to your project's Podfile:
-```swift
+
+```Swift
     pod 'SwiftTrace'
  ```
 Once the project has rebuilt, import SwiftTrace into the application's AppDelegate and add something like the following to the beginning of
 it's didFinishLaunchingWithOptions method:
-```swift
+
+```Swift
     SwiftTrace.traceBundle(containing: type(of: self))
  ```
 This traces all classes defined in the main application bundle.
 To trace, for example, all classes in the RxSwift Pod add the following
-```swift
+
+```Swift
     SwiftTrace.traceBundle(containing: RxSwift.DisposeBase.self)
  ```
 This gives output in the Xcode debug console such as that above.
 
 To trace a system framework such as UIKit you can trace classes using a pattern:
-```swift
+
+```Swift
     SwiftTrace.traceClasses(matchingPattern:"^UI")
  ```
 Individual classes can be traced using the underlying api:
-```swift
+
+```Swift
     SwiftTrace.trace(aClass: MyClass.self)
 ```
 Or to trace all methods of instances of a particular class including those of their superclasses
 use the following:
+
 ```Swift
     SwiftTrace.traceInstances(ofClass: aClass)
 ```
 Or to trace only a particular instance use the following:
+
 ```Swift
     SwiftTrace.trace(anInstance: anObject)
+```
+If you have specified `"-Xlinker -interposable"` in your project's `"Other Linker Flags"`
+it's possible to trace all methods in the application's main bundle at once which can be
+useful for profiling `SwiftUI` using the following call:
+
+```Swift
+    SwiftTrace.traceMainBundleMethods()
 ```
 It is possible to trace methods of a structs or other types if they are messaged through
 protools as this would then be indirect via what is called a `witness table`. Tracing

@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BB1B8179251B631900F76DC7 /* SwiftStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B8178251B631900F76DC7 /* SwiftStats.swift */; };
+		BB1B817B251B632D00F76DC7 /* SwiftInterpose.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B817A251B632D00F76DC7 /* SwiftInterpose.swift */; };
+		BB1B8180251B69B100F76DC7 /* SwiftStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B8178251B631900F76DC7 /* SwiftStats.swift */; };
+		BB1B8181251B69B200F76DC7 /* SwiftStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B8178251B631900F76DC7 /* SwiftStats.swift */; };
+		BB1B8182251B69B500F76DC7 /* SwiftInterpose.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B817A251B632D00F76DC7 /* SwiftInterpose.swift */; };
+		BB1B8183251B69B600F76DC7 /* SwiftInterpose.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B817A251B632D00F76DC7 /* SwiftInterpose.swift */; };
 		BB1C5CAD244C8E4700297908 /* SwiftArgs.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1C5CAC244C8E4700297908 /* SwiftArgs.swift */; };
 		BB1C5CAF244CB41B00297908 /* SwiftArgs.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1C5CAC244C8E4700297908 /* SwiftArgs.swift */; };
 		BB1C5CB2244CC92400297908 /* SwiftArgs.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1C5CAC244C8E4700297908 /* SwiftArgs.swift */; };
@@ -103,6 +109,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		BB1B8178251B631900F76DC7 /* SwiftStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftStats.swift; sourceTree = "<group>"; };
+		BB1B817A251B632D00F76DC7 /* SwiftInterpose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftInterpose.swift; sourceTree = "<group>"; };
 		BB1C5CAC244C8E4700297908 /* SwiftArgs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftArgs.swift; sourceTree = "<group>"; };
 		BB1C5CB3244D89F100297908 /* SwiftMeta.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftMeta.swift; sourceTree = "<group>"; };
 		BB1C5CB5244D8A1200297908 /* SwiftAspects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftAspects.swift; sourceTree = "<group>"; };
@@ -119,7 +127,7 @@
 		BBC3D1D61D0A438800520F38 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		BBC3D1D81D0A438800520F38 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BBC3D1E31D0A43B200520F38 /* SwiftTrace.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftTrace.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		BBC3D1E51D0A43B200520F38 /* SwiftTrace.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftTrace.h; sourceTree = "<group>"; };
+		BBC3D1E51D0A43B200520F38 /* SwiftTrace.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SwiftTrace.h; path = ../SwiftTraceGuts/include/SwiftTrace.h; sourceTree = "<group>"; };
 		BBC3D1E71D0A43B300520F38 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BBC3D1F01D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; name = xt_forwarding_trampoline_arm64.s; path = ../SwiftTraceGuts/xt_forwarding_trampoline_arm64.s; sourceTree = "<group>"; };
 		BBC3D1F11D0A43E800520F38 /* xt_forwarding_trampoline_x64.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; name = xt_forwarding_trampoline_x64.s; path = ../SwiftTraceGuts/xt_forwarding_trampoline_x64.s; sourceTree = "<group>"; };
@@ -238,6 +246,8 @@
 				BB1C5CAC244C8E4700297908 /* SwiftArgs.swift */,
 				BB1C5CB3244D89F100297908 /* SwiftMeta.swift */,
 				BB1C5CB9244D8A6B00297908 /* SwiftStack.swift */,
+				BB1B8178251B631900F76DC7 /* SwiftStats.swift */,
+				BB1B817A251B632D00F76DC7 /* SwiftInterpose.swift */,
 				BBC3D1F11D0A43E800520F38 /* xt_forwarding_trampoline_x64.s */,
 				BBC3D1F01D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s */,
 				BBC3D1E71D0A43B300520F38 /* Info.plist */,
@@ -504,6 +514,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BB1C5CB8244D8A2F00297908 /* SwiftInvoke.swift in Sources */,
+				BB1B8179251B631900F76DC7 /* SwiftStats.swift in Sources */,
 				BB1C5CD3244D94B300297908 /* SwiftSwizzle.swift in Sources */,
 				BB1C5CBA244D8A6B00297908 /* SwiftStack.swift in Sources */,
 				BBC3D1F41D0A43E800520F38 /* xt_forwarding_trampoline_x64.s in Sources */,
@@ -511,6 +522,7 @@
 				BB1C5CBB244D8AD700297908 /* SwiftMeta.swift in Sources */,
 				BBC3D1F31D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s in Sources */,
 				BB1C5CB6244D8A1200297908 /* SwiftAspects.swift in Sources */,
+				BB1B817B251B632D00F76DC7 /* SwiftInterpose.swift in Sources */,
 				BBC3D1F91D0A445D00520F38 /* SwiftTrace.swift in Sources */,
 				BB1C5CAD244C8E4700297908 /* SwiftArgs.swift in Sources */,
 			);
@@ -529,6 +541,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BB1C5CBF244D8ADE00297908 /* SwiftStack.swift in Sources */,
+				BB1B8181251B69B200F76DC7 /* SwiftStats.swift in Sources */,
 				BB1C5CC3244D8AE700297908 /* SwiftInvoke.swift in Sources */,
 				BB1C5CBD244D8AD800297908 /* SwiftMeta.swift in Sources */,
 				BB76EA19229544BD00E454F0 /* xt_forwarding_trampoline_x64.s in Sources */,
@@ -536,6 +549,7 @@
 				BB76EA18229544B900E454F0 /* SwiftTrace.mm in Sources */,
 				BBCDA3861D0E64AC007222D3 /* SwiftTraceXTests.swift in Sources */,
 				BB1C5CC1244D8AE300297908 /* SwiftAspects.swift in Sources */,
+				BB1B8183251B69B600F76DC7 /* SwiftInterpose.swift in Sources */,
 				BB76EA17229544B400E454F0 /* SwiftTrace.swift in Sources */,
 				BB1C5CB2244CC92400297908 /* SwiftArgs.swift in Sources */,
 			);
@@ -546,6 +560,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BB1C5CBE244D8ADD00297908 /* SwiftStack.swift in Sources */,
+				BB1B8180251B69B100F76DC7 /* SwiftStats.swift in Sources */,
 				BB1C5CC2244D8AE600297908 /* SwiftInvoke.swift in Sources */,
 				BB1C5CBC244D8AD800297908 /* SwiftMeta.swift in Sources */,
 				BB76EA16229540C200E454F0 /* xt_forwarding_trampoline_x64.s in Sources */,
@@ -553,6 +568,7 @@
 				BB1C5CAF244CB41B00297908 /* SwiftArgs.swift in Sources */,
 				BB76EA15229540BD00E454F0 /* SwiftTrace.mm in Sources */,
 				BB1C5CC0244D8AE200297908 /* SwiftAspects.swift in Sources */,
+				BB1B8182251B69B500F76DC7 /* SwiftInterpose.swift in Sources */,
 				BBF6EC6E1D0E54F100C5A202 /* AppDelegate.swift in Sources */,
 				BB76EA14229540B700E454F0 /* SwiftTrace.swift in Sources */,
 			);
@@ -658,6 +674,7 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

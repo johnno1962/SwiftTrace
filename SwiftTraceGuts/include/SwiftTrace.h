@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#10 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#11 $
 //
 
 #import <Foundation/Foundation.h>
@@ -132,6 +132,10 @@ in the Swift class provided.
 + (void)swiftTraceProtocolsInBundleWithSubLevels:(int)subLevels;
 + (void)swiftTraceProtocolsInBundleWithMatchingPattern:(NSString * _Nullable)pattern subLevels:(int)subLevels;
 /**
+ Use interposing to trace all methods in main bundle
+ */
++ (void)swiftTraceMainBundleMethods;
+/**
  Remove most recent trace
  */
 + (BOOL)swiftTraceUndoLastTrace;
@@ -161,7 +165,7 @@ extern "C" {
     const char * _Nonnull sig_argumentType(id _Nonnull signature, NSUInteger index);
     const char * _Nonnull sig_returnType(id _Nonnull signature);
     void findSwiftSymbols(const char * _Nullable path, const char * _Nonnull suffix, void (^ _Nonnull callback)(void * _Nonnull symbol, const char * _Nonnull symname, void * _Nonnull typeref, void * _Nonnull typeend));
-    void findImages(void (^ _Nonnull callback)(const char * _Nonnull imageName, const struct mach_header * _Nonnull header));
+    void appBundleImages(void (^ _Nonnull callback)(const char * _Nonnull imageName, const struct mach_header * _Nonnull header));
     const char * _Nullable callerBundle(void);
     int fast_dladdr(const void * _Nonnull, Dl_info * _Nonnull);
 #ifdef __cplusplus
