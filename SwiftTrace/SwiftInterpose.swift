@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#4 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#6 $
 //
 
 import Foundation
@@ -81,17 +81,22 @@ extension SwiftTrace {
     }
 
     /// Use interposing to trace all methods in a bundle
-    /// - Parameter bundlePath: path to bundle to interpose
     /// Requires "Other Linker Flags" -Xlinker -interposable
-    @objc open class func traceMethods(bundlePath: UnsafePointer<Int8>) {
+    /// - Parameters:
+    ///   - bundlePath: path to bundle to interpose
+    ///   - pattern: optional regex methodName should match
+    ///   - excluding: optional regex that would exclude methods
+    @objc open class func traceMethods(bundlePath: UnsafePointer<Int8>,
+                       pattern: String? = nil, excluding: String? = nil) {
         var interposes = [dyld_interpose_tuple]()
 
         for suffix in swiftFunctionSuffixes {
             findSwiftSymbols(bundlePath, suffix) {
                 symval, symname,  _, _ in
                 if let methodName = demangle(symbol: symname),
-                        methodName.replacingOccurrences(of: #"^(\w+\.\w+\()"#,
-                            with: "", options: .regularExpression) == methodName &&
+                        pattern?.stMatches(methodName) != false &&
+                        excluding?.stMatches(methodName) != true &&
+                        !"^(\\w+\\.\\w+\\()".stMatches(methodName) &&
                         !(methodName.contains(".getter :") && !methodName.hasSuffix("some")),
                     let method = swizzleFactory.init(name: methodName,
                          original: OpaquePointer(symval)) {
@@ -118,8 +123,20 @@ extension SwiftTrace {
     }
 
     /// Use interposing to trace all methods in main bundle
-    @objc open class func traceMainBundleMethods() {
-        traceMethods(bundlePath: Bundle.main.executablePath!)
+    /// - Parameters:
+    ///   - pattern: optional regex methodName should match
+    ///   - excluding: optional regex that would exclude methods
+    @objc open class func traceMainBundleMethods(
+        pattern: String? = nil, excluding: String? = nil) {
+        traceMethods(bundlePath: Bundle.main.executablePath!,
+                     pattern: pattern, excluding: excluding)
+    }
+}
+
+fileprivate extension String {
+    func stMatches(_ target: String) -> Bool {
+        return target.replacingOccurrences(of: self,
+            with: "___", options: .regularExpression) != target
     }
 }
 #endif

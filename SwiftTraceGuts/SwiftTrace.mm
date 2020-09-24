@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#13 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#14 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -277,8 +277,9 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 + (Swizzle * _Nullable)originalSwizzleFor:(IMP _Nonnull)implementation;
 /// Trace the protocol witnesses for a bundle containg the specified class
 + (void)traceProtocolsInBundleWithContaining:(Class _Nonnull)aClass matchingPattern:(NSString * _Nullable)pattern subLevels:(NSInteger)subLevels;
-/// Use interposing to trace all functions in main bundle
-+ (void)traceMainBundleMethods;
+/// Use interposing to trace matching functions in main bundle
++ (void)traceMainBundleMethodsWithPattern:(NSString * _Nullable)pattern
+                                excluding:(NSString * _Nullable)excluding;
 /// Accumulated amount of time spent in each swizzled method.
 + (NSDictionary<NSString *, NSNumber *> * _Nonnull)elapsedTimes;
 /// Numbers of times each swizzled method has been invoked.
@@ -379,8 +380,12 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 + (void)swiftTraceProtocolsInBundleWithMatchingPattern:(NSString *)pattern subLevels:(int)subLevels {
     [SwiftTrace traceProtocolsInBundleWithContaining:self matchingPattern:pattern subLevels:subLevels];
 }
++ (void)swiftTraceMainBundleMethodsWithPattern:(NSString *)pattern
+                                     excluding:(NSString *)excluding {
+    [SwiftTrace traceMainBundleMethodsWithPattern:pattern excluding:excluding];
+}
 + (void)swiftTraceMainBundleMethods {
-    [SwiftTrace traceMainBundleMethods];
+    [self swiftTraceMainBundleMethodsWithPattern:nil excluding:nil];
 }
 + (NSDictionary<NSString *, NSNumber *> * _Nonnull)swiftTraceElapsedTimes {
     return [SwiftTrace elapsedTimes];

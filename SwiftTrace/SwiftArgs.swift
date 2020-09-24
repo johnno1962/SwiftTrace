@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#63 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#64 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -92,10 +92,9 @@ extension SwiftTrace {
             return invocation.arguments
         }
 
-        lazy var isProtocolTrace: Bool = {
-            return (vtableSlot == nil && objcMethod == nil) ||
-                signature.hasPrefix("protocol witness for ")
-
+        lazy var hasSelf: Bool = {
+            return objcMethod != nil || vtableSlot != nil &&
+                !signature.hasPrefix("protocol witness for ")
         }()
 
         /**
@@ -109,7 +108,7 @@ extension SwiftTrace {
             let isReturn = !(parser === Decorated.argumentParser)
             var output = ""
 
-            if !isReturn && !isProtocolTrace {
+            if !isReturn && hasSelf {
                 invocation.arguments
                     .append(unsafeBitCast(invocation.swiftSelf, to: AnyObject.self))
             }
@@ -154,7 +153,7 @@ extension SwiftTrace {
 
             let endIndex = isReturn ?
                 typeRanges.isEmpty ? signature.startIndex :
-                    isProtocolTrace && !typeRanges.isEmpty ?
+                    !hasSelf && !typeRanges.isEmpty ?
                     typeRanges[0].upperBound : signature.endIndex :
                 signature.endIndex
             return output + signature[position ..< endIndex]
