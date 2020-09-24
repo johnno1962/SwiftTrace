@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#13 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#15 $
 //
 //  Invocation interface for Swift
 //  ==============================
@@ -15,6 +15,12 @@
 #if SWIFT_PACKAGE
 import SwiftTraceGuts
 #endif
+
+extension SwiftTraceArg {
+    public func add(toCall call: SwiftTrace.Call) {
+        call.add(arg: self)
+    }
+}
 
 extension SwiftTrace {
 
@@ -145,37 +151,3 @@ extension SwiftTrace {
         return call.getReturn()
     }
 }
-
-public protocol SwiftTraceArg {
-    func add(toCall call: SwiftTrace.Call)
-}
-public protocol SwiftTraceFloatArg: SwiftTraceArg {
-}
-extension SwiftTraceArg {
-    public func add(toCall call: SwiftTrace.Call) {
-        call.add(arg: self)
-    }
-}
-
-extension Bool: SwiftTraceArg {}
-extension Int: SwiftTraceArg {}
-extension UInt: SwiftTraceArg {}
-extension Int8: SwiftTraceArg {}
-extension UInt8: SwiftTraceArg {}
-extension Int16: SwiftTraceArg {}
-extension UInt16: SwiftTraceArg {}
-extension Int32: SwiftTraceArg {}
-extension UInt32: SwiftTraceArg {}
-extension Int64: SwiftTraceArg {}
-extension UInt64: SwiftTraceArg {}
-extension UnsafePointer: SwiftTraceArg {}
-extension UnsafeMutablePointer: SwiftTraceArg {}
-extension String: SwiftTraceArg {}
-extension Double: SwiftTraceFloatArg {}
-extension Float: SwiftTraceFloatArg {}
-#if os(macOS) || os(iOS) || os(tvOS)
-extension OSRect: SwiftTraceFloatArg {}
-extension OSPoint: SwiftTraceFloatArg {}
-extension OSSize: SwiftTraceFloatArg {}
-extension CGFloat: SwiftTraceFloatArg {}
-#endif

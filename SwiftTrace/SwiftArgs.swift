@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#64 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#72 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -15,6 +15,48 @@
 import Foundation
 #if SWIFT_PACKAGE
 import SwiftTraceGuts
+#endif
+
+#if os(macOS)
+import AppKit
+typealias OSRect = NSRect
+typealias OSPoint = NSPoint
+typealias OSSize = NSSize
+typealias OSEdgeInsets = NSEdgeInsets
+#elseif os(iOS) || os(tvOS)
+import UIKit
+typealias OSRect = CGRect
+typealias OSPoint = CGPoint
+typealias OSSize = CGSize
+typealias OSEdgeInsets = UIEdgeInsets
+#endif
+
+public protocol SwiftTraceArg {
+}
+public protocol SwiftTraceFloatArg: SwiftTraceArg {
+}
+
+extension Bool: SwiftTraceArg {}
+extension Int: SwiftTraceArg {}
+extension UInt: SwiftTraceArg {}
+extension Int8: SwiftTraceArg {}
+extension UInt8: SwiftTraceArg {}
+extension Int16: SwiftTraceArg {}
+extension UInt16: SwiftTraceArg {}
+extension Int32: SwiftTraceArg {}
+extension UInt32: SwiftTraceArg {}
+extension Int64: SwiftTraceArg {}
+extension UInt64: SwiftTraceArg {}
+extension UnsafePointer: SwiftTraceArg {}
+extension UnsafeMutablePointer: SwiftTraceArg {}
+extension String: SwiftTraceArg {}
+extension Double: SwiftTraceFloatArg {}
+extension Float: SwiftTraceFloatArg {}
+#if os(macOS) || os(iOS) || os(tvOS)
+extension OSRect: SwiftTraceFloatArg {}
+extension OSPoint: SwiftTraceFloatArg {}
+extension OSSize: SwiftTraceFloatArg {}
+extension CGFloat: SwiftTraceFloatArg {}
 #endif
 
 extension SwiftTrace {
@@ -28,7 +70,7 @@ extension SwiftTrace {
          Basic Swift argument type detector
          */
         static let argumentParser =
-            NSRegularExpression(regexp: ":\\s*([^,)]+)[,)]|\\.setter : (.+)$")
+            NSRegularExpression(regexp: ": ([^,)]+)[,)]|\\.setter : (.+)$")
 
         /**
          Very basic return valuue type detector
@@ -113,7 +155,6 @@ extension SwiftTrace {
                     .append(unsafeBitCast(invocation.swiftSelf, to: AnyObject.self))
             }
 
-            var hasSeenUnknownArgumentType = false
             let typeRanges = !isReturn ? argTypeRanges :
                 ranges(in: signature, parser: parser)
             var position = isReturn ? typeRanges.last?.lowerBound ??
@@ -121,7 +162,7 @@ extension SwiftTrace {
             invocation.floatArgumentOffset = 0
             invocation.intArgumentOffset = 0
 
-            for range in typeRanges where !hasSeenUnknownArgumentType {
+            for range in typeRanges {
                 output += signature[position ..< range.lowerBound]
                 var value: String?
 
@@ -136,19 +177,23 @@ extension SwiftTrace {
                 } else if type.hasPrefix("Swift.Optional<") {
                     let optional = type[type.index(type.startIndex, offsetBy: 15) ..<
                                         type.index(type.endIndex, offsetBy: -1)]
-                    if NSClassFromString(String(optional)) != nil {
+                        .replacingOccurrences(of: "^__C\\.", with: "",
+                                              options: .regularExpression)
+                    if NSClassFromString(optional) != nil {
                         value = Decorated.handleArg(invocation: invocation,
                                                     isReturn: isReturn,
                                                     type: AnyObject?.self)
-                    } else {
-                        hasSeenUnknownArgumentType = true
                     }
-                } else {
-                    hasSeenUnknownArgumentType = true
                 }
 
-                output += value ?? type
                 position = range.upperBound
+
+                if value == nil {
+                    output += isReturn ? "" : type
+                    break
+                }
+
+                output += value!
             }
 
             let endIndex = isReturn ?
@@ -166,6 +211,7 @@ extension SwiftTrace {
             "Swift.Int": { handleArg(invocation: $0, isReturn: $1, type: Int.self) },
             "Swift.Array<Swift.Int>": { handleArg(invocation: $0, isReturn: $1, type: [Int].self) },
             "Swift.Optional<Swift.Int>": { handleArg(invocation: $0, isReturn: $1, type: Int?.self) },
+            "Swift.Range<Swift.Int>": { handleArg(invocation: $0, isReturn: $1, type: Range<Int>.self) },
             "Swift.UInt": { handleArg(invocation: $0, isReturn: $1, type: UInt.self) },
             "Swift.Array<Swift.UInt>": { handleArg(invocation: $0, isReturn: $1, type: [UInt].self) },
             "Swift.Optional<Swift.UInt>": { handleArg(invocation: $0, isReturn: $1, type: UInt?.self) },
@@ -377,9 +423,23 @@ extension SwiftTrace {
                 return "@selector(\(NSStringFromSelector(SEL)))"
             } else if Type.self == String.self {
                 return "\"\(argPointer.pointee)\""
+            } else if let optionalType = type as? OptionalTyping.Type {
+                return optionalType.describe(optional: argPointer.pointee)
             } else {
                 return "\(argPointer.pointee)"
             }
         }
+    }
+}
+
+fileprivate protocol OptionalTyping {
+    static func describe<Ty>(optional: Ty) -> String
+}
+extension Optional: OptionalTyping {
+    static func describe<Ty>(optional: Ty) -> String {
+        if let value = unsafeBitCast(optional, to: Wrapped?.self) {
+            return "\(value)"
+        }
+        return "nil"
     }
 }

@@ -5,12 +5,18 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#6 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#11 $
+//
+//  Extensions to SwiftTrace using dyld_dynamic_interpose
+//  =====================================================
 //
 
 import Foundation
+#if SWIFT_PACKAGE
+import SwiftTraceGuts
+#endif
 
-#if DEBUG
+#if DEBUG && os(macOS) || os(iOS) || os(tvOS)
 extension SwiftTrace {
 
     public static var swiftFunctionSuffixes = ["fC", "yF", "lF", "tF", "Qrvg"]
@@ -97,6 +103,7 @@ extension SwiftTrace {
                         pattern?.stMatches(methodName) != false &&
                         excluding?.stMatches(methodName) != true &&
                         !"^(\\w+\\.\\w+\\()".stMatches(methodName) &&
+                        !methodName.contains("SwiftTrace") &&
                         !(methodName.contains(".getter :") && !methodName.hasSuffix("some")),
                     let method = swizzleFactory.init(name: methodName,
                          original: OpaquePointer(symval)) {
@@ -129,6 +136,18 @@ extension SwiftTrace {
     @objc open class func traceMainBundleMethods(
         pattern: String? = nil, excluding: String? = nil) {
         traceMethods(bundlePath: Bundle.main.executablePath!,
+                     pattern: pattern, excluding: excluding)
+    }
+
+    /// Use interposing to trace all methods in a framework
+    /// Doesn't actually require -Xlinker -interposable
+    /// - Parameters:
+    ///   - containing: Class which the framework contains
+    ///   - pattern: optional regex methodName should match
+    ///   - excluding: optional regex that would exclude methods
+    @objc open class func traceMethods(containing: AnyClass,
+        pattern: String? = nil, excluding: String? = nil) {
+        traceMethods(bundlePath: class_getImageName(containing)!,
                      pattern: pattern, excluding: excluding)
     }
 }

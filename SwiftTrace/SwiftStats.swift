@@ -5,7 +5,10 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStats.swift#2 $
+//  Obtaining invocation statistics
+//  ===============================
+//
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStats.swift#3 $
 //
 
 import Foundation

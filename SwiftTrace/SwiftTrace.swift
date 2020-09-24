@@ -6,26 +6,12 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#230 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#231 $
 //
 
 import Foundation
 #if SWIFT_PACKAGE
 import SwiftTraceGuts
-#endif
-
-#if os(macOS)
-import AppKit
-typealias OSRect = NSRect
-typealias OSPoint = NSPoint
-typealias OSSize = NSSize
-typealias OSEdgeInsets = NSEdgeInsets
-#elseif os(iOS) || os(tvOS)
-import UIKit
-typealias OSRect = CGRect
-typealias OSPoint = CGPoint
-typealias OSSize = CGSize
-typealias OSEdgeInsets = UIEdgeInsets
 #endif
 
 /** unsafeBitCast one type to another */

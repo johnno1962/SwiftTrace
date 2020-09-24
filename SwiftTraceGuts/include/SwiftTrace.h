@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#12 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#15 $
 //
 
 #import <Foundation/Foundation.h>
@@ -134,6 +134,9 @@ in the Swift class provided.
 /**
  Use interposing to trace all methods in main bundle
  */
++ (void)swiftTraceMethodsInFrameworkContaining:(Class _Nonnull)aClass
+                                       pattern:(NSString * _Nullable)pattern
+                                     excluding:(NSString * _Nullable)excluding;
 + (void)swiftTraceMainBundleMethodsWithPattern:(NSString * _Nullable)pattern
                                      excluding:(NSString * _Nullable)excluding;
 + (void)swiftTraceMainBundleMethods;

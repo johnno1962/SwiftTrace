@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#14 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#19 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -278,6 +278,9 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 /// Trace the protocol witnesses for a bundle containg the specified class
 + (void)traceProtocolsInBundleWithContaining:(Class _Nonnull)aClass matchingPattern:(NSString * _Nullable)pattern subLevels:(NSInteger)subLevels;
 /// Use interposing to trace matching functions in main bundle
++ (void)traceMethodsWithContaining:(Class _Nonnull)aClass
+                           pattern:(NSString * _Nullable)pattern
+                         excluding:(NSString * _Nullable)excluding;
 + (void)traceMainBundleMethodsWithPattern:(NSString * _Nullable)pattern
                                 excluding:(NSString * _Nullable)excluding;
 /// Accumulated amount of time spent in each swizzled method.
@@ -380,6 +383,12 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 + (void)swiftTraceProtocolsInBundleWithMatchingPattern:(NSString *)pattern subLevels:(int)subLevels {
     [SwiftTrace traceProtocolsInBundleWithContaining:self matchingPattern:pattern subLevels:subLevels];
 }
++ (void)swiftTraceMethodsInFrameworkContaining:(Class _Nonnull)aClass
+                                       pattern:(NSString * _Nullable)pattern
+                                     excluding:(NSString * _Nullable)excluding {
+    [SwiftTrace traceMethodsWithContaining:aClass
+                                   pattern:pattern excluding:excluding];
+}
 + (void)swiftTraceMainBundleMethodsWithPattern:(NSString *)pattern
                                      excluding:(NSString *)excluding {
     [SwiftTrace traceMainBundleMethodsWithPattern:pattern excluding:excluding];
@@ -395,13 +404,14 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 }
 @end
 
+#ifdef OBJC_TRACE_TESTER
 @implementation ObjcTraceTester: NSObject
 
 - (OSRect)a:(float)a i:(int)i b:(double)b c:(NSString *)c o:o s:(SEL)s {
     return OSMakeRect(1, 2, 3, 4);
 }
-
 @end
+#endif
 
 NSArray<Class> *objc_classArray() {
     unsigned nc;
@@ -527,7 +537,7 @@ void appBundleImages(void (^callback)(const char *sym, const struct mach_header 
     for (int32_t i = _dyld_image_count()-1; i >= 0 ; i--) {
         const char *imageName = _dyld_get_image_name(i);
 //        NSLog(@"findImages: %s", imageName);
-        if (strstr(imageName, "/Containers/") ||
+        if (strstr(imageName, "ontainers/") ||
             strstr(imageName, ".app/Contents/MacOS/") ||
             strstr(imageName, "/T/eval"))
             callback(imageName, _dyld_get_image_header(i));
