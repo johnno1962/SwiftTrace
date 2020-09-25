@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#26 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#27 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -18,6 +18,22 @@ import SwiftTraceGuts
 #endif
 
 extension SwiftTrace {
+
+   static var includeFilter: NSRegularExpression?
+   static var excludeFilter: NSRegularExpression?
+   static var filterGeneration = 0
+
+   @objc open class func traceFilter(include: String?) {
+       SwiftTrace.includeFilter = include != nil && include != "" ?
+           NSRegularExpression(regexp: include!) : nil
+       filterGeneration += 1
+   }
+
+   @objc open class func traceFilter(exclude: String?) {
+       SwiftTrace.excludeFilter = exclude != nil && exclude != "" ?
+           NSRegularExpression(regexp: exclude!) : nil
+       filterGeneration += 1
+   }
 
    /**
     Instances used to store information about a patch on a method
@@ -50,6 +66,19 @@ extension SwiftTrace {
 
        /** Closure that can be called instead of original implementation */
        public let nullImplmentation: nullImplementationType?
+
+       var filterGeneration = 0
+       var currentTrace = true
+
+       func shouldTrace() ->Bool {
+           if filterGeneration != SwiftTrace.filterGeneration {
+               currentTrace =
+                   SwiftTrace.includeFilter?.matches(signature) != false &&
+                   SwiftTrace.excludeFilter?.matches(signature) != true
+               filterGeneration = SwiftTrace.filterGeneration
+           }
+           return currentTrace
+       }
 
        /**
         Class used to create a specific "Invocation" of the "Swizzle" on entry
@@ -146,7 +175,7 @@ extension SwiftTrace {
            if let invocation = invocation() {
                _ = objcAdjustStret(invocation: invocation, isReturn: false,
                                    intArgs: &invocation.entryStack.pointee.intArg1)
-               if invocation.shouldDecorate {
+               if invocation.shouldDecorate && shouldTrace() {
                 ThreadLocal.current().caller()?.subLogged = true
                 print("\(subLogging() ? "\n" : "")\(String(repeating: SwiftTrace.traceIndent, count: invocation.stackDepth))\(entryDecorate(stack: &stack))", terminator: "")
                }
@@ -173,7 +202,7 @@ extension SwiftTrace {
        open func onExit(stack: inout ExitStack) {
            if let invocation = invocation() {
                let elapsed = Invocation.usecTime() - invocation.timeEntered
-               if invocation.shouldDecorate {
+               if invocation.shouldDecorate && shouldTrace() {
                 let returnValue = exitDecorate(stack: &stack)
                 print("\(invocation.subLogged ? "\n\(String(repeating: "  ", count: invocation.stackDepth))<-" : objcMethod != nil ? " ->" : "") \(returnValue)\(String(format: SwiftTrace.timeFormat, elapsed * 1000.0))", terminator: subLogging() ? "" : "\n")
                }
@@ -419,8 +448,13 @@ extension SwiftTrace {
            }
 
            public func caller() -> Invocation? {
-                if invocationStack.count > 1 {
-                    return invocationStack[invocationStack.count - 2]
+                var caller = invocationStack.count - 2
+                while caller >= 0 {
+                    let invocation = invocationStack[caller]
+                    if invocation.swizzle.shouldTrace() {
+                        return invocation
+                    }
+                    caller -= 1
                 }
                 return nil
            }
