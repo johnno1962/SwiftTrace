@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#231 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#233 $
 //
 
 import Foundation
@@ -280,7 +280,7 @@ open class SwiftTrace: NSObject {
         trace(objcClass: aClass, which: "-")
 
         iterateMethods(ofClass: aClass) {
-            (name, vtableSlot, stop) in
+            (name, slotIndex, vtableSlot, stop) in
             if let factory = methodFilter(name),
                 let swizzle = factory.init(name: name, vtableSlot: vtableSlot) {
                 vtableSlot.pointee = swizzle.forwardingImplementation()
@@ -321,7 +321,9 @@ open class SwiftTrace: NSObject {
      */
     @discardableResult
     open class func iterateMethods(ofClass aClass: AnyClass,
-           callback: (_ name: String, _ vtableSlot: UnsafeMutablePointer<SIMP>, _ stop: inout Bool) -> Void) -> Bool {
+                                   callback: (_ name: String, _ slotIndex: Int,
+                                              _ vtableSlot: UnsafeMutablePointer<SIMP>,
+                                              _ stop: inout Bool) -> Void) -> Bool {
         let swiftMeta: UnsafeMutablePointer<TargetClassMetadata> = autoBitCast(aClass)
         let className = NSStringFromClass(aClass)
         var stop = false
@@ -340,15 +342,18 @@ open class SwiftTrace: NSObject {
                     (vtableEnd) in
 
                     var info = Dl_info()
-                    for i in 0..<(vtableEnd - vtableStart) {
-                        if var impl: IMP = autoBitCast(vtableStart[i]) {
+                    for slotIndex in 0..<(vtableEnd - vtableStart) {
+                        if var impl: IMP = autoBitCast(vtableStart[slotIndex]) {
                             if let swizzle = originalSwizzle(for: impl) {
                                 impl = swizzle.implementation
                             }
                             let voidPtr: UnsafeMutableRawPointer = autoBitCast(impl)
-                            if fast_dladdr(voidPtr, &info) != 0 && info.dli_sname != nil,
-                                let demangled = demangle(symbol: info.dli_sname) {
-                                callback(demangled, &vtableStart[i]!, &stop)
+                            if fast_dladdr(voidPtr, &info) != 0,
+                                let symname = info.dli_sname,
+                                symname[strlen(symname)-1] == UInt8(ascii: "F"),
+                                let demangled = demangle(symbol: symname) {
+                                callback(demangled, slotIndex,
+                                         &vtableStart[slotIndex]!, &stop)
                                 if stop {
                                     break
                                 }
@@ -436,7 +441,7 @@ open class SwiftTrace: NSObject {
     open class func methodNames(ofClass: AnyClass) -> [String] {
         var names = [String]()
         iterateMethods(ofClass: ofClass) {
-            (name, vtableSlot, stop) in
+            (name, slotIndex, vtableSlot, stop) in
             names.append(name)
         }
         return names

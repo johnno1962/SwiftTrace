@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#15 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#16 $
 //
 //  Invocation interface for Swift
 //  ==============================
@@ -41,7 +41,7 @@ extension SwiftTrace {
             super.init(name: methodName, vtableSlot: &sigh)
 
             guard iterateMethods(ofClass: type(of: target), callback: {
-                (name, vtableSlot, stop) in
+                (name, slotIndex, vtableSlot, stop) in
                 if name == methodName {
                     self.vtableSlot = vtableSlot
                     implementation = rebind(vtableSlot).pointee

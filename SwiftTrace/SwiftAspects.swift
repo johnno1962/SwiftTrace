@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#10 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#11 $
 //
 //  Add aspects to Swift methods
 //  ============================
@@ -50,7 +50,7 @@ extension SwiftTrace {
                               onExit: ExitAspect? = nil,
                               replaceWith: nullImplementationType? = nil) -> Bool {
         return iterateMethods(ofClass: aClass) {
-            (name, vtableSlot, stop) in
+            (name, slotIndex, vtableSlot, stop) in
             if name == methodName, let method = patchClass.init(name: name,
                         vtableSlot: vtableSlot, onEntry: onEntry,
                         onExit: onExit, replaceWith: replaceWith) {
@@ -80,7 +80,7 @@ extension SwiftTrace {
     @discardableResult
     open class func removeAspect(aClass: AnyClass, methodName: String) -> Bool {
         return iterateMethods(ofClass: aClass) {
-            (name, vtableSlot, stop) in
+            (name, slotIndex, vtableSlot, stop) in
             if name == methodName,
                 let swizzle = SwiftTrace.lastSwiftTrace.activeSwizzles[unsafeBitCast(vtableSlot.pointee, to: IMP.self)] {
                 swizzle.remove()

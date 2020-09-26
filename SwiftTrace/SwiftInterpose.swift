@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#13 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#14 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -138,7 +138,7 @@ extension SwiftTrace {
     /// Use interposing to trace all methods in a framework
     /// Doesn't actually require -Xlinker -interposable
     /// - Parameters:
-    ///   - containing: Class which the framework contains
+    ///   - aClass: Class which the framework contains
     @objc open class func traceMethods(inFrameworkContaining aClass: AnyClass) {
         interposeMethods(inBundlePath: class_getImageName(aClass)!)
     }
