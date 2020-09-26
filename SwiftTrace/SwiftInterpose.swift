@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#11 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#13 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -16,9 +16,10 @@ import Foundation
 import SwiftTraceGuts
 #endif
 
-#if DEBUG && os(macOS) || os(iOS) || os(tvOS)
+#if os(macOS) || os(iOS) || os(tvOS)
 extension SwiftTrace {
 
+    /// Function type suffixes at end of mangled symbol name
     public static var swiftFunctionSuffixes = ["fC", "yF", "lF", "tF", "Qrvg"]
 
     /// Previous interposes need to be tracked
@@ -88,20 +89,20 @@ extension SwiftTrace {
 
     /// Use interposing to trace all methods in a bundle
     /// Requires "Other Linker Flags" -Xlinker -interposable
+    /// Filters using method include/exlxusion class vars.
     /// - Parameters:
-    ///   - bundlePath: path to bundle to interpose
-    ///   - pattern: optional regex methodName should match
-    ///   - excluding: optional regex that would exclude methods
-    @objc open class func traceMethods(bundlePath: UnsafePointer<Int8>,
-                       pattern: String? = nil, excluding: String? = nil) {
+    ///   - inBundlePath: path to bundle to interpose
+    @objc open class func interposeMethods(inBundlePath: UnsafePointer<Int8>,
+                                           subLevels: Int = 0) {
+        startNewTrace(subLevels: subLevels)
         var interposes = [dyld_interpose_tuple]()
 
         for suffix in swiftFunctionSuffixes {
-            findSwiftSymbols(bundlePath, suffix) {
+            findSwiftSymbols(inBundlePath, suffix) {
                 symval, symname,  _, _ in
                 if let methodName = demangle(symbol: symname),
-                        pattern?.stMatches(methodName) != false &&
-                        excluding?.stMatches(methodName) != true &&
+                        inclusionRegexp?.matches(methodName) != false &&
+                        exclusionRegexp?.matches(methodName) != true &&
                         !"^(\\w+\\.\\w+\\()".stMatches(methodName) &&
                         !methodName.contains("SwiftTrace") &&
                         !(methodName.contains(".getter :") && !methodName.hasSuffix("some")),
@@ -130,25 +131,16 @@ extension SwiftTrace {
     }
 
     /// Use interposing to trace all methods in main bundle
-    /// - Parameters:
-    ///   - pattern: optional regex methodName should match
-    ///   - excluding: optional regex that would exclude methods
-    @objc open class func traceMainBundleMethods(
-        pattern: String? = nil, excluding: String? = nil) {
-        traceMethods(bundlePath: Bundle.main.executablePath!,
-                     pattern: pattern, excluding: excluding)
+    @objc open class func traceMainBundleMethods() {
+        interposeMethods(inBundlePath: Bundle.main.executablePath!)
     }
 
     /// Use interposing to trace all methods in a framework
     /// Doesn't actually require -Xlinker -interposable
     /// - Parameters:
     ///   - containing: Class which the framework contains
-    ///   - pattern: optional regex methodName should match
-    ///   - excluding: optional regex that would exclude methods
-    @objc open class func traceMethods(containing: AnyClass,
-        pattern: String? = nil, excluding: String? = nil) {
-        traceMethods(bundlePath: class_getImageName(containing)!,
-                     pattern: pattern, excluding: excluding)
+    @objc open class func traceMethods(inFrameworkContaining aClass: AnyClass) {
+        interposeMethods(inBundlePath: class_getImageName(aClass)!)
     }
 }
 

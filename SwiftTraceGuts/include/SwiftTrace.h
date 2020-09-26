@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#15 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#17 $
 //
 
 #import <Foundation/Foundation.h>
@@ -26,8 +26,9 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
  dynamically loaded bundle, for example, from InjectionIII.
 
  Each trace superceeds any previous traces when they where
- not explicit about the class or instance being traced (see swiftTraceIntances and swiftTraceInstance). For example,
- the following code:
+ not explicit about the class or instance being traced
+ (see swiftTraceIntances and swiftTraceInstance). For
+ example, the following code:
 
  UIView.swiftTraceBundle()
  UITouch.traceInstances(withSubLevels: 3)
@@ -43,15 +44,17 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
  */
 + (NSString * _Nonnull)swiftTraceDefaultMethodExclusions;
 /**
- Provide an alternative regular expression to exclude methods.
- */
-+ (NSString *_Nullable)swiftTraceExclusionPattern;
-+ (void)swiftTraceSetExclusionPattern:(NSString *_Nullable)pattern;
-/**
  Optional filter of methods to be included in subsequent traces.
  */
-+ (NSString *_Nullable)swiftTraceInclusionPattern;
-+ (void)swiftTraceSetInclusionPattern:(NSString *_Nullable)pattern;
+@property (nonatomic, class, copy) NSString *_Nullable swiftTraceMethodInclusionPattern;
+/**
+ Provide a regular expression to exclude methods.
+ */
+@property (nonatomic, class, copy) NSString *_Nullable swiftTraceMethodExclusionPattern;
+/**
+ Function type suffixes at end of mangled symbol name.
+ */
+@property (nonatomic, class, copy) NSArray<NSString *> * _Nonnull swiftTraceFunctionSuffixes;
 /**
  Class will be traced (as opposed to swiftTraceInstances which
  will trace methods declared in super classes as well and only
@@ -133,13 +136,15 @@ in the Swift class provided.
 + (void)swiftTraceProtocolsInBundleWithMatchingPattern:(NSString * _Nullable)pattern subLevels:(int)subLevels;
 /**
  Use interposing to trace all methods in main bundle
+ Use swiftTraceInclusionPattern, swiftTraceExclusionPattern to filter
  */
-+ (void)swiftTraceMethodsInFrameworkContaining:(Class _Nonnull)aClass
-                                       pattern:(NSString * _Nullable)pattern
-                                     excluding:(NSString * _Nullable)excluding;
-+ (void)swiftTraceMainBundleMethodsWithPattern:(NSString * _Nullable)pattern
-                                     excluding:(NSString * _Nullable)excluding;
++ (void)swiftTraceMethodsInFrameworkContaining:(Class _Nonnull)aClass;
 + (void)swiftTraceMainBundleMethods;
+/**
+ Real time control over methods to be traced
+ */
+@property (nonatomic, class, copy) NSString *_Nullable swiftTraceFilterInclude;
+@property (nonatomic, class, copy) NSString *_Nullable swiftTraceFilterExclude;
 /**
  Remove most recent trace
  */
@@ -196,7 +201,6 @@ void dyld_dynamic_interpose(
 #else
 #define OSRect NSRect
 #define OSMakeRect NSMakeRect
-
 #endif
 
 @interface ObjcTraceTester: NSObject

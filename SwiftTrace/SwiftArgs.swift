@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#72 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#74 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -60,6 +60,13 @@ extension CGFloat: SwiftTraceFloatArg {}
 #endif
 
 extension SwiftTrace {
+    
+    /**
+     Returns a pointer to tye type handlers dictionary
+     */
+    @objc class var swiftTypeHandlers: UnsafeMutableRawPointer {
+        return UnsafeMutableRawPointer(&Decorated.swiftTypeHandlers)
+    }
 
     /**
      Swizze subclas that decorates signature with argument/return values

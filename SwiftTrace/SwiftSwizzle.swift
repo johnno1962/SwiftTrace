@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#27 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#29 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -23,16 +23,22 @@ extension SwiftTrace {
    static var excludeFilter: NSRegularExpression?
    static var filterGeneration = 0
 
-   @objc open class func traceFilter(include: String?) {
-       SwiftTrace.includeFilter = include != nil && include != "" ?
-           NSRegularExpression(regexp: include!) : nil
-       filterGeneration += 1
+    @objc open class var traceFilterInclude: String? {
+        get { return includeFilter?.pattern }
+        set(pattern) {
+           includeFilter = pattern != nil && pattern != "" ?
+               NSRegularExpression(regexp: pattern!) : nil
+           filterGeneration += 1
+        }
    }
 
-   @objc open class func traceFilter(exclude: String?) {
-       SwiftTrace.excludeFilter = exclude != nil && exclude != "" ?
-           NSRegularExpression(regexp: exclude!) : nil
-       filterGeneration += 1
+    @objc open class var traceFilterExclude: String? {
+        get { return excludeFilter?.pattern }
+        set(pattern) {
+           excludeFilter = pattern != nil && pattern != "" ?
+               NSRegularExpression(regexp: pattern!) : nil
+           filterGeneration += 1
+        }
    }
 
    /**
@@ -67,17 +73,18 @@ extension SwiftTrace {
        /** Closure that can be called instead of original implementation */
        public let nullImplmentation: nullImplementationType?
 
-       var filterGeneration = 0
-       var currentTrace = true
+       /** lazy calculation of shouldTrace */
+       var currentGeneration = 0
+       var currentShouldTrace = true
 
-       func shouldTrace() ->Bool {
-           if filterGeneration != SwiftTrace.filterGeneration {
-               currentTrace =
+       func shouldTrace() -> Bool {
+           if currentGeneration != SwiftTrace.filterGeneration {
+               currentGeneration = SwiftTrace.filterGeneration
+               currentShouldTrace =
                    SwiftTrace.includeFilter?.matches(signature) != false &&
                    SwiftTrace.excludeFilter?.matches(signature) != true
-               filterGeneration = SwiftTrace.filterGeneration
            }
-           return currentTrace
+           return currentShouldTrace
        }
 
        /**

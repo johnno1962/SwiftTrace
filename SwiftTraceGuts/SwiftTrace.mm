@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#19 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#21 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -173,7 +173,7 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 }
 
 // From here on additions to the original code for use by "SwiftTrace".
-
+// Duplicate public interface to Xtrace here for NSObject bridge
 @class Swizzle;
 @interface SwiftTrace : NSObject
 /// Format for ms of time spend in method
@@ -213,12 +213,6 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 /// default pattern of symbols to be excluded from tracing
 @property (nonatomic, class, readonly, copy) NSString * _Nonnull defaultMethodExclusions;
 + (NSString * _Nonnull)defaultMethodExclusions;
-@property (nonatomic, class, strong) NSRegularExpression * _Nullable exclusionRegexp;
-+ (NSRegularExpression * _Nullable)exclusionRegexp;
-+ (void)setExclusionRegexp:(NSRegularExpression * _Nullable)value;
-@property (nonatomic, class, strong) NSRegularExpression * _Nullable inclusionRegexp;
-+ (NSRegularExpression * _Nullable)inclusionRegexp;
-+ (void)setInclusionRegexp:(NSRegularExpression * _Nullable)value;
 /// Exclude symbols matching this pattern. If not specified
 /// a default pattern in swiftTraceDefaultExclusions is used.
 @property (nonatomic, class, copy) NSString * _Nullable methodExclusionPattern;
@@ -228,6 +222,10 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 @property (nonatomic, class, copy) NSString * _Nullable methodInclusionPattern;
 + (NSString * _Nullable)methodInclusionPattern;
 + (void)setMethodInclusionPattern:(NSString * _Nullable)newValue;
+/// Real time late filtering of methods from trace output
+@property (nonatomic, class, copy) NSString * _Nullable traceFilterInclude;
+@property (nonatomic, class, copy) NSString * _Nullable traceFilterExclude;
+@property (nonatomic, class, copy) NSArray<NSString *> * _Nonnull swiftFunctionSuffixes;
 /// in order to be traced, symbol must be included and not excluded
 /// \param symbol String representation of method
 ///
@@ -275,14 +273,15 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 + (void)traceWithAnInstance:(id _Nonnull)anInstance subLevels:(NSInteger)subLevels;
 /// follow chain of Sizzles through to find original implementataion
 + (Swizzle * _Nullable)originalSwizzleFor:(IMP _Nonnull)implementation;
-/// Trace the protocol witnesses for a bundle containg the specified class
+/// Trace the protocol witnesses for a bundle containing the specified class
 + (void)traceProtocolsInBundleWithContaining:(Class _Nonnull)aClass matchingPattern:(NSString * _Nullable)pattern subLevels:(NSInteger)subLevels;
-/// Use interposing to trace matching functions in main bundle
-+ (void)traceMethodsWithContaining:(Class _Nonnull)aClass
-                           pattern:(NSString * _Nullable)pattern
-                         excluding:(NSString * _Nullable)excluding;
-+ (void)traceMainBundleMethodsWithPattern:(NSString * _Nullable)pattern
-                                excluding:(NSString * _Nullable)excluding;
+/// Use interposing to trace all methods in main bundle
++ (void)traceMainBundleMethods;
+/// Use interposing to trace all methods in a framework
+/// Doesn’t actually require -Xlinker -interposable
+/// \param aClass Class which the framework contains
+///
++ (void)traceMethodsInFrameworkContaining:(Class _Nonnull)aClass;
 /// Accumulated amount of time spent in each swizzled method.
 + (NSDictionary<NSString *, NSNumber *> * _Nonnull)elapsedTimes;
 /// Numbers of times each swizzled method has been invoked.
@@ -310,21 +309,29 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 + (BOOL)dontSwizzlePropertyWithAClass:(Class _Nonnull)aClass sel:(SEL _Nonnull)sel;
 @end
 
+#ifndef SWIFTUISUPPORT
+// NSObject bridge for when SwiftTrace is dynamically loaded
 @implementation NSObject(SwiftTrace)
 + (NSString *)swiftTraceDefaultMethodExclusions {
     return [SwiftTrace defaultMethodExclusions];
 }
-+ (NSString *)swiftTraceExclusionPattern {
++ (NSString *)swiftTraceMethodExclusionPattern {
     return [SwiftTrace methodExclusionPattern];
 }
-+ (void)swiftTraceSetExclusionPattern:(NSString *)pattern {
++ (void)setSwiftTraceMethodExclusionPattern:(NSString *)pattern {
     [SwiftTrace setMethodExclusionPattern:pattern];
 }
-+ (NSString *)swiftTraceInclusionPattern {
++ (NSString *)swiftTraceMethodInclusionPattern {
     return [SwiftTrace methodInclusionPattern];
 }
-+ (void)swiftTraceSetInclusionPattern:(NSString *)pattern {
++ (void)setSwiftTraceMethodInclusionPattern:(NSString *)pattern {
     [SwiftTrace setMethodInclusionPattern:pattern];
+}
++ (NSArray<NSString *> * _Nonnull)swiftTraceFunctionSuffixes {
+    return [SwiftTrace swiftFunctionSuffixes];
+}
++ (void)setSwiftTraceFunctionSuffixes:(NSArray<NSString *> * _Nonnull)value {
+    [SwiftTrace setSwiftFunctionSuffixes:value];
 }
 + (void)swiftTrace {
     [SwiftTrace traceWithAClass:self];
@@ -383,18 +390,23 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 + (void)swiftTraceProtocolsInBundleWithMatchingPattern:(NSString *)pattern subLevels:(int)subLevels {
     [SwiftTrace traceProtocolsInBundleWithContaining:self matchingPattern:pattern subLevels:subLevels];
 }
-+ (void)swiftTraceMethodsInFrameworkContaining:(Class _Nonnull)aClass
-                                       pattern:(NSString * _Nullable)pattern
-                                     excluding:(NSString * _Nullable)excluding {
-    [SwiftTrace traceMethodsWithContaining:aClass
-                                   pattern:pattern excluding:excluding];
-}
-+ (void)swiftTraceMainBundleMethodsWithPattern:(NSString *)pattern
-                                     excluding:(NSString *)excluding {
-    [SwiftTrace traceMainBundleMethodsWithPattern:pattern excluding:excluding];
++ (void)swiftTraceMethodsInFrameworkContaining:(Class _Nonnull)aClass {
+    [SwiftTrace traceMethodsInFrameworkContaining:aClass];
 }
 + (void)swiftTraceMainBundleMethods {
-    [self swiftTraceMainBundleMethodsWithPattern:nil excluding:nil];
+    [SwiftTrace traceMainBundleMethods];
+}
++ (NSString * _Nullable)swiftTraceFilterInclude {
+    return [SwiftTrace traceFilterInclude];
+}
++ (void)setSwiftTraceFilterInclude:(NSString * _Nullable)include {
+    [SwiftTrace setTraceFilterInclude:include];
+}
++ (NSString * _Nullable)swiftTraceFilterExclude {
+    return [SwiftTrace traceFilterExclude];
+}
++ (void)setSwiftTraceFilterExclude:(NSString * _Nullable)exclude {
+    [SwiftTrace setTraceFilterExclude:exclude];
 }
 + (NSDictionary<NSString *, NSNumber *> * _Nonnull)swiftTraceElapsedTimes {
     return [SwiftTrace elapsedTimes];
@@ -403,6 +415,7 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
     return [SwiftTrace invocationCounts];
 }
 @end
+#endif
 
 #ifdef OBJC_TRACE_TESTER
 @implementation ObjcTraceTester: NSObject
