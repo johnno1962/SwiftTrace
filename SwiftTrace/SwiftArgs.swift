@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#74 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#79 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -60,7 +60,23 @@ extension CGFloat: SwiftTraceFloatArg {}
 #endif
 
 extension SwiftTrace {
-    
+
+    /**
+     Add a type to the map of type arguments that can be formatted
+     */
+    open class func addFormattedType<T>(_ type: T.Type, prefix: String) {
+        let typeName = prefix+"."+String(describing: type)
+        let slotsRequired = (MemoryLayout<T>.size +
+            MemoryLayout<intptr_t>.size - 1) /
+            MemoryLayout<intptr_t>.size
+        if slotsRequired > (T.self is SwiftTraceFloatArg ?
+            EntryStack.maxFloatSlots : EntryStack.maxIntSlots) {
+            NSLog("SwiftTrace: ⚠️ Type \(typeName) is too large to be formatted ⚠️")
+        }
+        Decorated.swiftTypeHandlers[typeName] =
+            { Decorated.handleArg(invocation: $0, isReturn: $1, type: type) }
+    }
+
     /**
      Returns a pointer to tye type handlers dictionary
      */
@@ -377,7 +393,7 @@ extension SwiftTrace {
                 MemoryLayout<intptr_t>.size
             if Type.self is SwiftTraceFloatArg.Type {
                 slot = invocation.floatArgumentOffset
-                maxSlots = EntryStack.maxFloatArgs
+                maxSlots = EntryStack.maxFloatSlots
                 argPointer = invocation.swizzle.rebind((isReturn ?
                     withUnsafeMutablePointer(to:
                     &invocation.exitStack.pointee.floatReturn1) {$0} :
@@ -387,7 +403,7 @@ extension SwiftTrace {
                 invocation.floatArgumentOffset += slotsRequired
             } else {
                 slot = invocation.intArgumentOffset
-                maxSlots = EntryStack.maxIntArgs
+                maxSlots = EntryStack.maxIntSlots
                 argPointer = invocation.swizzle.rebind((isReturn ?
                     withUnsafeMutablePointer(to:
                     &invocation.exitStack.pointee.intReturn1) {$0} :

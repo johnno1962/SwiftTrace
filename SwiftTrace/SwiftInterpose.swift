@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#14 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#15 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -96,6 +96,7 @@ extension SwiftTrace {
                                            subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels)
         var interposes = [dyld_interpose_tuple]()
+        var symbols = [String]()
 
         for suffix in swiftFunctionSuffixes {
             findSwiftSymbols(inBundlePath, suffix) {
@@ -116,13 +117,18 @@ extension SwiftTrace {
                     interposes.append(dyld_interpose_tuple(
                         replacement: hook, replacee: current))
                     interposed[current] = hook
+                    symbols.append(methodName)
                 }
             }
         }
 
         interposes.withUnsafeBufferPointer { interposes in
+            let debugInterpose = getenv("DEBUG_INTERPOSE") != nil
             appBundleImages { (imageName, header) in
                 for symno in 0..<interposes.count {
+                    if debugInterpose {
+                        print("Interposing: \(symbols[symno])")
+                    }
                     dyld_dynamic_interpose(header,
                                            interposes.baseAddress!+symno, 1)
                 }

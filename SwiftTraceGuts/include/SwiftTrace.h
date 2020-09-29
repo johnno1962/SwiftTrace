@@ -6,8 +6,11 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#17 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#19 $
 //
+
+#ifndef SWIFTTRACE_H
+#define SWIFTTRACE_H
 
 #import <Foundation/Foundation.h>
 
@@ -51,6 +54,11 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
  Provide a regular expression to exclude methods.
  */
 @property (nonatomic, class, copy) NSString *_Nullable swiftTraceMethodExclusionPattern;
+/**
+ Real time control over methods to be traced (regular expressions)
+ */
+@property (nonatomic, class, copy) NSString *_Nullable swiftTraceFilterInclude;
+@property (nonatomic, class, copy) NSString *_Nullable swiftTraceFilterExclude;
 /**
  Function type suffixes at end of mangled symbol name.
  */
@@ -141,11 +149,6 @@ in the Swift class provided.
 + (void)swiftTraceMethodsInFrameworkContaining:(Class _Nonnull)aClass;
 + (void)swiftTraceMainBundleMethods;
 /**
- Real time control over methods to be traced
- */
-@property (nonatomic, class, copy) NSString *_Nullable swiftTraceFilterInclude;
-@property (nonatomic, class, copy) NSString *_Nullable swiftTraceFilterExclude;
-/**
  Remove most recent trace
  */
 + (BOOL)swiftTraceUndoLastTrace;
@@ -208,3 +211,4 @@ void dyld_dynamic_interpose(
 - (OSRect)a:(float)a i:(int)i b:(double)b c:(NSString *_Nullable)c o:o s:(SEL _Nullable)s;
 
 @end
+#endif

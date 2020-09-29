@@ -128,17 +128,15 @@ If you want to further process output you can define your own custom tracing sub
  made up to subLevels inside a method in the most recent trace or if they where filtered
  anyway by a class or instance (traceInstances(ofClass:) and trace(anInstance:)).
 
-If you would like  to extend SwiftTrace to be able to log one of your struct types
-there are two steps. First, extend the type to conform to SwiftTraceArg if it contains
-only non-float types or SwiftTraceFloatArg of it contains only float types.
+If you would like to extend SwiftTrace to be able to log one of your app's types
+there are two steps. First, you may need to extend the type to conform to
+SwiftTraceFloatArg if it contains only float only float types for example SwiftUI.EdgeInsets.
 ```Swift
-extension TestStruct: SwiftTraceArg {}
+extension SwiftUI.EdgeInsets: SwiftTraceFloatArg {}
 ```
-Then, before the trace is called add a handler for the type which takes the following form:
+Then, add a handler for the type using the following api:
 ```Swift
-    SwiftTrace.Decorated.swiftTypeHandlers["SwiftTwaceApp.TestStruct"] = {
-        SwiftTrace.Decorated.handleArg(invocation: $0, isReturn: $1, type: TestStruct.self)
-    }
+    SwiftTrace.addFormattedType(SwiftUI.EdgeInsets.self, prefix: "SwiftUI")
 ```
  Many of these API's are also available as a extension of NSObject which is useful
  when SwiftTrace is made available by dynamically loading bundle as in

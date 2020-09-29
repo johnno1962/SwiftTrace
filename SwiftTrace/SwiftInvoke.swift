@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#16 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#17 $
 //
 //  Invocation interface for Swift
 //  ==============================
@@ -77,7 +77,7 @@ extension SwiftTrace {
             if arg is SwiftTraceFloatArg {
                 let registers = (MemoryLayout<T>.size +
                     MemoryLayout<Double>.size - 1) / MemoryLayout<Double>.size
-                if floatArgNumber + registers > EntryStack.maxFloatArgs {
+                if floatArgNumber + registers > EntryStack.maxFloatSlots {
                     fatalError("Too many float args for SwiftTrace.Call")
                 }
                 withUnsafeMutablePointer(to: &input.floatArg1) {
@@ -90,7 +90,7 @@ extension SwiftTrace {
             else {
                 let registers = (MemoryLayout<T>.size +
                     MemoryLayout<intptr_t>.size - 1) / MemoryLayout<intptr_t>.size
-                if intArgNumber + registers > EntryStack.maxIntArgs {
+                if intArgNumber + registers > EntryStack.maxIntSlots {
                     fatalError("Too many int args for SwiftTrace.Call")
                 }
                 withUnsafeMutablePointer(to: &input.intArg1) {

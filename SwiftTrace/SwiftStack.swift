@@ -18,8 +18,8 @@ extension SwiftTrace {
         Stack layout on entry from xt_forwarding_trampoline_arm64.s
      */
     public struct EntryStack {
-        static let maxFloatArgs = 8
-        static let maxIntArgs = 8
+        static let maxFloatSlots = 8
+        static let maxIntSlots = 8
 
         public var floatArg1: Double = 0.0
         public var floatArg2: Double = 0.0
@@ -79,8 +79,8 @@ extension SwiftTrace {
         Stack layout on entry from xt_forwarding_trampoline_x64.s
      */
     public struct EntryStack {
-        static let maxFloatArgs = 8
-        static let maxIntArgs = 6
+        static let maxFloatSlots = 8
+        static let maxIntSlots = 6
 
         public var floatArg1: Double = 0.0
         public var floatArg2: Double = 0.0
