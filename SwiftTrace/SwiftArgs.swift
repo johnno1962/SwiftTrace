@@ -423,6 +423,9 @@ extension SwiftTrace {
                     let describing = thread.describing
                     defer { thread.describing = describing }
                     thread.describing = true
+                    if let cls = object_getClass(id), cls.isSubclass(of: NSProxy.class()) {
+                        return nil
+                    }
                     if id.isKind(of: NSString.self) {
                         return "@\"\(id)\""
                     } else {
