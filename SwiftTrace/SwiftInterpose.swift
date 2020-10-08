@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#15 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#17 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -102,12 +102,11 @@ extension SwiftTrace {
             findSwiftSymbols(inBundlePath, suffix) {
                 symval, symname,  _, _ in
                 if let methodName = demangle(symbol: symname),
-                        inclusionRegexp?.matches(methodName) != false &&
-                        exclusionRegexp?.matches(methodName) != true &&
-                        !"^(\\w+\\.\\w+\\()".stMatches(methodName) &&
-                        !methodName.contains("SwiftTrace") &&
-                        !(methodName.contains(".getter :") && !methodName.hasSuffix("some")),
-                    let method = swizzleFactory.init(name: methodName,
+                    !"^(\\w+\\.\\w+\\()".stMatches(methodName) &&
+                    !methodName.contains("SwiftTrace") &&
+                    !(methodName.contains(".getter :") && !methodName.hasSuffix("some")),
+                    let factory = methodFilter(methodName),
+                    let method = factory.init(name: methodName,
                          original: OpaquePointer(symval)) {
                     let current = interposed[symval] ?? symval
                     let hook = unsafeBitCast(

@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#79 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#82 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -59,13 +59,19 @@ extension OSSize: SwiftTraceFloatArg {}
 extension CGFloat: SwiftTraceFloatArg {}
 #endif
 
+@_silgen_name("swift_getTypeName")
+private func getTypeName(_ type: Any.Type, qualified: Bool)
+                  -> (name: UnsafePointer<Int8>, size: Int)
+
 extension SwiftTrace {
 
     /**
      Add a type to the map of type arguments that can be formatted
      */
-    open class func addFormattedType<T>(_ type: T.Type, prefix: String) {
-        let typeName = prefix+"."+String(describing: type)
+    open class func addFormattedType<T>(_ type: T.Type, prefix: String? = nil) {
+        let typeName = prefix != nil ?
+            prefix!+"."+String(describing: type) :
+            String(cString: getTypeName(type, qualified: true).name)
         let slotsRequired = (MemoryLayout<T>.size +
             MemoryLayout<intptr_t>.size - 1) /
             MemoryLayout<intptr_t>.size

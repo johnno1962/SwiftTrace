@@ -277,6 +277,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print(UIColor.systemBlue)
 
         TestClass.swiftTraceProtocolsInBundle(withSubLevels: 1)
+        type(of: self).swiftTraceMainBundleMethods()
         return true
     }
 
