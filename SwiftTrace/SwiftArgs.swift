@@ -419,6 +419,9 @@ extension SwiftTrace {
             if Type.self == AnyObject?.self {
                 if let id = unsafeBitCast(argPointer.pointee,
                                           to: AnyObject?.self) {
+                    if let cls = object_getClass(id), cls.isSubclass(of: NSProxy.class()) {
+                        return identify(id: id)
+                    }
                     let thread = ThreadLocal.current()
                     let describing = thread.describing
                     defer { thread.describing = describing }
