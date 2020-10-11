@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#21 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#23 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -276,7 +276,10 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 /// Trace the protocol witnesses for a bundle containing the specified class
 + (void)traceProtocolsInBundleWithContaining:(Class _Nonnull)aClass matchingPattern:(NSString * _Nullable)pattern subLevels:(NSInteger)subLevels;
 /// Use interposing to trace all methods in main bundle
++ (void)interposeMethodsInBundlePath:(const int8_t *)bundlePath
+                           subLevels:(NSInteger)subLevels;
 + (void)traceMainBundleMethods;
++ (void)traceFrameworkMethods;
 /// Use interposing to trace all methods in a framework
 /// Doesn’t actually require -Xlinker -interposable
 /// \param aClass Class which the framework contains
@@ -395,6 +398,15 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 }
 + (void)swiftTraceMainBundleMethods {
     [SwiftTrace traceMainBundleMethods];
+}
++ (void)swiftTraceFrameworkMethods {
+    [SwiftTrace traceFrameworkMethods];
+}
++ (void)swiftTraceMethodsInBundle:(const int8_t *)bundlePath {
+    [SwiftTrace interposeMethodsInBundlePath:bundlePath subLevels:0];
+}
++ (void)swiftTraceBundlePath:(const int8_t *)bundlePath {
+    [SwiftTrace traceWithBundlePath:bundlePath subLevels:0];
 }
 + (NSString * _Nullable)swiftTraceFilterInclude {
     return [SwiftTrace traceFilterInclude];

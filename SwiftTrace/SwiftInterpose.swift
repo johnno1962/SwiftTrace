@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#17 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#19 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -21,9 +21,6 @@ extension SwiftTrace {
 
     /// Function type suffixes at end of mangled symbol name
     public static var swiftFunctionSuffixes = ["fC", "yF", "lF", "tF", "Qrvg"]
-
-    /// Previous interposes need to be tracked
-    public static var interposed = [UnsafeMutableRawPointer: UnsafeMutableRawPointer]()
 
     /// "interpose" aspects onto Swift function name.
     /// If the symbol is not in a different framework
@@ -133,6 +130,8 @@ extension SwiftTrace {
                 }
             }
         }
+
+        bundlesInterposed.insert(String(cString: inBundlePath))
     }
 
     /// Use interposing to trace all methods in main bundle
@@ -146,6 +145,17 @@ extension SwiftTrace {
     ///   - aClass: Class which the framework contains
     @objc open class func traceMethods(inFrameworkContaining aClass: AnyClass) {
         interposeMethods(inBundlePath: class_getImageName(aClass)!)
+    }
+
+    /// Apply a trace to all methods in framesworks in app bundle
+    /// - Parameter subLevels: levels of unqualified traces to show
+    @objc class func traceFrameworkMethods() {
+        appBundleImages { imageName, _ in
+            if strstr(imageName, ".framework") != nil {
+                interposeMethods(inBundlePath: imageName)
+                trace(bundlePath: imageName)
+            }
+        }
     }
 }
 

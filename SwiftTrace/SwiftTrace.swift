@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#233 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#242 $
 //
 
 import Foundation
@@ -24,6 +24,7 @@ func autoBitCast<IN,OUT>(_ arg: IN) -> OUT {
  */
 @objc(SwiftTrace)
 @objcMembers
+/// Base namespace of SwiftTrace functions
 open class SwiftTrace: NSObject {
 
     /**
@@ -58,6 +59,11 @@ open class SwiftTrace: NSObject {
     public typealias nullImplementationType = @convention(c) () -> AnyObject?
 
     public static var lastSwiftTrace = SwiftTrace(previous: nil, subLevels: 0)
+
+    /// Previous interposes need to be tracked
+    public static var interposed = [UnsafeMutableRawPointer: UnsafeMutableRawPointer]()
+
+    static var bundlesInterposed = Set<String>()
 
     /** Linked list of previous traces */
     let previousSwiftTrace: SwiftTrace?
@@ -187,21 +193,40 @@ open class SwiftTrace: NSObject {
 
     /**
      Iterate over all known classes in the app
+     - parameter bundlePath: optional path to framework containg class
      */
     @discardableResult
-    open class func forAllClasses( callback: (_ aClass: AnyClass,
-                                              _ stop: inout Bool) -> Void ) -> Bool {
+    open class func forAllClasses(bundlePath: UnsafePointer<Int8>? = nil,
+                                  callback: @escaping (_ aClass: AnyClass,
+                                    _ stop: inout Bool) -> Void ) -> Bool {
         var stopped = false
         var nc: UInt32 = 0
+        var registered = Set<UnsafeRawPointer>()
 
         if let classes = UnsafePointer(objc_copyClassList(&nc)) {
             for i in 0 ..< Int(nc) {
-                callback(classes[i], &stopped)
+                let aClass: AnyClass = classes[i]
+                if let imageName = class_getImageName(aClass),
+                    bundlePath == nil || imageName == bundlePath ||
+                    strcmp(imageName, bundlePath) == 0 {
+                    callback(aClass, &stopped)
+                }
+                registered.insert(autoBitCast(aClass))
                 if stopped {
                     break
                 }
             }
             free(UnsafeMutableRawPointer(mutating: classes))
+        }
+
+        /* This should pick up Pure Swift classes */
+        Bundle.main.executablePath!.withCString { executable in
+            findSwiftSymbols(bundlePath ?? executable, "CN") {
+                aClass, _,  _, _ in
+                if !registered.contains(aClass) && !stopped {
+                    callback(autoBitCast(aClass), &stopped)
+                }
+            }
         }
 
         return stopped
@@ -212,22 +237,12 @@ open class SwiftTrace: NSObject {
      - parameter bundlePath: Path to bundle to trace
      - parameter subLevels: levels of unqualified traces to show
      */
-    class func trace(bundlePath: UnsafePointer<Int8>?, subLevels: Int = 0) {
+    @objc class func trace(bundlePath: UnsafePointer<Int8>?, subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels)
-        var registered = Set<UnsafeRawPointer>()
-        forAllClasses {
+        forAllClasses(bundlePath: bundlePath) {
             (aClass, stop) in
-            if class_getImageName(aClass) == bundlePath {
-                trace(aClass: aClass)
-                registered.insert(autoBitCast(aClass))
-            }
+            trace(aClass: aClass)
         }
-        /* This should pick up and Pure Swift classes */
-        findSwiftSymbols(bundlePath, "CN", { aClass, _,  _, _ in
-            if !registered.contains(aClass) {
-                trace(aClass: autoBitCast(aClass))
-            }
-        })
     }
 
     /**
@@ -252,11 +267,14 @@ open class SwiftTrace: NSObject {
         forAllClasses {
             (aClass, stop) in
             let className = NSStringFromClass(aClass) as NSString
-            if regexp.firstMatch(in: String(describing: className) as String, range: NSMakeRange(0, className.length)) != nil {
+            if regexp.firstMatch(in: String(describing: className) as String,
+                                 range: NSMakeRange(0, className.length)) != nil {
                 trace(aClass: aClass)
             }
         }
     }
+
+    static let retainSelector = sel_registerName("retain")
 
     /**
      Underlying implementation of tracing an individual classs.
@@ -276,8 +294,15 @@ open class SwiftTrace: NSObject {
             tClass = class_getSuperclass(tClass)
         }
 
-        trace(objcClass: object_getClass(aClass)!, which: "+")
+        if class_getInstanceMethod(aClass, retainSelector) != nil {
+            trace(objcClass: object_getClass(aClass)!, which: "+")
+        }
         trace(objcClass: aClass, which: "-")
+
+        if let bundle = class_getImageName(aClass),
+            bundlesInterposed.contains(String(cString: bundle)) {
+            return
+        }
 
         iterateMethods(ofClass: aClass) {
             (name, slotIndex, vtableSlot, stop) in

@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#4 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#5 $
 //
 //  Assumptions made about Swift MetaData
 //  =====================================
@@ -43,41 +43,41 @@ extension SwiftTrace {
         let MetaClass: uintptr_t = 0, SuperClass: uintptr_t = 0
         let CacheData1: uintptr_t = 0, CacheData2: uintptr_t = 0
 
-        let Data: uintptr_t = 0
+        public let Data: uintptr_t = 0
 
         /// Swift-specific class flags.
-        let Flags: UInt32 = 0
+        public let Flags: UInt32 = 0
 
         /// The address point of instances of this type.
-        let InstanceAddressPoint: UInt32 = 0
+        public let InstanceAddressPoint: UInt32 = 0
 
         /// The required size of instances of this type.
         /// 'InstanceAddressPoint' bytes go before the address point;
         /// 'InstanceSize - InstanceAddressPoint' bytes go after it.
-        let InstanceSize: UInt32 = 0
+        public let InstanceSize: UInt32 = 0
 
         /// The alignment mask of the address point of instances of this type.
-        let InstanceAlignMask: UInt16 = 0
+        public let InstanceAlignMask: UInt16 = 0
 
         /// Reserved for runtime use.
-        let Reserved: UInt16 = 0
+        public let Reserved: UInt16 = 0
 
         /// The total size of the class object, including prefix and suffix
         /// extents.
-        let ClassSize: UInt32 = 0
+        public let ClassSize: UInt32 = 0
 
         /// The offset of the address point within the class object.
-        let ClassAddressPoint: UInt32 = 0
+        public let ClassAddressPoint: UInt32 = 0
 
         /// An out-of-line Swift-specific description of the type, or null
         /// if this is an artificial subclass.  We currently provide no
         /// supported mechanism for making a non-artificial subclass
         /// dynamically.
-        let Description: uintptr_t = 0
+        public let Description: uintptr_t = 0
 
         /// A function for destroying instance variables, used to clean up
         /// after an early return from a constructor.
-        var IVarDestroyer: SIMP? = nil
+        public var IVarDestroyer: SIMP? = nil
 
         // After this come the class members, laid out as follows:
         //   - class members for the superclass (recursively)

@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#19 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#21 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -86,6 +86,11 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
  */
 + (void)swiftTraceBundle;
 /**
+ Add a trace to all methods of all classes defined in the
+ all frameworks in the app bundle.
+ */
++ (void)swiftTraceFrameworkMethods;
+/**
  Output a trace of methods defined in the bundle containing
  the reciever and up to subLevels of calls made by them.
  */
@@ -148,6 +153,8 @@ in the Swift class provided.
  */
 + (void)swiftTraceMethodsInFrameworkContaining:(Class _Nonnull)aClass;
 + (void)swiftTraceMainBundleMethods;
++ (void)swiftTraceMethodsInBundle:(const int8_t * _Nonnull)bundlePath;
++ (void)swiftTraceBundlePath:(const int8_t * _Nonnull)bundlePath;
 /**
  Remove most recent trace
  */
