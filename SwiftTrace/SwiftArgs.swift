@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#82 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#87 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -282,11 +282,17 @@ extension SwiftTrace {
         /**
          Identify an instance for trace output
          */
-        static func identify(id: AnyObject) -> String {
-            let className = NSStringFromClass(object_getClass(id)!)
-            return object_isClass(id) ? className :
+        static func identify(id: AnyObject, objcClass: AnyClass? = nil) -> String {
+            var subClassed = ""
+            let thisClass: AnyClass? = object_getClass(id)
+            let className = NSStringFromClass(thisClass!)
+            if objcClass != nil &&
+                className != NSStringFromClass(objcClass!) {
+                subClassed = "/\(objcClass!)"
+            }
+            return (object_isClass(id) ? className :
                 String(format: identifyFormat, className as NSString,
-                       unsafeBitCast(id, to: uintptr_t.self))
+                       unsafeBitCast(id, to: uintptr_t.self))) + subClassed
         }
 
         /**
@@ -306,7 +312,7 @@ extension SwiftTrace {
                 invocation.arguments.append(objcSelf)
             }
             var output = isReturn ? "" :
-                "\(object_isClass(objcSelf) ? "+" : "-")[\(Decorated.identify(id: objcSelf)) "
+                "\(object_isClass(objcSelf) ? "+" : "-")[\(Decorated.identify(id: objcSelf, objcClass: objcClass)) "
             // /\(ThreadLocal.current().levelsTracing)/\(trace.instanceFilter)/\(trace.classFilter)
             // (Objective-)C methods have two implict arguments: self and _cmd;
             // if returning a struct, there is also the struct return address.

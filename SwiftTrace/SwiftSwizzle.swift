@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#29 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#32 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -60,6 +60,7 @@ extension SwiftTrace {
 
        /** Original objc method swizzled */
        let objcMethod: Method?
+       let objcClass: AnyClass?
 
        /** Total time spent in this method */
        var totalElapsed: TimeInterval = 0.0
@@ -110,13 +111,14 @@ extension SwiftTrace {
         */
         public required init?(name signature: String,
                               vtableSlot: UnsafeMutablePointer<SIMP>? = nil,
-                              objcMethod: Method? = nil,
+                              objcMethod: Method? = nil, objcClass: AnyClass? = nil,
                               original: OpaquePointer? = nil,
                               replaceWith: nullImplementationType? = nil) {
            self.trace = SwiftTrace.lastSwiftTrace
            self.signature = signature
            self.vtableSlot = vtableSlot
            self.objcMethod = objcMethod
+           self.objcClass = objcClass
            if let vtableSlot = vtableSlot {
                implementation = autoBitCast(vtableSlot.pointee)
            }
@@ -257,7 +259,7 @@ extension SwiftTrace {
             #endif
         }
 
-       /**
+        /**
            Remove this swizzle
         */
        open func remove() {

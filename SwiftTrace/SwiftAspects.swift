@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#11 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#12 $
 //
 //  Add aspects to Swift methods
 //  ============================
@@ -106,8 +106,8 @@ extension SwiftTrace {
                        original: original, replaceWith: replaceWith)
         }
 
-        public required init?(name: String, vtableSlot: UnsafeMutablePointer<SIMP>? = nil, objcMethod: Method? = nil, original: OpaquePointer? = nil, replaceWith: nullImplementationType? = nil) {
-            fatalError("Aspect.init(name:vtableSlot:objcMethod:replaceWith:) should not be used")
+        public required init?(name: String, vtableSlot: UnsafeMutablePointer<SIMP>? = nil, objcMethod: Method? = nil, objcClass: AnyClass?, original: OpaquePointer? = nil, replaceWith: nullImplementationType? = nil) {
+            fatalError("Aspect.init(name:vtableSlot:objcMethod:objcClass:replaceWith:) should not be used")
         }
 
         open override func onEntry(stack: inout EntryStack) {
