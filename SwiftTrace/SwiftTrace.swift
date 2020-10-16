@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#244 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#246 $
 //
 
 import Foundation
@@ -108,6 +108,7 @@ open class SwiftTrace: NSObject {
      Default pattern of common/problematic symbols to be excluded from tracing
      */
     open class var defaultMethodExclusions: String {
+        #if !os(macOS)
         return """
             \\.getter| (?:retain|_tryRetain|release|autorelease|_isDeallocating|.cxx_destruct|_?dealloc|description| debugDescription|contextID)]|initWithCoder|\
             ^\\+\\[(?:Reader_Base64|UI(?:NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |\
@@ -116,6 +117,18 @@ open class SwiftTrace: NSObject {
             _UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|\
             UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose| ns(?:li|is)_
             """
+        #else
+        return """
+            \\.getter| (?:retain(?:Count)?|_tryRetain|release|autorelease|_isDeallocating|.cxx_destruct|_?dealloc|class|description| debugDescription|\
+            contextID!undoManager|_animatorClassForTargetClass|cursorUpdate|_isTrackingAreaObject)]|initWithCoder|\
+            ^\\+\\[(?:Reader_Base64|UI(?:NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |\
+            ^.\\[(?:__NSAtom|NS(?:View|Appearance|AnimationContext|Segment|KVONotifying__)|_NSViewAnimator|UIView|RemoteCapture|BCEvent) |\
+            _TtGC7SwiftUI|NSTheme|NSTracking|UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|\
+            UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|\
+            _UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|\
+            UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose| ns(?:li|is)_
+            """
+        #endif
     }
 
     static var exclusionRegexp: NSRegularExpression? =
@@ -561,7 +574,7 @@ extension NSRegularExpression {
             try self.init(pattern: regexp)
         }
         catch let error as NSError {
-            fatalError(error.localizedDescription)
+            fatalError("Invalid regexp: \(regexp): \(error.localizedDescription)")
         }
     }
 

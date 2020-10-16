@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#19 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#21 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -21,6 +21,10 @@ extension SwiftTrace {
 
     /// Function type suffixes at end of mangled symbol name
     public static var swiftFunctionSuffixes = ["fC", "yF", "lF", "tF", "Qrvg"]
+
+    /// Regexp pattern for functions to exclude from interposing
+    public static var excludeFunction = NSRegularExpression(regexp: "^(\\w+\\.\\w+\\()")
+
 
     /// "interpose" aspects onto Swift function name.
     /// If the symbol is not in a different framework
@@ -99,7 +103,8 @@ extension SwiftTrace {
             findSwiftSymbols(inBundlePath, suffix) {
                 symval, symname,  _, _ in
                 if let methodName = demangle(symbol: symname),
-                    !"^(\\w+\\.\\w+\\()".stMatches(methodName) &&
+                    excludeFunction.firstMatch(in: methodName, options: [],
+                        range: NSMakeRange(0, methodName.utf16.count)) == nil &&
                     !methodName.contains("SwiftTrace") &&
                     !(methodName.contains(".getter :") && !methodName.hasSuffix("some")),
                     let factory = methodFilter(methodName),
@@ -156,13 +161,6 @@ extension SwiftTrace {
                 trace(bundlePath: imageName)
             }
         }
-    }
-}
-
-fileprivate extension String {
-    func stMatches(_ target: String) -> Bool {
-        return target.replacingOccurrences(of: self,
-            with: "___", options: .regularExpression) != target
     }
 }
 #endif

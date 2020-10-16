@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#33 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#34 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -186,7 +186,10 @@ extension SwiftTrace {
                                    intArgs: &invocation.entryStack.pointee.intArg1)
                if invocation.shouldDecorate && shouldTrace() {
                 ThreadLocal.current().caller()?.subLogged = true
-                print("\(subLogging() ? "\n" : "")\(String(repeating: SwiftTrace.traceIndent, count: invocation.stackDepth))\(entryDecorate(stack: &stack))", terminator: "")
+                let decorated = entryDecorate(stack: &stack)
+                let indent = String(repeating: SwiftTrace.traceIndent,
+                                    count: invocation.stackDepth)
+                print("\(subLogging() ? "\n" : "")\(indent)\(decorated)", terminator: "")
                }
            }
        }
