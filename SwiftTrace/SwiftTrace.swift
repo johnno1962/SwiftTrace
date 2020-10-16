@@ -109,9 +109,9 @@ open class SwiftTrace: NSObject {
      */
     open class var defaultMethodExclusions: String {
         return """
-            \\.getter| (?:retain|_tryRetain|release|autorelease|_isDeallocating|.cxx_destruct|dealloc|description| debugDescription)]|initWithCoder|\
+            \\.getter| (?:retain|_tryRetain|release|autorelease|_isDeallocating|.cxx_destruct|_?dealloc|description| debugDescription|contextID)]|initWithCoder|\
             ^\\+\\[(?:Reader_Base64|UI(?:NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |\
-            ^.\\[(?:UIView|RemoteCapture|BCEvent) |UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|\
+            ^.\\[(?:__NSAtom|NSView|UIView|RemoteCapture|BCEvent) |UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|\
             UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|\
             _UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|\
             UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose| ns(?:li|is)_

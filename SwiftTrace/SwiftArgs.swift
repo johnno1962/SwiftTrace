@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#87 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#88 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -57,6 +57,7 @@ extension OSRect: SwiftTraceFloatArg {}
 extension OSPoint: SwiftTraceFloatArg {}
 extension OSSize: SwiftTraceFloatArg {}
 extension CGFloat: SwiftTraceFloatArg {}
+extension OSEdgeInsets: SwiftTraceFloatArg {}
 #endif
 
 @_silgen_name("swift_getTypeName")
