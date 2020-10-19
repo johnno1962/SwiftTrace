@@ -8,7 +8,7 @@
 //  Obtaining invocation statistics
 //  ===============================
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStats.swift#3 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStats.swift#5 $
 //
 
 import Foundation
@@ -63,5 +63,15 @@ extension SwiftTrace {
         let sorted = invocationCounts().sorted { $1.value < $0.value }
         return onlyFirst != nil && onlyFirst! < sorted.count ?
             Array(sorted[0 ... onlyFirst!]) : sorted
+    }
+
+    public static func callOrder() -> [Swizzle] {
+        var calls = [Swizzle]()
+        var call = firstCalled
+        while call != nil {
+            calls.append(call!)
+            call = call!.nextCalled
+        }
+        return calls
     }
 }

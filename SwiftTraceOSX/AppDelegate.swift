@@ -145,6 +145,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         ptest(p: TestStruct())
         ptest(p: TestClass())
+
+        for call in SwiftTrace.callOrder() {
+            print(call.signature)
+        }
     }
 
     func ptest<T: P>(p: T) {

@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#34 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#35 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -19,9 +19,14 @@ import SwiftTraceGuts
 
 extension SwiftTrace {
 
-   static var includeFilter: NSRegularExpression?
-   static var excludeFilter: NSRegularExpression?
-   static var filterGeneration = 0
+    /** Used for real time filtering */
+    static var includeFilter: NSRegularExpression?
+    static var excludeFilter: NSRegularExpression?
+    static var filterGeneration = 0
+
+    /** Used to gather order in which methods are called */
+    static var firstCalled: Swizzle?
+    static var lastCalled: Swizzle?
 
     @objc open class var traceFilterInclude: String? {
         get { return includeFilter?.pattern }
@@ -77,6 +82,9 @@ extension SwiftTrace {
        /** lazy calculation of shouldTrace */
        var currentGeneration = 0
        var currentShouldTrace = true
+
+       /** Used to gather linked list of call order */
+       var nextCalled: Swizzle?
 
        func shouldTrace() -> Bool {
            if currentGeneration != SwiftTrace.filterGeneration {
@@ -184,12 +192,20 @@ extension SwiftTrace {
            if let invocation = invocation() {
                _ = objcAdjustStret(invocation: invocation, isReturn: false,
                                    intArgs: &invocation.entryStack.pointee.intArg1)
+               if nextCalled == nil && lastCalled != self {
+                   lastCalled?.nextCalled = self
+                   lastCalled = self
+                   if firstCalled == nil {
+                       firstCalled = self
+                   }
+               }
+
                if invocation.shouldDecorate && shouldTrace() {
-                ThreadLocal.current().caller()?.subLogged = true
-                let decorated = entryDecorate(stack: &stack)
-                let indent = String(repeating: SwiftTrace.traceIndent,
+                   ThreadLocal.current().caller()?.subLogged = true
+                   let decorated = entryDecorate(stack: &stack)
+                   let indent = String(repeating: SwiftTrace.traceIndent,
                                     count: invocation.stackDepth)
-                print("\(subLogging() ? "\n" : "")\(indent)\(decorated)", terminator: "")
+                   print("\(subLogging() ? "\n" : "")\(indent)\(decorated)", terminator: "")
                }
            }
        }

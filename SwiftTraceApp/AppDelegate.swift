@@ -263,6 +263,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
 //        SwiftTrace.methodExclusionPattern = " allocWithZone:| colorSpaceName|"+SwiftTrace.defaultMethodExclusions
 
+        for call in SwiftTrace.callOrder() {
+            print(call.signature)
+        }
+
         let originalFilter = SwiftTrace.methodFilter
         SwiftTrace.methodFilter = {
             (symbol) in

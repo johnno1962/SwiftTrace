@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#246 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#247 $
 //
 
 import Foundation
@@ -64,6 +64,10 @@ open class SwiftTrace: NSObject {
     public static var interposed = [UnsafeMutableRawPointer: UnsafeMutableRawPointer]()
 
     static var bundlesInterposed = Set<String>()
+
+    @objc class var isTracing: Bool {
+        return lastSwiftTrace.previousSwiftTrace != nil
+    }
 
     /** Linked list of previous traces */
     let previousSwiftTrace: SwiftTrace?

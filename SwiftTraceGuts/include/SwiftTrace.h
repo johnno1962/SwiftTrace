@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#21 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#22 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -63,6 +63,8 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
  Function type suffixes at end of mangled symbol name.
  */
 @property (nonatomic, class, copy) NSArray<NSString *> * _Nonnull swiftTraceFunctionSuffixes;
+/** Are we tracing? */
+@property (readonly, class) BOOL swiftTracing;
 /**
  Class will be traced (as opposed to swiftTraceInstances which
  will trace methods declared in super classes as well and only

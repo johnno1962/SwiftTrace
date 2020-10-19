@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#23 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#24 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -230,6 +230,8 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 /// \param symbol String representation of method
 ///
 @property (nonatomic, class, copy) Swizzle *_Nullable (^ _Nonnull methodFilter)(NSString * _Nonnull);
+/// Are we tracing something?
+@property (readonly, class) BOOL isTracing;
 + (Swizzle *_Nullable (^ _Nonnull)(NSString * _Nonnull))methodFilter;
 /// Intercepts and tracess all classes linked into the bundle containing a class.
 /// \param theClass the class to specify the bundle
@@ -335,6 +337,9 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 }
 + (void)setSwiftTraceFunctionSuffixes:(NSArray<NSString *> * _Nonnull)value {
     [SwiftTrace setSwiftFunctionSuffixes:value];
+}
++ (BOOL)swiftTracing {
+    return [SwiftTrace isTracing];
 }
 + (void)swiftTrace {
     [SwiftTrace traceWithAClass:self];
