@@ -8,7 +8,7 @@
 //  Obtaining invocation statistics
 //  ===============================
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStats.swift#5 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStats.swift#6 $
 //
 
 import Foundation
@@ -36,8 +36,7 @@ extension SwiftTrace {
      */
     public static func sortedElapsedTimes(onlyFirst: Int? = nil) ->  [(key: String, value: TimeInterval)] {
         let sorted = elapsedTimes().sorted { $1.value < $0.value }
-        return onlyFirst != nil && onlyFirst! < sorted.count ?
-            Array(sorted[0 ... onlyFirst!]) : sorted
+        return onlyFirst != nil ? Array(sorted.prefix(onlyFirst!)) : sorted
     }
 
     func populate(invocationCounts: inout [String: Int]) {
@@ -61,8 +60,7 @@ extension SwiftTrace {
      */
     public static func sortedInvocationCounts(onlyFirst: Int? = nil) ->  [(key: String, value: Int)] {
         let sorted = invocationCounts().sorted { $1.value < $0.value }
-        return onlyFirst != nil && onlyFirst! < sorted.count ?
-            Array(sorted[0 ... onlyFirst!]) : sorted
+        return onlyFirst != nil ? Array(sorted.prefix(onlyFirst!)) : sorted
     }
 
     public static func callOrder() -> [Swizzle] {

@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#21 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#33 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -23,8 +23,8 @@ extension SwiftTrace {
     public static var swiftFunctionSuffixes = ["fC", "yF", "lF", "tF", "Qrvg"]
 
     /// Regexp pattern for functions to exclude from interposing
-    public static var excludeFunction = NSRegularExpression(regexp: "^(\\w+\\.\\w+\\()")
-
+    public static var excludeFunction = NSRegularExpression(regexp:
+        "^\\w+\\.\\w+\\(|SwiftTrace")
 
     /// "interpose" aspects onto Swift function name.
     /// If the symbol is not in a different framework
@@ -42,10 +42,10 @@ extension SwiftTrace {
                               onExit: ExitAspect? = nil,
                               replaceWith: nullImplementationType? = nil) {
         var info = Dl_info()
-        dladdr(unsafeBitCast(aType, to: UnsafeRawPointer.self), &info)
+        dladdr(autoBitCast(aType), &info)
         interpose(aBundle: info.dli_fname, methodName: methodName,
-                  patchClass: patchClass,
-                  onEntry: onEntry, onExit: onExit, replaceWith: replaceWith)
+                  patchClass: patchClass, onEntry: onEntry, onExit: onExit,
+                  replaceWith: replaceWith)
     }
 
     /// "interpose" aspects onto Swift function name.
@@ -66,26 +66,29 @@ extension SwiftTrace {
         var interposes = [dyld_interpose_tuple]()
 
         for suffix in swiftFunctionSuffixes {
-            findSwiftSymbols(aBundle, suffix, { symval, symname,  _, _ in
+            findSwiftSymbols(aBundle, suffix, { symval, symname, _, _ in
                 if demangle(symbol: symname) == methodName,
+                    let current = interposed(replacee: symval),
                     let method = patchClass.init(name: methodName,
-                         original: OpaquePointer(symval),
+                         original: OpaquePointer(current),
                          onEntry: onEntry, onExit: onExit,
                          replaceWith: replaceWith) {
-                    let hook = method.forwardingImplementation()
                     interposes.append(dyld_interpose_tuple(
-                        replacement: unsafeBitCast(hook, to: UnsafeRawPointer.self),
-                        replacee: symval))
+                        replacement: autoBitCast(method.forwardingImplementation()),
+                        replacee: current))
                 }
             })
         }
 
-        interposes.withUnsafeBufferPointer { interposes in
-            appBundleImages { (imageName, header) in
-                dyld_dynamic_interpose(header, interposes.baseAddress!,
-                                       interposes.count)
-            }
+        apply(interposes: interposes, symbols: [methodName])
+    }
+
+    open class func interposed(replacee: UnsafeRawPointer) -> UnsafeRawPointer? {
+        var current = replacee
+        while let replacement = interposed[current] {
+            current = replacement
         }
+        return current
     }
 
     /// Use interposing to trace all methods in a bundle
@@ -93,7 +96,10 @@ extension SwiftTrace {
     /// Filters using method include/exlxusion class vars.
     /// - Parameters:
     ///   - inBundlePath: path to bundle to interpose
+    ///   - packageName: include only methods with prefix
+    ///   - subLevels: not currently used
     @objc open class func interposeMethods(inBundlePath: UnsafePointer<Int8>,
+                                           packageName: String? = nil,
                                            subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels)
         var interposes = [dyld_interpose_tuple]()
@@ -103,38 +109,25 @@ extension SwiftTrace {
             findSwiftSymbols(inBundlePath, suffix) {
                 symval, symname,  _, _ in
                 if let methodName = demangle(symbol: symname),
+                    packageName == nil ||
+                        methodName.hasPrefix(packageName!+".") ||
+                        methodName.hasPrefix("(extension in \(packageName!))"),
                     excludeFunction.firstMatch(in: methodName, options: [],
-                        range: NSMakeRange(0, methodName.utf16.count)) == nil &&
-                    !methodName.contains("SwiftTrace") &&
-                    !(methodName.contains(".getter :") && !methodName.hasSuffix("some")),
+                        range: NSMakeRange(0, methodName.utf16.count)) == nil,
                     let factory = methodFilter(methodName),
+                    let current = interposed(replacee: symval),
                     let method = factory.init(name: methodName,
-                         original: OpaquePointer(symval)) {
-                    let current = interposed[symval] ?? symval
-                    let hook = unsafeBitCast(
-                        method.forwardingImplementation(),
-                        to: UnsafeMutableRawPointer.self)
+                                              original: OpaquePointer(current)) {
 //                    print(interposes.count, methodName)
                     interposes.append(dyld_interpose_tuple(
-                        replacement: hook, replacee: current))
-                    interposed[current] = hook
+                        replacement: autoBitCast(method.forwardingImplementation()),
+                        replacee: current))
                     symbols.append(methodName)
                 }
             }
         }
 
-        interposes.withUnsafeBufferPointer { interposes in
-            let debugInterpose = getenv("DEBUG_INTERPOSE") != nil
-            appBundleImages { (imageName, header) in
-                for symno in 0..<interposes.count {
-                    if debugInterpose {
-                        print("Interposing: \(symbols[symno])")
-                    }
-                    dyld_dynamic_interpose(header,
-                                           interposes.baseAddress!+symno, 1)
-                }
-            }
-        }
+        apply(interposes: interposes, symbols: symbols)
 
         bundlesInterposed.insert(String(cString: inBundlePath))
     }
@@ -153,12 +146,59 @@ extension SwiftTrace {
     }
 
     /// Apply a trace to all methods in framesworks in app bundle
-    /// - Parameter subLevels: levels of unqualified traces to show
-    @objc class func traceFrameworkMethods() {
+    @objc open class func traceFrameworkMethods() {
         appBundleImages { imageName, _ in
             if strstr(imageName, ".framework") != nil {
                 interposeMethods(inBundlePath: imageName)
                 trace(bundlePath: imageName)
+            }
+        }
+    }
+
+    open class func apply(interposes: [dyld_interpose_tuple],
+                          symbols: [String]? = nil, haveInjected: Bool = false) {
+        for toapply in interposes {
+            interposed[toapply.replacee] = toapply.replacement
+        }
+        interposes.withUnsafeBufferPointer { interposes in
+            let debugInterpose = getenv("DEBUG_INTERPOSE") != nil
+            var lastLoaded = true
+
+            appBundleImages { (imageName, header) in
+                if haveInjected && lastLoaded {
+                    // Need to apply all previous interposes
+                    // to the newly loaded dylib as well.
+                    var previous = Array<dyld_interpose_tuple>()
+                    for (replacee, replacement) in SwiftTrace.interposed {
+                        previous.append(dyld_interpose_tuple(
+                            replacement: interposed(replacee: replacement)!,
+                            replacee: replacee))
+                    }
+                    dyld_dynamic_interpose(header, previous, previous.count)
+                    lastLoaded = false
+                }
+
+                for symno in 0 ..< interposes.count {
+                    if debugInterpose, let symbols = symbols {
+                        print("Interposing: \(symbols[symno])")
+                    }
+                    dyld_dynamic_interpose(header,
+                                           interposes.baseAddress!+symno, 1)
+                }
+            }
+        }
+    }
+
+    @objc open class func revertInterposes() {
+        var interposes = [dyld_interpose_tuple]()
+        for (replacee, replacement) in interposed {
+            interposes.append(dyld_interpose_tuple(
+                replacement: replacee, replacee: replacement))
+        }
+        interposes.withUnsafeBufferPointer { interposes in
+            appBundleImages { (imageName, header) in
+                dyld_dynamic_interpose(header,
+                    interposes.baseAddress!, interposes.count)
             }
         }
     }

@@ -147,6 +147,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         SwiftTrace.interpose(aType: TestClass.self, methodName: "SwiftTwaceApp.TestClass.x() -> Swift.Optional<SwiftTwaceApp.TestClass>",
             onEntry: { swizzle, stack in print("entry... \(stack)") },
             onExit: { swizzle, stack in print("exit \(stack)") })
+        SwiftTrace.interpose(aType: TestClass.self, methodName: "SwiftTwaceApp.TestClass.x() -> Swift.Optional<SwiftTwaceApp.TestClass>",
+            onEntry: { swizzle, stack in print("entry2... \(stack)") },
+            onExit: { swizzle, stack in print("exit2 \(stack)") })
+        SwiftTrace.interpose(aType: TestClass.self, methodName: "SwiftTwaceApp.TestClass.x() -> Swift.Optional<SwiftTwaceApp.TestClass>",
+            onEntry: { swizzle, stack in print("entry3... \(stack)") },
+            onExit: { swizzle, stack in print("exit3 \(stack)") })
 
         _ = TestClass().x()
 

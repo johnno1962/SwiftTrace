@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#35 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#38 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -269,10 +269,9 @@ extension SwiftTrace {
             guard objcMethod != nil && !isReturn else { return false }
             let returnType = methodSignature == nil ? "UNDECODABLE" :
                 String(cString: sig_returnType(methodSignature!))
-            let isStret = returnType.hasPrefix("{") &&
-                !returnType.hasSuffix("=ff}") &&
-                !returnType.hasSuffix("=dd}") &&
-                !returnType.hasSuffix("=QQ}")
+            let isStret =
+                returnType.hasPrefix("{") && returnType.hasSuffix("}") &&
+                returnType[returnType.endIndex-4] != "="
             if isStret && !isReturn {
                 invocation.swiftSelf = intArgs[1]
             }

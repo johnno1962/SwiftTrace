@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#247 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#251 $
 //
 
 import Foundation
@@ -61,11 +61,11 @@ open class SwiftTrace: NSObject {
     public static var lastSwiftTrace = SwiftTrace(previous: nil, subLevels: 0)
 
     /// Previous interposes need to be tracked
-    public static var interposed = [UnsafeMutableRawPointer: UnsafeMutableRawPointer]()
+    public static var interposed = [UnsafeRawPointer: UnsafeRawPointer]()
 
     static var bundlesInterposed = Set<String>()
 
-    @objc class var isTracing: Bool {
+    public class var isTracing: Bool {
         return lastSwiftTrace.previousSwiftTrace != nil
     }
 
@@ -112,27 +112,16 @@ open class SwiftTrace: NSObject {
      Default pattern of common/problematic symbols to be excluded from tracing
      */
     open class var defaultMethodExclusions: String {
-        #if !os(macOS)
         return """
-            \\.getter| (?:retain|_tryRetain|release|autorelease|_isDeallocating|.cxx_destruct|_?dealloc|description| debugDescription|contextID)]|initWithCoder|\
+            \\.getter : (?!some)| (?:retain(?:Count)?|_tryRetain|release|autorelease|_isDeallocating|.cxx_destruct|_?dealloc|class|description|\
+            debugDescription|contextID|undoManager|_animatorClassForTargetClass|cursorUpdate|_isTrackingAreaObject)]|initWithCoder|\
             ^\\+\\[(?:Reader_Base64|UI(?:NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |\
-            ^.\\[(?:__NSAtom|NSView|UIView|RemoteCapture|BCEvent) |UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|\
-            UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|\
-            _UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|\
-            UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose| ns(?:li|is)_
-            """
-        #else
-        return """
-            \\.getter| (?:retain(?:Count)?|_tryRetain|release|autorelease|_isDeallocating|.cxx_destruct|_?dealloc|class|description| debugDescription|\
-            contextID!undoManager|_animatorClassForTargetClass|cursorUpdate|_isTrackingAreaObject)]|initWithCoder|\
-            ^\\+\\[(?:Reader_Base64|UI(?:NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |\
-            ^.\\[(?:__NSAtom|NS(?:View|Appearance|AnimationContext|Segment|KVONotifying__)|_NSViewAnimator|UIView|RemoteCapture|BCEvent) |\
+            ^.\\[(?:__NSAtom|NS(?:View|Appearance|AnimationContext|Segment|KVONotifying_\\S+)|_NSViewAnimator|UIView|RemoteCapture|BCEvent) |\
             _TtGC7SwiftUI|NSTheme|NSTracking|UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|\
             UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|\
             _UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|\
             UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose| ns(?:li|is)_
             """
-        #endif
     }
 
     static var exclusionRegexp: NSRegularExpression? =
@@ -254,7 +243,7 @@ open class SwiftTrace: NSObject {
      - parameter bundlePath: Path to bundle to trace
      - parameter subLevels: levels of unqualified traces to show
      */
-    @objc class func trace(bundlePath: UnsafePointer<Int8>?, subLevels: Int = 0) {
+    @objc open class func trace(bundlePath: UnsafePointer<Int8>?, subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels)
         forAllClasses(bundlePath: bundlePath) {
             (aClass, stop) in
@@ -265,7 +254,7 @@ open class SwiftTrace: NSObject {
     /**
      Lists Swift classes not inheriting from NSObject in an app or framework.
      */
-    open class func swiftClassList(bundlePath: UnsafePointer<Int8>? = nil) -> [AnyClass] {
+    @objc open class func swiftClassList(bundlePath: UnsafePointer<Int8>? = nil) -> [AnyClass] {
         var classes = [AnyClass]()
         findSwiftSymbols(bundlePath, "CN", { aClass, _, _, _ in
             classes.append(autoBitCast(aClass))
@@ -278,7 +267,7 @@ open class SwiftTrace: NSObject {
      - parameter pattern: regexp patten to specify classes to trace
      - parameter subLevels: levels of unqualified traces to show
      */
-    open class func traceClasses(matchingPattern pattern: String, subLevels: Int = 0) {
+    @objc open class func traceClasses(matchingPattern pattern: String, subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels)
         let regexp = NSRegularExpression(regexp: pattern)
         forAllClasses {
@@ -297,7 +286,7 @@ open class SwiftTrace: NSObject {
      Underlying implementation of tracing an individual classs.
      - parameter aClass: the class, the methods of which to trace
      */
-    open class func trace(aClass: AnyClass) {
+    @objc open class func trace(aClass: AnyClass) {
         let className = NSStringFromClass(aClass)
         if className.hasPrefix("Swift.") || className.hasPrefix("__") {
             return
@@ -335,7 +324,7 @@ open class SwiftTrace: NSObject {
      - parameter aClass: the class, the methods of which to trace
      - parameter subLevels: levels of unqualified traces to show
      */
-    open class func traceInstances(ofClass aClass: AnyClass, subLevels: Int = 0) {
+    @objc open class func traceInstances(ofClass aClass: AnyClass, subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels).classFilter = aClass
         var tClass: AnyClass? = aClass
         while tClass != NSObject.self && tClass != nil {
@@ -349,7 +338,7 @@ open class SwiftTrace: NSObject {
      - parameter anInstance: the class, the methods of which to trace
      - parameter subLevels: levels of unqualified traces to show
      */
-    open class func trace(anInstance: AnyObject, subLevels: Int = 0) {
+    @objc open class func trace(anInstance: AnyObject, subLevels: Int = 0) {
         traceInstances(ofClass: object_getClass(anInstance)!, subLevels: subLevels)
         lastSwiftTrace.instanceFilter = unsafeBitCast(anInstance, to: intptr_t.self)
         lastSwiftTrace.classFilter =  nil
@@ -416,14 +405,15 @@ open class SwiftTrace: NSObject {
      - parameter subLevels: subLevels to log of previous traces to trace
      */
     #if swift(>=5.0)
-    open class func traceProtocolsInBundle(containing aClass: AnyClass? = nil, matchingPattern: String? = nil, subLevels: Int = 0) {
+    @objc open class func traceProtocolsInBundle(containing aClass: AnyClass? = nil, matchingPattern: String? = nil, subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels)
         let regex = matchingPattern != nil ?
             NSRegularExpression(regexp: matchingPattern!) : nil
         findSwiftSymbols(aClass == nil ? callerBundle() :
             aClass == NSObject.self ? nil : class_getImageName(aClass), "WP") {
-            (address: UnsafeMutableRawPointer, _, typeref, typeend) in
-            let witnessTable = address.assumingMemoryBound(to: SIMP.self)
+            (address: UnsafeRawPointer, _, typeref, typeend) in
+            let witnessTable = UnsafeMutableRawPointer(mutating: address)
+                .assumingMemoryBound(to: SIMP.self)
             var info = Dl_info()
             // The start of a witness table is always the protocol descriptor
             // then the associated types (always in section `__swift5_typeref`)
@@ -449,7 +439,7 @@ open class SwiftTrace: NSObject {
                         regex == nil || regex!.matches(demangled) {
                         if let factory = methodFilter(demangled),
                             let swizzle = factory.init(name: demangled,
-                                                       vtableSlot: &witnessTable[slot]) {
+                                           vtableSlot: &witnessTable[slot]) {
                             witnessTable[slot] = swizzle.forwardingImplementation()
                         }
                         continue

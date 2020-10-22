@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#24 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#27 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -172,147 +172,10 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
     return implementation;
 }
 
+// ====================================================================
 // From here on additions to the original code for use by "SwiftTrace".
-// Duplicate public interface to Xtrace here for NSObject bridge
-@class Swizzle;
-@interface SwiftTrace : NSObject
-/// Format for ms of time spend in method
-@property (nonatomic, class, copy) NSString * _Nonnull timeFormat;
-+ (NSString * _Nonnull)timeFormat ;
-+ (void)setTimeFormat:(NSString * _Nonnull)value;
-/// Format for idenifying class instance
-@property (nonatomic, class, copy) NSString * _Nonnull identifyFormat;
-+ (NSString * _Nonnull)identifyFormat ;
-+ (void)setIdentifyFormat:(NSString * _Nonnull)value;
-/// Indentation amogst different call levels on the stack
-@property (nonatomic, class, copy) NSString * _Nonnull traceIndent;
-+ (NSString * _Nonnull)traceIndent ;
-+ (void)setTraceIndent:(NSString * _Nonnull)value;
-/// Class used to create “Sizzle” instances representing a member function
-@property (nonatomic, class) Swizzle *_Nonnull swizzleFactory;
-+ (Swizzle * _Nonnull)swizzleFactory ;
-+ (void)setSwizzleFactory:(Swizzle * _Nonnull)value;
-@property (nonatomic, class, strong) SwiftTrace * _Nonnull lastSwiftTrace;
-+ (SwiftTrace * _Nonnull)lastSwiftTrace ;
-+ (void)setLastSwiftTrace:(SwiftTrace * _Nonnull)value;
-/// Linked list of previous traces
-@property (nonatomic, readonly, strong) SwiftTrace * _Nullable previousSwiftTrace;
-/// Trace only instances of a particular class
-@property (nonatomic) Class _Nullable classFilter;
-/// Trace only a particular instance
-@property (nonatomic) intptr_t instanceFilter;
-/// Trace only a particular instance
-@property (nonatomic, readonly) NSInteger subLevels;
-- (nonnull instancetype)initWithPrevious:(SwiftTrace * _Nullable)previous subLevels:(NSInteger)subLevels;
-+ (SwiftTrace * _Nonnull)startNewTraceWithSubLevels:(NSInteger)subLevels;
-@property (nonatomic, class, readonly) NSInteger noFilter;
-+ (NSInteger)noFilter;
-@property (nonatomic, class, readonly) NSInteger noObject;
-+ (NSInteger)noObject;
-- (void)mutePreviousUnfiltered;
-/// default pattern of symbols to be excluded from tracing
-@property (nonatomic, class, readonly, copy) NSString * _Nonnull defaultMethodExclusions;
-+ (NSString * _Nonnull)defaultMethodExclusions;
-/// Exclude symbols matching this pattern. If not specified
-/// a default pattern in swiftTraceDefaultExclusions is used.
-@property (nonatomic, class, copy) NSString * _Nullable methodExclusionPattern;
-+ (NSString * _Nullable)methodExclusionPattern;
-+ (void)setMethodExclusionPattern:(NSString * _Nullable)newValue;
-/// Include symbols matching pattern only
-@property (nonatomic, class, copy) NSString * _Nullable methodInclusionPattern;
-+ (NSString * _Nullable)methodInclusionPattern;
-+ (void)setMethodInclusionPattern:(NSString * _Nullable)newValue;
-/// Real time late filtering of methods from trace output
-@property (nonatomic, class, copy) NSString * _Nullable traceFilterInclude;
-@property (nonatomic, class, copy) NSString * _Nullable traceFilterExclude;
-@property (nonatomic, class, copy) NSArray<NSString *> * _Nonnull swiftFunctionSuffixes;
-/// in order to be traced, symbol must be included and not excluded
-/// \param symbol String representation of method
-///
-@property (nonatomic, class, copy) Swizzle *_Nullable (^ _Nonnull methodFilter)(NSString * _Nonnull);
-/// Are we tracing something?
-@property (readonly, class) BOOL isTracing;
-+ (Swizzle *_Nullable (^ _Nonnull)(NSString * _Nonnull))methodFilter;
-/// Intercepts and tracess all classes linked into the bundle containing a class.
-/// \param theClass the class to specify the bundle
-///
-/// \param subLevels levels of unqualified traces to show
-///
-+ (void)traceBundleWithContaining:(Class _Nonnull)theClass subLevels:(NSInteger)subLevels;
-/// Trace all user developed classes in the main bundle of an app
-/// \param subLevels levels of unqualified traces to show
-///
-+ (void)traceMainBundleWithSubLevels:(NSInteger)subLevels;
-/// Trace a classes defined in a specific bundlePath (executable image)
-/// \param bundlePath Path to bundle to trace
-///
-/// \param subLevels levels of unqualified traces to show
-///
-+ (void)traceWithBundlePath:(int8_t const * _Nullable)bundlePath subLevels:(NSInteger)subLevels;
-/// Lists Swift classes not inheriting from NSObject in an app or framework.
-+ (NSArray<Class> * _Nonnull)swiftClassListWithBundlePath:(int8_t const * _Nonnull)bundlePath;
-/// Intercepts and tracess all classes with names matching regexp pattern
-/// \param pattern regexp patten to specify classes to trace
-///
-/// \param subLevels levels of unqualified traces to show
-///
-+ (void)traceClassesMatchingPattern:(NSString * _Nonnull)pattern subLevels:(NSInteger)subLevels;
-/// Underlying implementation of tracing an individual classs.
-/// \param aClass the class, the methods of which to trace
-///
-+ (void)traceWithAClass:(Class _Nonnull)aClass;
-/// Trace instances of a particular class including methods of superclass
-/// \param aClass the class, the methods of which to trace
-///
-/// \param subLevels levels of unqualified traces to show
-///
-+ (void)traceInstancesOfClass:(Class _Nonnull)aClass subLevels:(NSInteger)subLevels;
-/// Trace a particular instance only.
-/// \param anInstance the class, the methods of which to trace
-///
-/// \param subLevels levels of unqualified traces to show
-///
-+ (void)traceWithAnInstance:(id _Nonnull)anInstance subLevels:(NSInteger)subLevels;
-/// follow chain of Sizzles through to find original implementataion
-+ (Swizzle * _Nullable)originalSwizzleFor:(IMP _Nonnull)implementation;
-/// Trace the protocol witnesses for a bundle containing the specified class
-+ (void)traceProtocolsInBundleWithContaining:(Class _Nonnull)aClass matchingPattern:(NSString * _Nullable)pattern subLevels:(NSInteger)subLevels;
-/// Use interposing to trace all methods in main bundle
-+ (void)interposeMethodsInBundlePath:(const int8_t *)bundlePath
-                           subLevels:(NSInteger)subLevels;
-+ (void)traceMainBundleMethods;
-+ (void)traceFrameworkMethods;
-/// Use interposing to trace all methods in a framework
-/// Doesn’t actually require -Xlinker -interposable
-/// \param aClass Class which the framework contains
-///
-+ (void)traceMethodsInFrameworkContaining:(Class _Nonnull)aClass;
-/// Accumulated amount of time spent in each swizzled method.
-+ (NSDictionary<NSString *, NSNumber *> * _Nonnull)elapsedTimes;
-/// Numbers of times each swizzled method has been invoked.
-+ (NSDictionary<NSString *, NSNumber *> * _Nonnull)invocationCounts;
-/// Returns a list of all Swift methods as demangled symbols of a class
-/// \param ofClass - class to be dumped
-///
-+ (NSArray<NSString *> * _Nonnull)methodNamesOfClass:(Class _Nonnull)ofClass;
-+ (BOOL)undoLastTrace;
-/// Remove all swizzles applied until now
-+ (void)removeAllTraces;
-/// Remove all swizzles for this trace
-- (void)removeSwizzles;
-/// Intercept Objective-C class’ methods using swizzling
-/// \param aClass meta-class or class to be swizzled
-///
-/// \param which “+” for class methods, “-” for instance methods
-///
-+ (void)traceWithObjcClass:(Class _Nonnull)aClass which:(NSString * _Nonnull)which;
-/// Very old code intended to prevent property accessors from being traced
-/// \param aClass class of method
-///
-/// \param sel selector of method being checked
-///
-+ (BOOL)dontSwizzlePropertyWithAClass:(Class _Nonnull)aClass sel:(SEL _Nonnull)sel;
-@end
+
+#import "SwiftTrace-Swift.h"
 
 #ifndef SWIFTUISUPPORT
 // NSObject bridge for when SwiftTrace is dynamically loaded
@@ -408,7 +271,7 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
     [SwiftTrace traceFrameworkMethods];
 }
 + (void)swiftTraceMethodsInBundle:(const int8_t *)bundlePath {
-    [SwiftTrace interposeMethodsInBundlePath:bundlePath subLevels:0];
+    [SwiftTrace interposeMethodsInBundlePath:bundlePath packageName:nil subLevels:0];
 }
 + (void)swiftTraceBundlePath:(const int8_t *)bundlePath {
     [SwiftTrace traceWithBundlePath:bundlePath subLevels:0];
@@ -505,28 +368,28 @@ typedef uint32_t sectsize_t;
 #endif
 
 void findSwiftSymbols(const char *bundlePath, const char *suffix,
-                      void (^callback)(void *aClass, const char *symname, void *typeref, void *typeend)) {
+                      void (^callback)(const void *symval, const char *symname, void *typeref, void *typeend)) {
     for (int32_t i = _dyld_image_count(); i >= 0 ; i--) {
-        const mach_header_t *header = (const mach_header_t *)_dyld_get_image_header(i);
         const char *imageName = _dyld_get_image_name(i);
-
-        if (!(imageName && (!bundlePath ||
-                imageName == bundlePath || strcmp(imageName, bundlePath) == 0)))
+        if (!(imageName && (!bundlePath || imageName == bundlePath ||
+                            strcmp(imageName, bundlePath) == 0)))
             continue;
 
+        const mach_header_t *header =
+            (const mach_header_t *)_dyld_get_image_header(i);
         segment_command_t *seg_linkedit = nullptr;
         segment_command_t *seg_text = nullptr;
         struct symtab_command *symtab = nullptr;
         // to filter associated type witness entries
         sectsize_t typeref_size = 0;
-        char *typeref_start =
-            getsectdatafromheader_f(header, SEG_TEXT, "__swift5_typeref", &typeref_size);
+        char *typeref_start = getsectdatafromheader_f(header, SEG_TEXT,
+                                            "__swift5_typeref", &typeref_size);
 
-        struct load_command *cmd = (struct load_command *)((intptr_t)header + sizeof(mach_header_t));
-        for (uint32_t i = 0; i < header->ncmds; i++, cmd = (struct load_command *)((intptr_t)cmd + cmd->cmdsize))
-        {
-            switch(cmd->cmd)
-            {
+        struct load_command *cmd =
+            (struct load_command *)((intptr_t)header + sizeof(mach_header_t));
+        for (uint32_t i = 0; i < header->ncmds; i++,
+             cmd = (struct load_command *)((intptr_t)cmd + cmd->cmdsize)) {
+            switch(cmd->cmd) {
                 case LC_SEGMENT:
                 case LC_SEGMENT_64:
                     if (!strcmp(((segment_command_t *)cmd)->segname, SEG_TEXT))
@@ -538,8 +401,10 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
                 case LC_SYMTAB: {
                     symtab = (struct symtab_command *)cmd;
                     intptr_t file_slide = ((intptr_t)seg_linkedit->vmaddr - (intptr_t)seg_text->vmaddr) - seg_linkedit->fileoff;
-                    const char *strings = (const char *)header + (symtab->stroff + file_slide);
-                    nlist_t *sym = (nlist_t *)((intptr_t)header + (symtab->symoff + file_slide));
+                    const char *strings = (const char *)header +
+                                               (symtab->stroff + file_slide);
+                    nlist_t *sym = (nlist_t *)((intptr_t)header +
+                                               (symtab->symoff + file_slide));
 
                     for (uint32_t i = 0; i < symtab->nsyms; i++, sym++) {
                         const char *sptr = strings + sym->n_un.n_strx;
@@ -549,7 +414,8 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
                         if (sym->n_type == 0xf &&
                             strncmp(sptr, "_$s", 3) == 0 &&
                             strcmp(sptr+strlen(sptr)-sufflen, suffix) == 0 &&
-                            (location = (void *)(sym->n_value + (intptr_t)header - (intptr_t)seg_text->vmaddr))) {
+                            (location = (void *)(sym->n_value +
+                             (intptr_t)header - (intptr_t)seg_text->vmaddr))) {
                             callback(location, sptr+1, typeref_start,
                                      typeref_start + typeref_size);
                         }
@@ -564,11 +430,18 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
 }
 
 void appBundleImages(void (^callback)(const char *sym, const struct mach_header *)) {
+    NSBundle *mainBundle = [NSBundle mainBundle];
+    const char *mainExecutable = mainBundle.executablePath.UTF8String;
+    const char *bundleFrameworks = mainBundle.privateFrameworksPath.UTF8String;
+    size_t frameworkPathLength = strlen(bundleFrameworks);
+
     for (int32_t i = _dyld_image_count()-1; i >= 0 ; i--) {
         const char *imageName = _dyld_get_image_name(i);
 //        NSLog(@"findImages: %s", imageName);
-        if (strstr(imageName, "ontainers/") ||
-            strstr(imageName, ".app/Contents/MacOS/") ||
+        if (strcmp(imageName, mainExecutable) == 0 ||
+            strncmp(imageName, bundleFrameworks, frameworkPathLength) == 0 ||
+            (strstr(imageName, "/DerivedData/") &&
+             strstr(imageName, ".framework/")) ||
             strstr(imageName, "/T/eval"))
             callback(imageName, _dyld_get_image_header(i));
     }
