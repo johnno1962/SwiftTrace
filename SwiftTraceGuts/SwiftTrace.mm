@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#30 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#31 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -577,6 +577,9 @@ SWIFT_CLASS_PROPERTY(@property (nonatomic, class, copy) NSString * _Nullable tra
 # pragma clang attribute pop
 #endif
 #pragma clang diagnostic pop
+// ====================================================================
+// End copy of SWiftTrace-Swift.h included here
+// ====================================================================
 
 #ifndef SWIFTUISUPPORT
 // NSObject bridge for when SwiftTrace is dynamically loaded
@@ -699,9 +702,6 @@ SWIFT_CLASS_PROPERTY(@property (nonatomic, class, copy) NSString * _Nullable tra
 }
 @end
 #endif
-// ====================================================================
-// End copy of SWiftTrace-Swift.h included here
-// ====================================================================
 
 #ifdef OBJC_TRACE_TESTER
 @implementation ObjcTraceTester: NSObject

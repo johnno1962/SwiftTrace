@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#33 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#37 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -85,8 +85,13 @@ extension SwiftTrace {
 
     open class func interposed(replacee: UnsafeRawPointer) -> UnsafeRawPointer? {
         var current = replacee
+        var lookups = 0
         while let replacement = interposed[current] {
             current = replacement
+            lookups += 1
+        }
+        if lookups > 1 {
+            interposed[replacee] = current
         }
         return current
     }
@@ -156,7 +161,8 @@ extension SwiftTrace {
     }
 
     open class func apply(interposes: [dyld_interpose_tuple],
-                          symbols: [String]? = nil, haveInjected: Bool = false) {
+                          symbols: [String]? = nil,
+                          onInjection: ((UnsafePointer<mach_header>) -> Void)? = nil) {
         for toapply in interposes {
             interposed[toapply.replacee] = toapply.replacement
         }
@@ -165,25 +171,20 @@ extension SwiftTrace {
             var lastLoaded = true
 
             appBundleImages { (imageName, header) in
-                if haveInjected && lastLoaded {
-                    // Need to apply all previous interposes
-                    // to the newly loaded dylib as well.
-                    var previous = Array<dyld_interpose_tuple>()
-                    for (replacee, replacement) in SwiftTrace.interposed {
-                        previous.append(dyld_interpose_tuple(
-                            replacement: interposed(replacee: replacement)!,
-                            replacee: replacee))
-                    }
-                    dyld_dynamic_interpose(header, previous, previous.count)
+                if lastLoaded {
+                    onInjection?(header)
                     lastLoaded = false
                 }
 
-                for symno in 0 ..< interposes.count {
-                    if debugInterpose, let symbols = symbols {
-                        print("Interposing: \(symbols[symno])")
+                if debugInterpose {
+                    for symno in 0 ..< interposes.count {
+                        print("Interposing: \(symbols?[symno] ?? "unknown")")
+                        dyld_dynamic_interpose(header,
+                                               interposes.baseAddress!+symno, 1)
                     }
+                } else {
                     dyld_dynamic_interpose(header,
-                                           interposes.baseAddress!+symno, 1)
+                                           interposes.baseAddress!, interposes.count)
                 }
             }
         }

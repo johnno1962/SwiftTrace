@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#94 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#95 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -205,8 +205,7 @@ extension SwiftTrace {
                                                 isReturn: isReturn,
                                                 type: AnyObject?.self)
                 } else if type.hasPrefix("Swift.Optional<") {
-                    let optional = type[type.startIndex+15 ..<
-                                        type.endIndex-1]
+                    let optional = type[.start+15 ..< .end-1]
                         .replacingOccurrences(of: "^__C\\.", with: "",
                                               options: .regularExpression)
                     if NSClassFromString(optional) != nil {
