@@ -13,6 +13,9 @@
 		BB1B8181251B69B200F76DC7 /* SwiftStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B8178251B631900F76DC7 /* SwiftStats.swift */; };
 		BB1B8182251B69B500F76DC7 /* SwiftInterpose.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B817A251B632D00F76DC7 /* SwiftInterpose.swift */; };
 		BB1B8183251B69B600F76DC7 /* SwiftInterpose.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B817A251B632D00F76DC7 /* SwiftInterpose.swift */; };
+		BB1C3242254B47CF001EDFCC /* EasyPointer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1C3241254B47CF001EDFCC /* EasyPointer.swift */; };
+		BB1C3243254B47CF001EDFCC /* EasyPointer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1C3241254B47CF001EDFCC /* EasyPointer.swift */; };
+		BB1C3244254B59F1001EDFCC /* EasyPointer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1C3241254B47CF001EDFCC /* EasyPointer.swift */; };
 		BB1C5CAD244C8E4700297908 /* SwiftArgs.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1C5CAC244C8E4700297908 /* SwiftArgs.swift */; };
 		BB1C5CAF244CB41B00297908 /* SwiftArgs.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1C5CAC244C8E4700297908 /* SwiftArgs.swift */; };
 		BB1C5CB2244CC92400297908 /* SwiftArgs.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1C5CAC244C8E4700297908 /* SwiftArgs.swift */; };
@@ -114,6 +117,7 @@
 /* Begin PBXFileReference section */
 		BB1B8178251B631900F76DC7 /* SwiftStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftStats.swift; sourceTree = "<group>"; };
 		BB1B817A251B632D00F76DC7 /* SwiftInterpose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftInterpose.swift; sourceTree = "<group>"; };
+		BB1C3241254B47CF001EDFCC /* EasyPointer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EasyPointer.swift; sourceTree = "<group>"; };
 		BB1C5CAC244C8E4700297908 /* SwiftArgs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftArgs.swift; sourceTree = "<group>"; };
 		BB1C5CB3244D89F100297908 /* SwiftMeta.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftMeta.swift; sourceTree = "<group>"; };
 		BB1C5CB5244D8A1200297908 /* SwiftAspects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftAspects.swift; sourceTree = "<group>"; };
@@ -253,6 +257,7 @@
 				BB1B8178251B631900F76DC7 /* SwiftStats.swift */,
 				BB1B817A251B632D00F76DC7 /* SwiftInterpose.swift */,
 				BB64461A2545816300A83098 /* StringIndex.swift */,
+				BB1C3241254B47CF001EDFCC /* EasyPointer.swift */,
 				BBC3D1F11D0A43E800520F38 /* xt_forwarding_trampoline_x64.s */,
 				BBC3D1F01D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s */,
 				BBC3D1E71D0A43B300520F38 /* Info.plist */,
@@ -526,6 +531,7 @@
 				BBC3D1F71D0A442F00520F38 /* SwiftTrace.mm in Sources */,
 				BB1C5CBB244D8AD700297908 /* SwiftMeta.swift in Sources */,
 				BB64461C2545816500A83098 /* StringIndex.swift in Sources */,
+				BB1C3243254B47CF001EDFCC /* EasyPointer.swift in Sources */,
 				BBC3D1F31D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s in Sources */,
 				BB1C5CB6244D8A1200297908 /* SwiftAspects.swift in Sources */,
 				BB1B817B251B632D00F76DC7 /* SwiftInterpose.swift in Sources */,
@@ -538,6 +544,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB1C3244254B59F1001EDFCC /* EasyPointer.swift in Sources */,
 				BBCDA3771D0E60C7007222D3 /* SwiftTraceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -574,6 +581,7 @@
 				BB1C5CD5244D94CB00297908 /* SwiftSwizzle.swift in Sources */,
 				BB1C5CAF244CB41B00297908 /* SwiftArgs.swift in Sources */,
 				BB64461B2545816500A83098 /* StringIndex.swift in Sources */,
+				BB1C3242254B47CF001EDFCC /* EasyPointer.swift in Sources */,
 				BB76EA15229540BD00E454F0 /* SwiftTrace.mm in Sources */,
 				BB1C5CC0244D8AE200297908 /* SwiftAspects.swift in Sources */,
 				BB1B8182251B69B500F76DC7 /* SwiftInterpose.swift in Sources */,

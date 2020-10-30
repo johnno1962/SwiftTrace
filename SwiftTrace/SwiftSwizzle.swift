@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#39 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#41 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -310,13 +310,13 @@ extension SwiftTrace {
 
        /** pointer to memory for return of struct */
        open func structReturn<T>(as: T.Type = T.self) -> UnsafeMutablePointer<T> {
-           return invocation().structReturn!.assumingMemoryBound(to: T.self)
+           return UnsafeMutablePointer(cast: invocation().structReturn!)
        }
 
        /** convert arguments & return results to a specifi type */
        open func rebind<IN,OUT>(_ pointer: UnsafeMutablePointer<IN>,
                                 to: OUT.Type = OUT.self) -> UnsafeMutablePointer<OUT> {
-           return autoBitCast(pointer)
+           return UnsafeMutablePointer(cast: pointer)
        }
 
        /**
