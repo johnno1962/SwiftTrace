@@ -9,22 +9,32 @@
 //
 //  Repo: https://github.com/johnno1962/StringIndex.git
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/StringIndex.swift#7 $
+//  $Id: //depot/StringIndex/Sources/StringIndex/StringIndex.swift#9 $
 //
 
 // Basic operators to offset String.Index when used in a subscript
-public func + (index: String.Index, offset: Int) -> String.OffsetIndex {
+public func + (index: String.Index?, offset: Int) -> String.OffsetIndex {
     return .offsetIndex(index: index, offset: offset)
 }
-public func - (index: String.Index, offset: Int) -> String.OffsetIndex {
+public func - (index: String.Index?, offset: Int) -> String.OffsetIndex {
     return index + -offset
+}
+
+// Mixed String.Index and OffsetIndex in range
+public func ..< (lhs: String.OffsetIndex, rhs: String.Index?)
+    -> Range<String.OffsetIndex> {
+    return lhs ..< rhs + 0
+}
+public func ..< (lhs: String.Index?, rhs: String.OffsetIndex)
+    -> Range<String.OffsetIndex> {
+    return lhs + 0 ..< rhs
 }
 
 extension String {
 
     /// Represents an index to be offset
     public enum OffsetIndex: Comparable {
-        case offsetIndex(index: Index, offset: Int),
+        case offsetIndex(index: Index?, offset: Int),
              start, startOffset(offset: Int), end, endOffset(offset: Int),
              first(of: Character), firstOffset(of: Character, offset: Int),
              last(of: Character), lastOffset(of: Character, offset: Int)
@@ -50,6 +60,7 @@ extension String {
         public func index<S: StringProtocol>(in string: S) -> String.Index? {
             switch self {
             case .offsetIndex(let index, let offset):
+                guard let index = index else { return nil }
                 return safeIndex(index, offsetBy: offset, in: string)
             case .start:
                 return string.startIndex
@@ -101,14 +112,6 @@ extension String {
             return index + -offset
         }
 
-        // Mixed String.Index and OffsetIndex in range
-        public static func ..< (lhs: OffsetIndex, rhs: Index) -> Range<OffsetIndex> {
-            return lhs ..< rhs + 0
-        }
-        public static func ..< (lhs: Index, rhs: OffsetIndex) -> Range<OffsetIndex> {
-            return lhs + 0 ..< rhs
-        }
-
         /// Required by Comparable check when creating ranges
         public static func < (lhs: OffsetIndex, rhs: OffsetIndex) -> Bool {
             return false // slight cheat here as we don't know the string
@@ -133,6 +136,7 @@ extension StringProtocol {
             guard let start = offset.index(in: self) else {
                 fatalError("Invalid offset index \(offset), \(#function)")
             }
+            // Assigning Chacater to endIndex is an append.
             let end = start + (start < endIndex ? 1 : 0)
             self[start ..< end] = OISubstring(String(newValue))
         }
@@ -142,14 +146,14 @@ extension StringProtocol {
     public subscript (range: Range<OffsetIndex>) -> OISubstring {
         get {
             guard let result = self[safe: range] else {
-                fatalError("Invalid offset range \(range.lowerBound) ..<  \(range.upperBound), \(#function)")
+                fatalError("Invalid range of offset index \(range), \(#function)")
             }
             return result
         }
         set (newValue) {
             guard let from = range.lowerBound.index(in: self),
                 let to = range.upperBound.index(in: self) else {
-                fatalError("Invalid offset range \(range.lowerBound) ..<  \(range.upperBound), \(#function)")
+                fatalError("Invalid range of offset index \(range), \(#function)")
             }
             let before = self[..<from], after = self[to...]
             self = Self(String(before) + String(newValue) + String(after))!
@@ -170,13 +174,7 @@ extension StringProtocol {
     // "safe" nil returning subscripts on StringProtocol for OffsetIndex
     // from:  https://forums.swift.org/t/optional-safe-subscripting-for-arrays
     public subscript (safe offset: OffsetIndex) -> Character? {
-        get {
-            if let index = offset.index(in: self) {
-                return self[index]
-            } else {
-                return nil
-            }
-        }
+        get { return offset.index(in: self).flatMap { self[$0] } }
         set (newValue) { self[offset] = newValue! }
     }
     // lhs ..< rhs operator

@@ -6,18 +6,13 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#251 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#254 $
 //
 
 import Foundation
 #if SWIFT_PACKAGE
 import SwiftTraceGuts
 #endif
-
-/** unsafeBitCast one type to another */
-func autoBitCast<IN,OUT>(_ arg: IN) -> OUT {
-    return unsafeBitCast(arg, to: OUT.self)
-}
 
 /**
     Base class for SwiftTrace api through it's public class methods
@@ -365,31 +360,28 @@ open class SwiftTrace: NSObject {
             return false
         }
 
-        withUnsafeMutablePointer(to: &swiftMeta.pointee.IVarDestroyer) {
-            (vtableStart) in
-            swiftMeta.withMemoryRebound(to: Int8.self, capacity: 1) {
-                let endMeta = ($0 - Int(swiftMeta.pointee.ClassAddressPoint) + Int(swiftMeta.pointee.ClassSize))
-                endMeta.withMemoryRebound(to: Optional<SIMP>.self, capacity: 1) {
-                    (vtableEnd) in
+        let endMeta = UnsafeMutablePointer<Int8>(cast: swiftMeta) -
+            Int(swiftMeta.pointee.ClassAddressPoint) +
+            Int(swiftMeta.pointee.ClassSize)
+        let vtableStart = UnsafeMutablePointer<SIMP?>(cast:
+            &swiftMeta.pointee.IVarDestroyer)
+        let vtableEnd = UnsafeMutablePointer<SIMP?>(cast: endMeta)
 
-                    var info = Dl_info()
-                    for slotIndex in 0..<(vtableEnd - vtableStart) {
-                        if var impl: IMP = autoBitCast(vtableStart[slotIndex]) {
-                            if let swizzle = originalSwizzle(for: impl) {
-                                impl = swizzle.implementation
-                            }
-                            let voidPtr: UnsafeMutableRawPointer = autoBitCast(impl)
-                            if fast_dladdr(voidPtr, &info) != 0,
-                                let symname = info.dli_sname,
-                                symname[strlen(symname)-1] == UInt8(ascii: "F"),
-                                let demangled = demangle(symbol: symname) {
-                                callback(demangled, slotIndex,
-                                         &vtableStart[slotIndex]!, &stop)
-                                if stop {
-                                    break
-                                }
-                            }
-                        }
+        var info = Dl_info()
+        for slotIndex in 0..<(vtableEnd - vtableStart) {
+            if var impl: IMP = autoBitCast(vtableStart[slotIndex]) {
+                if let swizzle = originalSwizzle(for: impl) {
+                    impl = swizzle.implementation
+                }
+                let voidPtr: UnsafeMutableRawPointer = autoBitCast(impl)
+                if fast_dladdr(voidPtr, &info) != 0,
+                    let symname = info.dli_sname,
+                    symname[strlen(symname)-1] == UInt8(ascii: "F"),
+                    let demangled = demangle(symbol: symname) {
+                    callback(demangled, slotIndex,
+                             &vtableStart[slotIndex]!, &stop)
+                    if stop {
+                        break
                     }
                 }
             }
@@ -412,8 +404,7 @@ open class SwiftTrace: NSObject {
         findSwiftSymbols(aClass == nil ? callerBundle() :
             aClass == NSObject.self ? nil : class_getImageName(aClass), "WP") {
             (address: UnsafeRawPointer, _, typeref, typeend) in
-            let witnessTable = UnsafeMutableRawPointer(mutating: address)
-                .assumingMemoryBound(to: SIMP.self)
+            let witnessTable = UnsafeMutablePointer<SIMP>(mutating: address)
             var info = Dl_info()
             // The start of a witness table is always the protocol descriptor
             // then the associated types (always in section `__swift5_typeref`)

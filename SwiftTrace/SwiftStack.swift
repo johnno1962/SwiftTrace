@@ -160,7 +160,7 @@ extension SwiftTrace.ExitStack {
                                           to: Any.Type = T.self) -> UnsafeMutablePointer<T> {
         if MemoryLayout<T>.size > MemoryLayout<intptr_t>.size * SwiftTrace.ExitStack.returnRegs {
             resyncStructReturn()
-            return invocation.structReturn!.assumingMemoryBound(to: T.self)
+            return UnsafeMutablePointer(cast: invocation.structReturn!)
         }
         else {
             let swizzle = swizzle ?? invocation!.swizzle
