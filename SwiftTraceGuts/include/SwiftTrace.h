@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#26 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#27 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -166,6 +166,10 @@ in the Swift class provided.
  Remove all tracing swizles.
  */
 + (void)swiftTraceRemoveAllTraces;
+/**
+ Remove all interposes from tracing.
+ */
++ (void)swiftTraceRevertAllInterposes;
 /**
  Total elapsed time by traced method.
  */

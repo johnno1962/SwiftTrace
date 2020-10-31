@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#37 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#41 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -85,13 +85,8 @@ extension SwiftTrace {
 
     open class func interposed(replacee: UnsafeRawPointer) -> UnsafeRawPointer? {
         var current = replacee
-        var lookups = 0
         while let replacement = interposed[current] {
             current = replacement
-            lookups += 1
-        }
-        if lookups > 1 {
-            interposed[replacee] = current
         }
         return current
     }
@@ -190,18 +185,27 @@ extension SwiftTrace {
         }
     }
 
+    /// Revert all previous interposes
     @objc open class func revertInterposes() {
-        var interposes = [dyld_interpose_tuple]()
+        let replacements = Set(interposed.values)
+        var reverses = [dyld_interpose_tuple]()
+
         for (replacee, replacement) in interposed {
-            interposes.append(dyld_interpose_tuple(
-                replacement: replacee, replacee: replacement))
-        }
-        interposes.withUnsafeBufferPointer { interposes in
-            appBundleImages { (imageName, header) in
-                dyld_dynamic_interpose(header,
-                    interposes.baseAddress!, interposes.count)
+            if !replacements.contains(replacee) {
+                var current: UnsafeRawPointer? = replacement
+                while current != nil {
+                    reverses.append(dyld_interpose_tuple(
+                        replacement: replacee, replacee: current!))
+                    current = interposed[current!]
+                }
             }
         }
+
+        appBundleImages { (imageName, header) in
+            dyld_dynamic_interpose(header, reverses, reverses.count)
+        }
+        
+        interposed.removeAll()
     }
 }
 #endif

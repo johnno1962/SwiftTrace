@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#31 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#32 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -640,6 +640,9 @@ SWIFT_CLASS_PROPERTY(@property (nonatomic, class, copy) NSString * _Nullable tra
 }
 + (void)swiftTraceRemoveAllTraces {
     [SwiftTrace removeAllTraces];
+}
++ (void)swiftTraceRevertAllInterposes {
+    [SwiftTrace revertInterposes];
 }
 + (void)swiftTraceInstances {
     [self swiftTraceInstancesWithSubLevels:0];
