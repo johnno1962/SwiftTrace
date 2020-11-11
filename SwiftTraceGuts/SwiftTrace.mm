@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#32 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#33 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -851,7 +851,7 @@ void appBundleImages(void (^callback)(const char *sym, const struct mach_header 
             strncmp(imageName, bundleFrameworks, frameworkPathLength) == 0 ||
             (strstr(imageName, "/DerivedData/") &&
              strstr(imageName, ".framework/")) ||
-            strstr(imageName, "/T/eval"))
+            strstr(imageName, "/eval"))
             callback(imageName, _dyld_get_image_header(i));
     }
 }
