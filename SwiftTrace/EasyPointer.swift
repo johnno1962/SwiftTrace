@@ -9,7 +9,7 @@
 //
 //  Repo: https://github.com/johnno1962/EasyPointer.git
 //
-//  $Id: //depot/EasyPointer/Sources/EasyPointer/EasyPointer.swift#3 $
+//  $Id: //depot/EasyPointer/Sources/EasyPointer/EasyPointer.swift#4 $
 //
 
 public func autoBitCast<IN,OUT>(_ x: IN) -> OUT {
@@ -27,7 +27,7 @@ extension UnsafePointer {
         self = autoBitCast(cast)
     }
     public init(cast: UnsafeRawPointer) {
-        self = cast.assumingMemoryBound(to: Pointee.self)
+        self = cast.bindMemory(to: Pointee.self, capacity: 1)
     }
     public init(cast: OpaquePointer) {
         self = autoBitCast(cast)
@@ -60,7 +60,7 @@ extension UnsafeMutablePointer {
         self = autoBitCast(cast)
     }
     public init(cast: UnsafeMutableRawPointer) {
-        self = cast.assumingMemoryBound(to: Pointee.self)
+        self = cast.bindMemory(to: Pointee.self, capacity: 1)
     }
     public init(cast: OpaquePointer) {
         self = autoBitCast(cast)
