@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#41 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#42 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -166,10 +166,10 @@ extension SwiftTrace {
        }
 
        /**
-           Return a unique pointer to a trampoline that will callback the oneEntry()
-           and onExit() method in this class
+           Return a unique pointer to a trampoline that will callback
+           the oneEntry() and onExit() method in this class
         */
-       func forwardingImplementation() -> SIMP {
+       open lazy var forwardingImplementation: SIMP = {
            /* create trampoline */
            let impl = imp_implementationForwardingToTracer(autoBitCast(self),
                        autoBitCast(Swizzle.onEntry), autoBitCast(Swizzle.onExit))
@@ -181,9 +181,9 @@ extension SwiftTrace {
                    previous.reSwizzled = true
                }
                previousTrace = previousTrace!.previousSwiftTrace
-            }
+           }
            return autoBitCast(impl)
-       }
+       }()
 
        /**
         method called before trampoline enters the target "Swizzle"
@@ -231,8 +231,8 @@ extension SwiftTrace {
            if let invocation = invocation() {
                let elapsed = Invocation.usecTime() - invocation.timeEntered
                if invocation.shouldDecorate && shouldTrace() {
-                let returnValue = exitDecorate(stack: &stack)
-                print("\(invocation.subLogged ? "\n\(String(repeating: "  ", count: invocation.stackDepth))<-" : objcMethod != nil ? " ->" : "") \(returnValue)\(String(format: SwiftTrace.timeFormat, elapsed * 1000.0))", terminator: subLogging() ? "" : "\n")
+                   let returnValue = exitDecorate(stack: &stack)
+                   print("\(invocation.subLogged ? "\n\(String(repeating: "  ", count: invocation.stackDepth))<-" : objcMethod != nil ? " ->" : "") \(returnValue)\(String(format: SwiftTrace.timeFormat, elapsed * 1000.0))", terminator: subLogging() ? "" : "\n")
                }
                totalElapsed += elapsed
                invocationCount += 1

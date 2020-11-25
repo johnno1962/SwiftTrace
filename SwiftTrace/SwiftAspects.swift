@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#12 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#13 $
 //
 //  Add aspects to Swift methods
 //  ============================
@@ -54,7 +54,7 @@ extension SwiftTrace {
             if name == methodName, let method = patchClass.init(name: name,
                         vtableSlot: vtableSlot, onEntry: onEntry,
                         onExit: onExit, replaceWith: replaceWith) {
-                vtableSlot.pointee = method.forwardingImplementation()
+                vtableSlot.pointee = method.forwardingImplementation
                 stop = true
             }
         }

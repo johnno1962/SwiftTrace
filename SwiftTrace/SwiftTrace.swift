@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#254 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#255 $
 //
 
 import Foundation
@@ -309,7 +309,7 @@ open class SwiftTrace: NSObject {
             (name, slotIndex, vtableSlot, stop) in
             if let factory = methodFilter(name),
                 let swizzle = factory.init(name: name, vtableSlot: vtableSlot) {
-                vtableSlot.pointee = swizzle.forwardingImplementation()
+                vtableSlot.pointee = swizzle.forwardingImplementation
             }
         }
     }
@@ -431,7 +431,7 @@ open class SwiftTrace: NSObject {
                         if let factory = methodFilter(demangled),
                             let swizzle = factory.init(name: demangled,
                                            vtableSlot: &witnessTable[slot]) {
-                            witnessTable[slot] = swizzle.forwardingImplementation()
+                            witnessTable[slot] = swizzle.forwardingImplementation
                         }
                         continue
                     }
@@ -519,7 +519,7 @@ open class SwiftTrace: NSObject {
                     let swizzle = factory.init(name: name, objcMethod: method,
                                                objcClass: aClass) {
                     class_replaceMethod(aClass, sel,
-                            autoBitCast(swizzle.forwardingImplementation()), type)
+                            autoBitCast(swizzle.forwardingImplementation), type)
                 }
             }
             free(methods)

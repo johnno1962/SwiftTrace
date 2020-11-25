@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#95 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#98 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -53,10 +53,10 @@ extension String: SwiftTraceArg {}
 extension Double: SwiftTraceFloatArg {}
 extension Float: SwiftTraceFloatArg {}
 #if os(macOS) || os(iOS) || os(tvOS)
-extension OSRect: SwiftTraceFloatArg {}
+extension CGFloat: SwiftTraceFloatArg {}
 extension OSPoint: SwiftTraceFloatArg {}
 extension OSSize: SwiftTraceFloatArg {}
-extension CGFloat: SwiftTraceFloatArg {}
+extension OSRect: SwiftTraceFloatArg {}
 extension OSEdgeInsets: SwiftTraceFloatArg {}
 #endif
 
@@ -82,6 +82,18 @@ extension SwiftTrace {
         }
         Decorated.swiftTypeHandlers[typeName] =
             { Decorated.handleArg(invocation: $0, isReturn: $1, type: type) }
+    }
+
+    /**
+     Prepare function that will trace an individual function.
+     */
+    open class func trace(name signature: String,
+                          vtableSlot: UnsafeMutablePointer<SIMP>? = nil,
+                          objcMethod: Method? = nil, objcClass: AnyClass? = nil,
+                          original: UnsafeRawPointer) -> SIMP? {
+        return Decorated(name: signature, vtableSlot: vtableSlot,
+                         objcMethod: objcMethod, objcClass: objcClass,
+                         original: autoBitCast(original))?.forwardingImplementation
     }
 
     /**
@@ -276,7 +288,8 @@ extension SwiftTrace {
          Selector name for objc method
          */
         lazy var selector: String = {
-            return NSStringFromSelector(method_getName(objcMethod!))
+            return signature.hasPrefix("Injection#") ? signature :
+                NSStringFromSelector(method_getName(objcMethod!))
         }()
 
         /**

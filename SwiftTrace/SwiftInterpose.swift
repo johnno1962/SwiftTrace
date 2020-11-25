@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#41 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#42 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -74,7 +74,7 @@ extension SwiftTrace {
                          onEntry: onEntry, onExit: onExit,
                          replaceWith: replaceWith) {
                     interposes.append(dyld_interpose_tuple(
-                        replacement: autoBitCast(method.forwardingImplementation()),
+                        replacement: autoBitCast(method.forwardingImplementation),
                         replacee: current))
                 }
             })
@@ -120,7 +120,7 @@ extension SwiftTrace {
                                               original: OpaquePointer(current)) {
 //                    print(interposes.count, methodName)
                     interposes.append(dyld_interpose_tuple(
-                        replacement: autoBitCast(method.forwardingImplementation()),
+                        replacement: autoBitCast(method.forwardingImplementation),
                         replacee: current))
                     symbols.append(methodName)
                 }
