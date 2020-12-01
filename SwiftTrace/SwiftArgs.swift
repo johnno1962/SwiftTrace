@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#98 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#104 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -60,28 +60,61 @@ extension OSRect: SwiftTraceFloatArg {}
 extension OSEdgeInsets: SwiftTraceFloatArg {}
 #endif
 
-@_silgen_name("swift_getTypeName")
-private func getTypeName(_ type: Any.Type, qualified: Bool)
-                  -> (name: UnsafePointer<Int8>, size: Int)
+/**
+ Shenaniggans to be able to decorate any type linked into an app
+ */
+@_silgen_name("sizeofAnyType")
+public func sizeof(anyType: Any.Type) -> size_t
+
+@_silgen_name("thunkToGeneric")
+func thunkToGeneric(funcPtr: UnsafeRawPointer, valuePtr: UnsafeRawPointer,
+                    type: Any.Type, outPtr: UnsafeMutableRawPointer)
+
+func describer<Type>(value: Type, outPtr: UnsafeMutableRawPointer) {
+    outPtr.assumingMemoryBound(to: String.self).pointee =  "\(value)"
+}
+
+func appender<Type>(value: Type, outPtr: UnsafeMutableRawPointer) {
+    outPtr.assumingMemoryBound(to: [Any].self).pointee.append(value)
+}
 
 extension SwiftTrace {
 
     /**
+     Enable auto decoration of unknwon top level types
+     */
+    static public var autoDecorate = true
+    /**
+     Definitions related to auto-tracability of types
+     */
+    static let module = _typeName(SwiftTrace.self).components(separatedBy: ".")[0]
+    static let argumentMangling = "5value6outPtryx_SvtlF"
+    static func bindGeneric(name: String) -> UnsafeMutableRawPointer {
+        let RTLD_DEFAULT = UnsafeMutableRawPointer(bitPattern: -2)
+        return dlsym(RTLD_DEFAULT, """
+            $s\(module.utf16.count)\(module)\(name.utf16.count)\(name)
+            """+argumentMangling)!
+    }
+    static var describerFptr = bindGeneric(name: "describer")
+    static var appenderFptr = bindGeneric(name: "appender")
+
+
+    /**
      Add a type to the map of type arguments that can be formatted
      */
-    open class func addFormattedType<T>(_ type: T.Type, prefix: String? = nil) {
-        let typeName = prefix != nil ?
-            prefix!+"."+String(describing: type) :
-            String(cString: getTypeName(type, qualified: true).name)
-        let slotsRequired = (MemoryLayout<T>.size +
-            MemoryLayout<intptr_t>.size - 1) /
-            MemoryLayout<intptr_t>.size
-        if slotsRequired > (T.self is SwiftTraceFloatArg ?
-            EntryStack.maxFloatSlots : EntryStack.maxIntSlots) {
-            NSLog("SwiftTrace: ⚠️ Type \(typeName) is too large to be formatted ⚠️")
+    open class func makeTraceable(types: [Any.Type]) {
+        for type in types {
+            let typeName = _typeName(type)
+            let slotsRequired = (sizeof(anyType: type) +
+                MemoryLayout<intptr_t>.size - 1) /
+                MemoryLayout<intptr_t>.size
+            if slotsRequired > (type is SwiftTraceFloatArg ?
+                EntryStack.maxFloatSlots : EntryStack.maxIntSlots) {
+                NSLog("SwiftTrace: ⚠️ Type \(typeName) is too large to be formatted ⚠️")
+            }
+            Decorated.swiftTypeHandlers[typeName] =
+                { Decorated.handleArg(invocation: $0, isReturn: $1, type: type) }
         }
-        Decorated.swiftTypeHandlers[typeName] =
-            { Decorated.handleArg(invocation: $0, isReturn: $1, type: type) }
     }
 
     /**
@@ -97,7 +130,7 @@ extension SwiftTrace {
     }
 
     /**
-     Returns a pointer to tye type handlers dictionary
+     Returns a pointer to tye type handlers dictionary - no longer used
      */
     @objc class var swiftTypeHandlers: UnsafeMutableRawPointer {
         return UnsafeMutableRawPointer(&Decorated.swiftTypeHandlers)
@@ -124,7 +157,9 @@ extension SwiftTrace {
          Cache of positions in signature of arguments
          */
         lazy var argTypeRanges: [Range<String.Index>] = {
-            return ranges(in: signature, parser: Decorated.argumentParser)
+            let endArgs = signature.range(of: " -> ")?.lowerBound
+            let args = endArgs != nil ? signature[..<(endArgs!+0)] : signature
+            return ranges(in: args, parser: Decorated.argumentParser)
         }()
 
         /**
@@ -204,6 +239,8 @@ extension SwiftTrace {
             invocation.floatArgumentOffset = 0
             invocation.intArgumentOffset = 0
 
+            _ = Decorated.installCompoundTraceableTypes
+
             for range in typeRanges {
                 output += signature[position ..< range.lowerBound]
                 var value: String?
@@ -212,6 +249,11 @@ extension SwiftTrace {
                 if let typeHandler = Decorated.swiftTypeHandlers[type],
                     let handled = typeHandler(invocation, isReturn) {
                     value = handled
+                } else if autoDecorate, signature[..<range.lowerBound]
+                            .firstIndex(of: "<") == nil,
+                      let anyType = Decorated.getType(named: type) {
+                    value = Decorated.handleArg(invocation: invocation,
+                                            isReturn: isReturn, type: anyType)
                 } else if NSClassFromString(type) != nil {
                     value = Decorated.handleArg(invocation: invocation,
                                                 isReturn: isReturn,
@@ -245,43 +287,44 @@ extension SwiftTrace {
             return output + signature[position ..< endIndex]
         }
 
+        static let nameAbbreviations = [
+            "Swift": "s"
+        ]
+
+        static var typeCache = [String: Any.Type?]()
+
+        public static func getType(named: String) -> Any.Type? {
+            if let type = typeCache[named] {
+                return type
+            }
+            var mangled = ""
+            for name in named.components(separatedBy: ".") {
+                mangled += nameAbbreviations[name] ??
+                    "\(name.utf16.count)\(name)"
+            }
+            let type = named.hasPrefix("Foundation.") ||
+                named == "SwiftUI.StrokeStyle" ? nil :
+                _typeByName(mangled+"V") ?? _typeByName(mangled+"C")
+            typeCache[named] = type
+            return type
+        }
+
+        static let installCompoundTraceableTypes: () = {
+            SwiftTrace.makeTraceable(types: [
+                Int?.self, [Int].self, Range<Int>.self,
+                UInt?.self, [UInt].self, Range<UInt>.self,
+                String?.self, [String].self, Bool?.self,
+                Float.self, Double.self, CGFloat.self,
+                Float?.self, Double?.self, CGFloat?.self,
+                [Float].self, [Double].self, [CGFloat].self,
+            ])
+        }()
+
         /**
          Mapping of Swift type names to handler for that concrete type
          */
         public static var swiftTypeHandlers: [String: (Invocation, Bool) -> String?] = [
-            "Swift.Int": { handleArg(invocation: $0, isReturn: $1, type: Int.self) },
-            "Swift.Array<Swift.Int>": { handleArg(invocation: $0, isReturn: $1, type: [Int].self) },
-            "Swift.Optional<Swift.Int>": { handleArg(invocation: $0, isReturn: $1, type: Int?.self) },
-            "Swift.Range<Swift.Int>": { handleArg(invocation: $0, isReturn: $1, type: Range<Int>.self) },
-            "Swift.UInt": { handleArg(invocation: $0, isReturn: $1, type: UInt.self) },
-            "Swift.Array<Swift.UInt>": { handleArg(invocation: $0, isReturn: $1, type: [UInt].self) },
-            "Swift.Optional<Swift.UInt>": { handleArg(invocation: $0, isReturn: $1, type: UInt?.self) },
-            "Swift.Int64": { handleArg(invocation: $0, isReturn: $1, type: Int64.self) },
-            "Swift.UInt64": { handleArg(invocation: $0, isReturn: $1, type: UInt64.self) },
-            "Swift.Int32": { handleArg(invocation: $0, isReturn: $1, type: Int32.self) },
-            "Swift.UInt32": { handleArg(invocation: $0, isReturn: $1, type: UInt32.self) },
-            "Swift.Int16": { handleArg(invocation: $0, isReturn: $1, type: Int16.self) },
-            "Swift.UInt16": { handleArg(invocation: $0, isReturn: $1, type: UInt16.self) },
-            "Swift.Int8": { handleArg(invocation: $0, isReturn: $1, type: Int8.self) },
-            "Swift.UInt8": { handleArg(invocation: $0, isReturn: $1, type: UInt8.self) },
-            "Swift.String": { handleArg(invocation: $0, isReturn: $1, type: String.self) },
-            "Swift.Array<Swift.String>": { handleArg(invocation: $0, isReturn: $1, type: [String].self) },
-            "Swift.Optional<Swift.String>": { handleArg(invocation: $0, isReturn: $1, type: String?.self) },
-            "Swift.Bool": { handleArg(invocation: $0, isReturn: $1, type: Bool.self) },
-            "Swift.Optional<Swift.Bool>": { handleArg(invocation: $0, isReturn: $1, type: Bool?.self) },
-            "Swift.Float": { handleArg(invocation: $0, isReturn: $1, type: Float.self) },
-            "Swift.Optional<Swift.Float>": { handleArg(invocation: $0, isReturn: $1, type: Float?.self) },
-            "Swift.Double": { handleArg(invocation: $0, isReturn: $1, type: Double.self) },
-            "Swift.Optional<Swift.Double>": { handleArg(invocation: $0, isReturn: $1, type: Double?.self) },
-            "CoreGraphics.CGFloat": { handleArg(invocation: $0, isReturn: $1, type: CGFloat.self) },
-            "Swift.Optional<CoreGraphics.CGFloat>": { handleArg(invocation: $0, isReturn: $1, type: CGFloat?.self) },
-            "__C.CGRect": { handleArg(invocation: $0, isReturn: $1, type: OSRect.self) },
-            "__C.CGPoint": { handleArg(invocation: $0, isReturn: $1, type: OSPoint.self) },
-            "__C.CGSize": { handleArg(invocation: $0, isReturn: $1, type: OSSize.self) },
-            "__C.NSEdgeInsets": { handleArg(invocation: $0, isReturn: $1, type: OSEdgeInsets.self) },
-            "CoreGraphics.UIEdgeInsets": { handleArg(invocation: $0, isReturn: $1, type: OSEdgeInsets.self) },
-
-            "()": { _,_  in return "Void" },
+            "()": { _,_ in return "Void" }
         ]
 
         /**
@@ -402,24 +445,24 @@ extension SwiftTrace {
             "{NSEdgeInsets=dddd}":
                 { handleArg(invocation: $0, isReturn: $1, type: OSEdgeInsets.self) },
             "@?": { _,_  in return "^{}" },
-            "v": { _,_  in return "Void" }
+            "v": { _,_  in return "void" }
         ]
 
         /**
          Generic argument handler given an invoction and the concrete type
          */
-        public static func handleArg<Type>(invocation: Invocation,
-                                           isReturn: Bool, type: Type.Type) -> String? {
+        public static func handleArg(invocation: Invocation,
+                                     isReturn: Bool, type: Any.Type) -> String? {
             let slot: Int
             let maxSlots: Int
-            let argPointer: UnsafeMutablePointer<Type>
-            let slotsRequired = (MemoryLayout<Type>.size +
+            var argPointer: UnsafeRawPointer
+            let slotsRequired = (sizeof(anyType: type) +
                 MemoryLayout<intptr_t>.size - 1) /
                 MemoryLayout<intptr_t>.size
-            if Type.self is SwiftTraceFloatArg.Type {
+            if type is SwiftTraceFloatArg.Type {
                 slot = invocation.floatArgumentOffset
-                maxSlots = EntryStack.maxFloatSlots
-                argPointer = invocation.swizzle.rebind((isReturn ?
+                maxSlots = isReturn ? ExitStack.returnRegs : EntryStack.maxFloatSlots
+                argPointer = UnsafeRawPointer((isReturn ?
                     withUnsafeMutablePointer(to:
                     &invocation.exitStack.pointee.floatReturn1) {$0} :
                     withUnsafeMutablePointer(to:
@@ -428,8 +471,8 @@ extension SwiftTrace {
                 invocation.floatArgumentOffset += slotsRequired
             } else {
                 slot = invocation.intArgumentOffset
-                maxSlots = EntryStack.maxIntSlots
-                argPointer = invocation.swizzle.rebind((isReturn ?
+                maxSlots = isReturn ? ExitStack.returnRegs : EntryStack.maxIntSlots
+                argPointer = UnsafeRawPointer((isReturn ?
                     withUnsafeMutablePointer(to:
                     &invocation.exitStack.pointee.intReturn1) {$0} :
                     withUnsafeMutablePointer(to:
@@ -438,12 +481,20 @@ extension SwiftTrace {
                 invocation.intArgumentOffset += slotsRequired
             }
 
-            guard slot + slotsRequired <= maxSlots else { return nil }
+            if isReturn && slotsRequired > ExitStack.returnRegs,
+                let structPtr = invocation.structReturn {
+                argPointer = UnsafeRawPointer(structPtr)
+            } else {
+                guard slot + slotsRequired <= maxSlots else { return nil }
+            }
 
-            invocation.arguments.append(argPointer.pointee)
-            if Type.self == AnyObject?.self {
-                if let id = unsafeBitCast(argPointer.pointee,
-                                          to: AnyObject?.self) {
+            withUnsafeMutablePointer(to: &invocation.arguments) {
+                thunkToGeneric(funcPtr: appenderFptr, valuePtr: argPointer,
+                               type: type, outPtr: $0)
+            }
+
+            if type == AnyObject?.self {
+                if let id = argPointer.load(as: AnyObject?.self) {
                     if let cls = object_getClass(id), cls.isSubclass(of: NSProxy.class()) {
                         return identify(id: id)
                     }
@@ -460,35 +511,37 @@ extension SwiftTrace {
                     return "nil"
                 }
             }
-            else if Type.self == UnsafePointer<UInt8>?.self {
-                if let str = unsafeBitCast(argPointer.pointee,
-                                           to: UnsafePointer<UInt8>?.self) {
+            else if type == UnsafePointer<UInt8>?.self {
+                if let str = argPointer.load(as: UnsafePointer<UInt8>?.self) {
                     return "\"\(String(cString: str))\""
                 } else {
                     return "NULL"
                 }
-            } else if Type.self == UnsafeRawPointer.self {
-                return String(format: "%p", unsafeBitCast(argPointer.pointee, to: uintptr_t.self))
-            } else if Type.self == Selector.self {
-                let SEL = unsafeBitCast(argPointer.pointee, to: Selector.self)
+            } else if type == UnsafeRawPointer.self {
+                return String(format: "%p", argPointer.load(as: uintptr_t.self))
+            } else if type == Selector.self {
+                let SEL = argPointer.load(as: Selector.self)
                 return "@selector(\(NSStringFromSelector(SEL)))"
-            } else if Type.self == String.self {
-                return "\"\(argPointer.pointee)\""
+            } else if type == String.self {
+                return "\"\(argPointer.load(as: String.self))\""
             } else if let optionalType = type as? OptionalTyping.Type {
-                return optionalType.describe(optional: argPointer.pointee)
+                return optionalType.describe(optionalPtr: argPointer)
             } else {
-                return "\(argPointer.pointee)"
+                var out = ""
+                thunkToGeneric(funcPtr: describerFptr, valuePtr: argPointer,
+                               type: type, outPtr: &out)
+                return out
             }
         }
     }
 }
 
 fileprivate protocol OptionalTyping {
-    static func describe<Ty>(optional: Ty) -> String
+    static func describe(optionalPtr: UnsafeRawPointer) -> String
 }
 extension Optional: OptionalTyping {
-    static func describe<Ty>(optional: Ty) -> String {
-        if let value = unsafeBitCast(optional, to: Wrapped?.self) {
+    static func describe(optionalPtr: UnsafeRawPointer) -> String {
+        if let value = optionalPtr.load(as: Wrapped?.self) {
             return "\(value)"
         }
         return "nil"

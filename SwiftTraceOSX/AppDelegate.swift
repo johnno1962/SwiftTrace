@@ -8,14 +8,21 @@
 
 import Cocoa
 
+public typealias XInt = UInt16
+
+public struct Stret {
+    let r1: CGRect, r2: CGRect, r3: CGRect
+}
+
 public protocol P {
     associatedtype myType
     associatedtype myType2
     var i: Int { get set }
     func x()
     func y() -> Float
-    func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: Double?, g1: Float, h1: Double, f2: Double, g2: Float, h2: myType?, e: myType2? )
+    func z( _ d: XInt, f: Double, s: String?, g: Float, h: Double, f1: Double?, g1: Float, h1: Double, f2: Double, g2: Float, h2: myType?, e: myType2? )
     func rect(r1: NSRect, r2: NSRect) -> NSRect
+    func rect2(r1: NSRect, r2: NSRect) -> Stret
     func arr(a: [String], b: [Int]) -> [String]
     func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> ()
 }
@@ -33,12 +40,16 @@ open class TestClass: NSObject, P {
         return -9.0
     }
 
-    open func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: Double?, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double?, e: CGFloat? ) {
+    open func z( _ d: XInt, f: Double, s: String?, g: Float, h: Double, f1: Double?, g1: Float, h1: Double, f2: Double, g2: Float, h2: Double?, e: CGFloat? ) {
         print( "open func z( \(i) \(d) \(String(describing: e)) \(f) \(String(describing: s)) \(g) \(h) \(String(describing: f1)) \(g1) \(h1) \(f2) \(g2) \(String(describing: h2)) )" )
     }
 
     public func rect(r1: NSRect, r2: NSRect) -> NSRect {
         return r1
+    }
+
+    public func rect2(r1: NSRect, r2: NSRect) -> Stret {
+        return Stret(r1: r1, r2: r2, r3: r2)
     }
 
     public func arr(a: [String], b: [Int]) -> [String] {
@@ -63,12 +74,16 @@ struct TestStruct: P {
         return -9.0
     }
 
-    public func z( _ d: Int, f: Double, s: String?, g: Float, h: Double, f1: Double?, g1: Float, h1: Double, f2: Double, g2: Float, h2: CGFloat?, e: Int? ) {
+    public func z( _ d: XInt, f: Double, s: String?, g: Float, h: Double, f1: Double?, g1: Float, h1: Double, f2: Double, g2: Float, h2: CGFloat?, e: Int? ) {
         print( "open func z( \(i) \(d) \(String(describing: e)) \(f) \(String(describing: s)) \(g) \(h) \(String(describing: f1)) \(g1) \(h1) \(f2) \(g2) \(String(describing: h2)) )" )
     }
 
     public func rect(r1: NSRect, r2: NSRect) -> NSRect {
         return r1
+    }
+
+    public func rect2(r1: NSRect, r2: NSRect) -> Stret {
+        return Stret(r1: r1, r2: r2, r3: r2)
     }
 
     public func arr(a: [String], b: [Int]) -> [String] {
@@ -86,9 +101,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @IBOutlet weak var window: NSWindow!
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        #if false
+        #if true
         // Insert code here to initialize your application
-        print(objc_classArray().count)
+//        print(objc_classArray().count)
 
         // any inclusions or exlusiona need to come before trace enabled
         //SwiftTrace.include( "Swift.Optiona|TestClass" )
@@ -115,8 +130,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         objcTester.a(44, i:45, b: 55, c: "66", o: self, s: Selector(("jjj:")))
 
 
-        var a: P = TestClass()
+        var a/*: P*/ = TestClass()
         print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect(r1: __C.CGRect, r2: __C.CGRect) -> __C.CGRect", args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)) as NSRect)
+
+        print(a.rect2(r1: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), r2:NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)))
 
         print(SwiftTrace.methodNames(ofClass: TestClass.self))
         print(SwiftTrace.swiftClassList(bundlePath: class_getImageName(TestClass.self)))
