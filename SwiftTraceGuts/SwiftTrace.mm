@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#34 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#35 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -809,6 +809,13 @@ typedef uint32_t sectsize_t;
 #define getsectdatafromheader_f getsectdatafromheader
 #endif
 
+static char includeObjcClasses[] = {"CN"};
+static char objcClassPrefix[] = {"_OBJC_CLASS_$_"};
+
+const char *classesIncludingObjc() {
+    return includeObjcClasses;
+}
+
 void findSwiftSymbols(const char *bundlePath, const char *suffix,
                       void (^callback)(const void *symval, const char *symname, void *typeref, void *typeend)) {
     for (int32_t i = _dyld_image_count(); i >= 0 ; i--) {
@@ -854,8 +861,10 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
                         void *location;
 
                         if (sym->n_type == 0xf &&
-                            strncmp(sptr, "_$s", 3) == 0 &&
-                            strcmp(sptr+strlen(sptr)-sufflen, suffix) == 0 &&
+                            ((strncmp(sptr, "_$s", 3) == 0 &&
+                              strcmp(sptr+strlen(sptr)-sufflen, suffix) == 0) ||
+                             (suffix == includeObjcClasses && strncmp(sptr,
+                              objcClassPrefix, sizeof objcClassPrefix-1) == 0)) &&
                             (location = (void *)(sym->n_value +
                              (intptr_t)header - (intptr_t)seg_text->vmaddr))) {
                             callback(location, sptr+1, typeref_start,

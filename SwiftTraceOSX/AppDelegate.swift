@@ -166,6 +166,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         for call in SwiftTrace.callOrder() {
             print(call.signature)
         }
+
+        findSwiftSymbols(Bundle.main.executablePath, classesIncludingObjc()) {
+            cls,_,_,_ in
+            print(unsafeBitCast(cls, to: AnyClass.self))
+        }
     }
 
     func ptest<T: P>(p: T) {
