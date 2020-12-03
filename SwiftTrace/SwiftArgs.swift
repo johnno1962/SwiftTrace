@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#109 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#113 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -86,9 +86,10 @@ public func appender<Type>(value: Type, outPtr: UnsafeMutableRawPointer) {
 extension SwiftTrace {
 
     /**
-     Enable auto decoration of unknwon top level types
+     Enable auto decoration of unknown types
      */
-    static public var autoDecorate = true
+    static public var typeLookup = false
+
     /**
      Definitions related to auto-tracability of types
      */
@@ -98,6 +99,10 @@ extension SwiftTrace {
     static func mangle(_ name: String) -> String {
         return "\(name.utf16.count)\(name)"
     }
+
+    /**
+     Find pointer for function processing type as generic
+     */
     public static func bindGeneric(name: String, owner: String = module)
         -> UnsafeMutableRawPointer {
         let symbol = "$s\(owner)\(mangle(name))\(argumentMangling)"
@@ -130,7 +135,16 @@ extension SwiftTrace {
     }
 
     /**
-     Prepare function that will trace an individual function.
+     Prevent a type fom being decorated
+     */
+    open class func makeUntracable(typesNamed: [String]) {
+        for typeName in typesNamed {
+            Decorated.typeCache[typeName] = nil
+        }
+    }
+
+    /**
+     Prepare function pointer that will trace an individual function.
      */
     open class func trace(name signature: String,
                           vtableSlot: UnsafeMutablePointer<SIMP>? = nil,
@@ -261,7 +275,8 @@ extension SwiftTrace {
                 if let typeHandler = Decorated.swiftTypeHandlers[type],
                     let handled = typeHandler(invocation, isReturn) {
                     value = handled
-                } else if autoDecorate, signature[..<range.lowerBound]
+                } else if typeLookup || type.hasPrefix("Swift."),
+                          signature[..<range.lowerBound]
                             .firstIndex(of: "<") == nil,
                       let anyType = Decorated.getType(named: type) {
                     value = Decorated.handleArg(invocation: invocation,
@@ -299,13 +314,31 @@ extension SwiftTrace {
             return output + signature[position ..< endIndex]
         }
 
-        static let nameAbbreviations = [
+        public static var nameAbbreviations = [
             "Swift": "s"
         ]
 
-        static var typeCache = [String: Any.Type?]()
+        public static var typeCache: [String: Any.Type?] = [
+            "Foundation.URL": nil,
+            "Foundation.IndexPath": nil,
+            "SwiftUI.StrokeStyle": nil,
+            "SwiftUI.CoordinateSpace": nil,
+            "SwiftUI.LocalizedStringKey.StringInterpolation": nil,
+            "SwiftUI.Color.RGBColorSpace": nil,
+            "SwiftUI.Image.ResizingMode": nil,
+            "SwiftUI.NavigationBarItem.TitleDisplayMode": nil,
+            "SwiftUI.RoundedRectangle": nil,
+            "SwiftUI.ToolbarItemPlacement": nil,
+            "SwiftUI.KeyEquivalent": nil,
+            "SwiftUI.Text.DateStyle": nil,
+            "SwiftUI.RoundedCornerStyle": nil,
+            "Kingfisher.Source": nil,
+            "Backend.Endpoint": nil,
+            "Backend.Video": nil
+        ]
         static var typeCacheLock = OS_SPINLOCK_INIT
 
+        /// Best effort recovery of type from qualified name
         public static func getType(named: String) -> Any.Type? {
             OSSpinLockLock(&typeCacheLock)
             defer { OSSpinLockUnlock(&typeCacheLock) }
@@ -313,14 +346,29 @@ extension SwiftTrace {
                 return type
             }
             var mangled = ""
+            var first = true
+            var out: Any.Type?
             for name in named.components(separatedBy: ".") {
                 mangled += nameAbbreviations[name] ?? mangle(name)
+                out = nil
+                if !first {
+                    if let type = _typeByName(mangled+"V") {
+                        mangled += "V" // value type
+                        out = type
+                    } else if let type = _typeByName(mangled+"C") {
+                        mangled += "C" // class type
+                        out = type
+                    } else if let type = _typeByName(mangled+"O") {
+                        mangled += "O" // enum type?
+                        out = type
+                    } else {
+                        break
+                    }
+                }
+                first = false
             }
-            let type = named.hasPrefix("Foundation.") ||
-                named == "SwiftUI.StrokeStyle" ? nil :
-                _typeByName(mangled+"V") ?? _typeByName(mangled+"C")
-            typeCache[named] = type
-            return type
+            typeCache[named] = out
+            return out
         }
 
         static let installCompoundTraceableTypes: () = {

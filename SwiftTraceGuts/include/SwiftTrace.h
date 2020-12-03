@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#28 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#29 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -65,6 +65,8 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
 @property (nonatomic, class, copy) NSArray<NSString *> * _Nonnull swiftTraceFunctionSuffixes;
 /** Are we tracing? */
 @property (readonly, class) BOOL swiftTracing;
+/** lookup unknonw types */
+@property (class) BOOL swiftTraceTypeLookup;
 /**
  Class will be traced (as opposed to swiftTraceInstances which
  will trace methods declared in super classes as well and only
