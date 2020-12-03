@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#255 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#256 $
 //
 
 import Foundation
@@ -201,6 +201,15 @@ open class SwiftTrace: NSObject {
                                   callback: @escaping (_ aClass: AnyClass,
                                     _ stop: inout Bool) -> Void ) -> Bool {
         var stopped = false
+        if bundlePath != nil {
+            findSwiftSymbols(bundlePath, classesIncludingObjc()) {
+                aClass,_,_,_ in
+                callback(autoBitCast(aClass), &stopped)
+            }
+            return stopped
+        }
+
+        // The old version of the code...
         var nc: UInt32 = 0
         var registered = Set<UnsafeRawPointer>()
 

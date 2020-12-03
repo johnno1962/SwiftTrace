@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BB07C35F2577F99800FD6ADB /* xt_forwarding_trampoline_arm64.s in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F01D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s */; };
 		BB1B8179251B631900F76DC7 /* SwiftStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B8178251B631900F76DC7 /* SwiftStats.swift */; };
 		BB1B817B251B632D00F76DC7 /* SwiftInterpose.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B817A251B632D00F76DC7 /* SwiftInterpose.swift */; };
 		BB1B8180251B69B100F76DC7 /* SwiftStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B8178251B631900F76DC7 /* SwiftStats.swift */; };
@@ -587,6 +588,7 @@
 				BB1B8182251B69B500F76DC7 /* SwiftInterpose.swift in Sources */,
 				BBF6EC6E1D0E54F100C5A202 /* AppDelegate.swift in Sources */,
 				BB76EA14229540B700E454F0 /* SwiftTrace.swift in Sources */,
+				BB07C35F2577F99800FD6ADB /* xt_forwarding_trampoline_arm64.s in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
