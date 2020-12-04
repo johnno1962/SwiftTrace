@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#113 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#114 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -139,8 +139,70 @@ extension SwiftTrace {
      */
     open class func makeUntracable(typesNamed: [String]) {
         for typeName in typesNamed {
-            Decorated.typeCache[typeName] = nil
+            typeCache[typeName] = nil
         }
+    }
+
+    public static var nameAbbreviations = [
+        "Swift": "s"
+    ]
+
+    public static var typeCache: [String: Any.Type?] = [
+        // These types are known to cause problems.
+        // Pre-populating a nil entry prevents them
+        // being lookuped up using getType(named:).
+        "Foundation.URL": nil,
+        "Foundation.IndexPath": nil,
+        "SwiftUI.StrokeStyle": nil,
+        "SwiftUI.CoordinateSpace": nil,
+        "SwiftUI.LocalizedStringKey.StringInterpolation": nil,
+        "SwiftUI.Color.RGBColorSpace": nil,
+        "SwiftUI.Image.ResizingMode": nil,
+        "SwiftUI.NavigationBarItem.TitleDisplayMode": nil,
+        "SwiftUI.RoundedRectangle": nil,
+        "SwiftUI.ToolbarItemPlacement": nil,
+        "SwiftUI.KeyEquivalent": nil,
+        "SwiftUI.Text.DateStyle": nil,
+        "SwiftUI.RoundedCornerStyle": nil,
+        "Kingfisher.Source": nil,
+        "Backend.Endpoint": nil,
+        "Backend.Video": nil
+    ]
+    static var typeCacheLock = OS_SPINLOCK_INIT
+
+    /**
+     Best effort recovery of type from a qualified name
+     */
+    public static func getType(named: String) -> Any.Type? {
+        OSSpinLockLock(&typeCacheLock)
+        defer { OSSpinLockUnlock(&typeCacheLock) }
+        if let type = typeCache[named] {
+            return type
+        }
+        var mangled = ""
+        var first = true
+        var out: Any.Type?
+        for name in named.components(separatedBy: ".") {
+            mangled += nameAbbreviations[name] ?? mangle(name)
+            out = nil
+            if !first {
+                if let type = _typeByName(mangled+"V") {
+                    mangled += "V" // value type
+                    out = type
+                } else if let type = _typeByName(mangled+"C") {
+                    mangled += "C" // class type
+                    out = type
+                } else if let type = _typeByName(mangled+"O") {
+                    mangled += "O" // enum type?
+                    out = type
+                } else {
+                    break
+                }
+            }
+            first = false
+        }
+        typeCache[named] = out
+        return out
     }
 
     /**
@@ -163,7 +225,7 @@ extension SwiftTrace {
     }
 
     /**
-     Swizze subclas that decorates signature with argument/return values
+     Swizze subclass that decorates signature with argument/return values
      */
     open class Decorated: Swizzle {
 
@@ -278,7 +340,7 @@ extension SwiftTrace {
                 } else if typeLookup || type.hasPrefix("Swift."),
                           signature[..<range.lowerBound]
                             .firstIndex(of: "<") == nil,
-                      let anyType = Decorated.getType(named: type) {
+                      let anyType = SwiftTrace.getType(named: type) {
                     value = Decorated.handleArg(invocation: invocation,
                                             isReturn: isReturn, type: anyType)
                 } else if NSClassFromString(type) != nil {
@@ -314,65 +376,8 @@ extension SwiftTrace {
             return output + signature[position ..< endIndex]
         }
 
-        public static var nameAbbreviations = [
-            "Swift": "s"
-        ]
-
-        public static var typeCache: [String: Any.Type?] = [
-            "Foundation.URL": nil,
-            "Foundation.IndexPath": nil,
-            "SwiftUI.StrokeStyle": nil,
-            "SwiftUI.CoordinateSpace": nil,
-            "SwiftUI.LocalizedStringKey.StringInterpolation": nil,
-            "SwiftUI.Color.RGBColorSpace": nil,
-            "SwiftUI.Image.ResizingMode": nil,
-            "SwiftUI.NavigationBarItem.TitleDisplayMode": nil,
-            "SwiftUI.RoundedRectangle": nil,
-            "SwiftUI.ToolbarItemPlacement": nil,
-            "SwiftUI.KeyEquivalent": nil,
-            "SwiftUI.Text.DateStyle": nil,
-            "SwiftUI.RoundedCornerStyle": nil,
-            "Kingfisher.Source": nil,
-            "Backend.Endpoint": nil,
-            "Backend.Video": nil
-        ]
-        static var typeCacheLock = OS_SPINLOCK_INIT
-
-        /// Best effort recovery of type from qualified name
-        public static func getType(named: String) -> Any.Type? {
-            OSSpinLockLock(&typeCacheLock)
-            defer { OSSpinLockUnlock(&typeCacheLock) }
-            if let type = typeCache[named] {
-                return type
-            }
-            var mangled = ""
-            var first = true
-            var out: Any.Type?
-            for name in named.components(separatedBy: ".") {
-                mangled += nameAbbreviations[name] ?? mangle(name)
-                out = nil
-                if !first {
-                    if let type = _typeByName(mangled+"V") {
-                        mangled += "V" // value type
-                        out = type
-                    } else if let type = _typeByName(mangled+"C") {
-                        mangled += "C" // class type
-                        out = type
-                    } else if let type = _typeByName(mangled+"O") {
-                        mangled += "O" // enum type?
-                        out = type
-                    } else {
-                        break
-                    }
-                }
-                first = false
-            }
-            typeCache[named] = out
-            return out
-        }
-
         static let installCompoundTraceableTypes: () = {
-            SwiftTrace.makeTraceable(types: [
+            makeTraceable(types: [
                 Int?.self, [Int].self, Range<Int>.self,
                 UInt?.self, [UInt].self, Range<UInt>.self,
                 String?.self, [String].self, Bool?.self,
@@ -511,7 +516,7 @@ extension SwiftTrace {
         ]
 
         /**
-         Generic argument handler given an invoction and the concrete type
+         Generic argument handler given an invocation and the concrete type
          */
         public static func handleArg(invocation: Invocation,
                                      isReturn: Bool, type: Any.Type) -> String? {

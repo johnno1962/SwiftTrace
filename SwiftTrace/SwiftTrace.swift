@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#256 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#257 $
 //
 
 import Foundation
@@ -204,7 +204,9 @@ open class SwiftTrace: NSObject {
         if bundlePath != nil {
             findSwiftSymbols(bundlePath, classesIncludingObjc()) {
                 aClass,_,_,_ in
-                callback(autoBitCast(aClass), &stopped)
+                if !stopped {
+                    callback(autoBitCast(aClass), &stopped)
+                }
             }
             return stopped
         }
@@ -276,9 +278,7 @@ open class SwiftTrace: NSObject {
         let regexp = NSRegularExpression(regexp: pattern)
         forAllClasses {
             (aClass, stop) in
-            let className = NSStringFromClass(aClass) as NSString
-            if regexp.firstMatch(in: String(describing: className) as String,
-                                 range: NSMakeRange(0, className.length)) != nil {
+            if regexp.matches(NSStringFromClass(aClass)) {
                 trace(aClass: aClass)
             }
         }
