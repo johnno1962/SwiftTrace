@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#114 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#123 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -70,7 +70,7 @@ public func sizeof(anyType: Any.Type) -> size_t
  Shenaniggans to be able to decorate any type linked into an app
  */
 @_silgen_name("thunkToGeneric")
-func thunkToGeneric(funcPtr: UnsafeRawPointer, valuePtr: UnsafeRawPointer,
+func thunkToGeneric(funcPtr: UnsafeRawPointer, valuePtr: UnsafeRawPointer?,
                     type: Any.Type, outPtr: UnsafeMutableRawPointer)
 
 /// generic function to describe a value of any type
@@ -83,12 +83,27 @@ public func appender<Type>(value: Type, outPtr: UnsafeMutableRawPointer) {
     outPtr.assumingMemoryBound(to: [Any].self).pointee.append(value)
 }
 
+/// generic function to find the optional type for a wrapped type
+public func getOptionalType<Type>(value: Optional<Type>, outPtr: UnsafeMutableRawPointer) {
+    outPtr.assumingMemoryBound(to: Any.Type?.self).pointee = Optional<Type>.self
+}
+
+/// generic function to find the array type for an element type
+public func getArrayType<Type>(value: Array<Type>, outPtr: UnsafeMutableRawPointer) {
+    outPtr.assumingMemoryBound(to: Any.Type?.self).pointee = Array<Type>.self
+}
+
 extension SwiftTrace {
 
     /**
      Enable auto decoration of unknown types
      */
     static public var typeLookup = false
+
+    /**
+     A "pagmatic" limit on the size of structs that will be decorated
+     */
+    static public var maxIntegerArgumentSlots = 4
 
     /**
      Definitions related to auto-tracability of types
@@ -103,9 +118,9 @@ extension SwiftTrace {
     /**
      Find pointer for function processing type as generic
      */
-    public static func bindGeneric(name: String, owner: String = module)
-        -> UnsafeMutableRawPointer {
-        let symbol = "$s\(owner)\(mangle(name))\(argumentMangling)"
+    public static func bindGeneric(name: String, owner: String = module,
+                   args: String = argumentMangling) -> UnsafeMutableRawPointer {
+        let symbol = "$s\(owner)\(mangle(name))\(args)"
         let RTLD_DEFAULT = UnsafeMutableRawPointer(bitPattern: -2)
         guard let genericFunctionPtr = dlsym(RTLD_DEFAULT, symbol) else {
             fatalError("Could lot locate generic function for symbol \(symbol)")
@@ -115,6 +130,10 @@ extension SwiftTrace {
 
     static var describerFptr = bindGeneric(name: "describer")
     static var appenderFptr = bindGeneric(name: "appender")
+    static var getOptionalTypeFptr = bindGeneric(name: "getOptionalType",
+                                                 args: "5value6outPtryxSg_SvtlF")
+    static var getArrayTypeFptr = bindGeneric(name: "getArrayType",
+                                              args: "5value6outPtrySayxG_SvtlF")
 
     /**
      Add a type to the map of type arguments that can be formatted
@@ -148,13 +167,19 @@ extension SwiftTrace {
     ]
 
     public static var typeCache: [String: Any.Type?] = [
+        "Swift.String": String.self,
+        "Swift.Double": Double.self,
+        "Swift.Float": Float.self,
+        "CoreGraphics.CGFloat": CGFloat.self,
+
         // These types are known to cause problems.
         // Pre-populating a nil entry prevents them
         // being lookuped up using getType(named:).
         "Foundation.URL": nil,
+        "Foundation.UUID": nil,
         "Foundation.IndexPath": nil,
-        "SwiftUI.StrokeStyle": nil,
-        "SwiftUI.CoordinateSpace": nil,
+//        "SwiftUI.StrokeStyle": nil,
+//        "SwiftUI.CoordinateSpace": nil,
         "SwiftUI.LocalizedStringKey.StringInterpolation": nil,
         "SwiftUI.Color.RGBColorSpace": nil,
         "SwiftUI.Image.ResizingMode": nil,
@@ -164,9 +189,20 @@ extension SwiftTrace {
         "SwiftUI.KeyEquivalent": nil,
         "SwiftUI.Text.DateStyle": nil,
         "SwiftUI.RoundedCornerStyle": nil,
-        "Kingfisher.Source": nil,
-        "Backend.Endpoint": nil,
-        "Backend.Video": nil
+        "SwiftUI.PopoverAttachmentAnchor": nil,
+        "SwiftUI.SwitchToggleStyle": nil,
+
+        // Also encountered these
+//        "Kingfisher.Source": nil,
+//        "Backend.Endpoint": nil,
+//        "Backend.Video": nil,
+
+        // This is a cheat as this struct
+        // contains a mix of Float/String
+//        "MovieSwift.ImageData": nil,
+//        "Unwrap.RearrangeTheLinesPractice": nil,
+//        "Curiosity.PostDetailToolbar": nil,
+//        "Kingfisher.ImageLoadingResult": nil,
     ]
     static var typeCacheLock = OS_SPINLOCK_INIT
 
@@ -176,30 +212,49 @@ extension SwiftTrace {
     public static func getType(named: String) -> Any.Type? {
         OSSpinLockLock(&typeCacheLock)
         defer { OSSpinLockUnlock(&typeCacheLock) }
+        var out: Any.Type?
         if let type = typeCache[named] {
             return type
-        }
-        var mangled = ""
-        var first = true
-        var out: Any.Type?
-        for name in named.components(separatedBy: ".") {
-            mangled += nameAbbreviations[name] ?? mangle(name)
-            out = nil
-            if !first {
-                if let type = _typeByName(mangled+"V") {
-                    mangled += "V" // value type
-                    out = type
-                } else if let type = _typeByName(mangled+"C") {
-                    mangled += "C" // class type
-                    out = type
-                } else if let type = _typeByName(mangled+"O") {
-                    mangled += "O" // enum type?
-                    out = type
-                } else {
-                    break
-                }
+        } else if named.hasPrefix("Swift.Optional<"),
+            let wrapped = named[safe: .start+15 ..< .end-1] {
+            OSSpinLockUnlock(&typeCacheLock)
+            if let wrappedType = SwiftTrace.getType(named: wrapped) {
+                thunkToGeneric(funcPtr: getOptionalTypeFptr,
+                               valuePtr: nil,
+                               type: wrappedType, outPtr: &out)
             }
-            first = false
+            OSSpinLockLock(&typeCacheLock)
+        } else if named.hasPrefix("Swift.Array<"),
+            let element = named[safe: .start+12 ..< .end-1] {
+            OSSpinLockUnlock(&typeCacheLock)
+            if let elementType = SwiftTrace.getType(named: element) {
+                thunkToGeneric(funcPtr: getArrayTypeFptr,
+                               valuePtr: nil,
+                               type: elementType, outPtr: &out)
+            }
+            OSSpinLockLock(&typeCacheLock)
+        } else {
+            var mangled = ""
+            var first = true
+            for name in named.components(separatedBy: ".") {
+                mangled += nameAbbreviations[name] ?? mangle(name)
+                out = nil
+                if !first {
+                    if let type = _typeByName(mangled+"V") {
+                        mangled += "V" // value type
+                        out = type
+                    } else if let type = _typeByName(mangled+"C") {
+                        mangled += "C" // class type
+                        out = type
+                    } else if let type = _typeByName(mangled+"O") {
+                        mangled += "O" // enum type?
+                        out = type
+                    } else {
+                        break
+                    }
+                }
+                first = false
+            }
         }
         typeCache[named] = out
         return out
@@ -245,25 +300,30 @@ extension SwiftTrace {
          Cache of positions in signature of arguments
          */
         lazy var argTypeRanges: [Range<String.Index>] = {
-            let endArgs = signature.range(of: " -> ")?.lowerBound
-            let args = endArgs != nil ? signature[..<(endArgs!+0)] : signature
-            return ranges(in: args, parser: Decorated.argumentParser)
+            return ranges(in: signature, parser: Decorated.argumentParser)
         }()
 
         /**
-         Ranges of arguments in signature
+         Ranges of arguments in signature, there is a lot going on here,,
          */
         open func ranges(in signature: String, parser: NSRegularExpression) -> [Range<String.Index>] {
+            let start = parser === Decorated.argumentParser ?
+                signature.range(of: "(", range: signature.index(after:
+                    signature.startIndex)..<signature.endIndex)?.upperBound ??
+                    signature.startIndex : signature.startIndex
+            let end = signature.contains("Foundation.URL") ? start :
+                parser == Decorated.argumentParser ?
+                signature.range(of: " -> ")?.lowerBound ?? signature.endIndex :
+                signature.endIndex
             return parser.matches(in: signature,
-                    range: NSRange(signature.startIndex ..<
-                    signature.endIndex, in: signature)).compactMap {
+                    range: NSRange(start ..< end, in: signature)).compactMap {
                 Range($0.range(at: 1), in: signature) ??
                 Range($0.range(at: 2), in: signature)
             }
         }
 
         /**
-         substitute argguament values into signature on method entry
+         substitute argument values into signature on method entry
          */
         open override func entryDecorate(stack: inout EntryStack) -> String {
             let invocation = self.invocation()!
@@ -327,8 +387,6 @@ extension SwiftTrace {
             invocation.floatArgumentOffset = 0
             invocation.intArgumentOffset = 0
 
-            _ = Decorated.installCompoundTraceableTypes
-
             for range in typeRanges {
                 output += signature[position ..< range.lowerBound]
                 var value: String?
@@ -338,8 +396,6 @@ extension SwiftTrace {
                     let handled = typeHandler(invocation, isReturn) {
                     value = handled
                 } else if typeLookup || type.hasPrefix("Swift."),
-                          signature[..<range.lowerBound]
-                            .firstIndex(of: "<") == nil,
                       let anyType = SwiftTrace.getType(named: type) {
                     value = Decorated.handleArg(invocation: invocation,
                                             isReturn: isReturn, type: anyType)
@@ -347,15 +403,6 @@ extension SwiftTrace {
                     value = Decorated.handleArg(invocation: invocation,
                                                 isReturn: isReturn,
                                                 type: AnyObject?.self)
-                } else if type.hasPrefix("Swift.Optional<") {
-                    let optional = type[.start+15 ..< .end-1]
-                        .replacingOccurrences(of: "^__C\\.", with: "",
-                                              options: .regularExpression)
-                    if NSClassFromString(optional) != nil {
-                        value = Decorated.handleArg(invocation: invocation,
-                                                    isReturn: isReturn,
-                                                    type: AnyObject?.self)
-                    }
                 }
 
                 position = range.upperBound
@@ -375,17 +422,6 @@ extension SwiftTrace {
                 signature.endIndex
             return output + signature[position ..< endIndex]
         }
-
-        static let installCompoundTraceableTypes: () = {
-            makeTraceable(types: [
-                Int?.self, [Int].self, Range<Int>.self,
-                UInt?.self, [UInt].self, Range<UInt>.self,
-                String?.self, [String].self, Bool?.self,
-                Float.self, Double.self, CGFloat.self,
-                Float?.self, Double?.self, CGFloat?.self,
-                [Float].self, [Double].self, [CGFloat].self,
-            ])
-        }()
 
         /**
          Mapping of Swift type names to handler for that concrete type
@@ -537,6 +573,9 @@ extension SwiftTrace {
                     .advanced(by: slot))
                 invocation.floatArgumentOffset += slotsRequired
             } else {
+                if slotsRequired > maxIntegerArgumentSlots {
+                    return nil
+                }
                 slot = invocation.intArgumentOffset
                 maxSlots = isReturn ? ExitStack.returnRegs : EntryStack.maxIntSlots
                 argPointer = UnsafeRawPointer((isReturn ?
@@ -560,6 +599,10 @@ extension SwiftTrace {
                                type: type, outPtr: $0)
             }
 
+            return describe(argPointer, type: type)
+        }
+
+        static func describe(_ argPointer: UnsafeRawPointer, type: Any.Type) -> String {
             if type == AnyObject?.self {
                 if let id = argPointer.load(as: AnyObject?.self) {
                     if let cls = object_getClass(id), cls.isSubclass(of: NSProxy.class()) {
@@ -608,8 +651,8 @@ fileprivate protocol OptionalTyping {
 }
 extension Optional: OptionalTyping {
     static func describe(optionalPtr: UnsafeRawPointer) -> String {
-        if let value = optionalPtr.load(as: Wrapped?.self) {
-            return "\(value)"
+        if var value = optionalPtr.load(as: Wrapped?.self) {
+            return SwiftTrace.Decorated.describe(&value, type: Wrapped.self)
         }
         return "nil"
     }

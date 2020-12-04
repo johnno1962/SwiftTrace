@@ -23,8 +23,9 @@ public protocol P {
     func z( _ d: XInt, f: Double, s: String?, g: Float, h: Double, f1: Double?, g1: Float, h1: Double, f2: Double, g2: Float, h2: myType?, e: myType2? )
     func rect(r1: NSRect, r2: NSRect) -> NSRect
     func rect2(r1: NSRect, r2: NSRect) -> Stret
-    func arr(a: [String], b: [Int]) -> [String]
+    func arr(a: [String?], b: [Int]) -> [String?]
     func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> ()
+    func u(i: Int, u: URL, j: Int) -> URL
 }
 
 open class TestClass: NSObject, P {
@@ -52,12 +53,16 @@ open class TestClass: NSObject, P {
         return Stret(r1: r1, r2: r2, r3: r2)
     }
 
-    public func arr(a: [String], b: [Int]) -> [String] {
+    public func arr(a: [String?], b: [Int]) -> [String?] {
         return a
     }
 
     public func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> () {
         return c
+    }
+    
+    public func u(i: Int, u: URL, j: Int) -> URL {
+        return u
     }
 }
 
@@ -86,12 +91,16 @@ struct TestStruct: P {
         return Stret(r1: r1, r2: r2, r3: r2)
     }
 
-    public func arr(a: [String], b: [Int]) -> [String] {
+    public func arr(a: [String?], b: [Int]) -> [String?] {
         return a
     }
 
     public func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> () {
         return c
+    }
+    
+    public func u(i: Int, u: URL, j: Int) -> URL {
+        return u
     }
 }
 
@@ -138,6 +147,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         print(SwiftTrace.methodNames(ofClass: TestClass.self))
         print(SwiftTrace.swiftClassList(bundlePath: class_getImageName(TestClass.self)))
+
+        print(a.u(i: 99, u: URL(string: "http://google.com")!, j: 89))
 
         a.i = 888
         print(a.i)

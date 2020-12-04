@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#257 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#258 $
 //
 
 import Foundation
@@ -405,7 +405,7 @@ open class SwiftTrace: NSObject {
      - parameter matchingPattern: regex pattern to match entries against
      - parameter subLevels: subLevels to log of previous traces to trace
      */
-    #if swift(>=5.0)
+    #if swift(>=5.0) && !arch(arm64)
     @objc open class func traceProtocolsInBundle(containing aClass: AnyClass? = nil, matchingPattern: String? = nil, subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels)
         let regex = matchingPattern != nil ?
