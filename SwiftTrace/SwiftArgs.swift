@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#123 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#127 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -66,31 +66,23 @@ extension OSEdgeInsets: SwiftTraceFloatArg {}
 @_silgen_name("sizeofAnyType")
 public func sizeof(anyType: Any.Type) -> size_t
 
-/**
- Shenaniggans to be able to decorate any type linked into an app
- */
-@_silgen_name("thunkToGeneric")
-func thunkToGeneric(funcPtr: UnsafeRawPointer, valuePtr: UnsafeRawPointer?,
-                    type: Any.Type, outPtr: UnsafeMutableRawPointer)
-
 /// generic function to describe a value of any type
 public func describer<Type>(value: Type, outPtr: UnsafeMutableRawPointer) {
-    outPtr.assumingMemoryBound(to: String.self).pointee =  "\(value)"
+    var out = "\(value)"
+    if type(of: value) is AnyClass && !(value is CustomStringConvertible) {
+        let mirror = Mirror(reflecting: value)
+        var props = [String]()
+        for (name, value) in mirror.children {
+            props.append("\(name ?? "noname"): \(value is String ? "\"\(value)\"" : value)")
+        }
+        out = "<\(out) 0x\(String(unsafeBitCast(value, to: uintptr_t.self), radix: 16))>(\(props.joined(separator: ", ")))"
+    }
+    outPtr.assumingMemoryBound(to: String.self).pointee = out
 }
 
 /// generic function to append a value to an array
 public func appender<Type>(value: Type, outPtr: UnsafeMutableRawPointer) {
     outPtr.assumingMemoryBound(to: [Any].self).pointee.append(value)
-}
-
-/// generic function to find the optional type for a wrapped type
-public func getOptionalType<Type>(value: Optional<Type>, outPtr: UnsafeMutableRawPointer) {
-    outPtr.assumingMemoryBound(to: Any.Type?.self).pointee = Optional<Type>.self
-}
-
-/// generic function to find the array type for an element type
-public func getArrayType<Type>(value: Array<Type>, outPtr: UnsafeMutableRawPointer) {
-    outPtr.assumingMemoryBound(to: Any.Type?.self).pointee = Array<Type>.self
 }
 
 extension SwiftTrace {
@@ -105,35 +97,36 @@ extension SwiftTrace {
      */
     static public var maxIntegerArgumentSlots = 4
 
-    /**
-     Definitions related to auto-tracability of types
-     */
-    public static let module =
-        mangle(_typeName(SwiftTrace.self).components(separatedBy: ".")[0])
-    public static let argumentMangling = "5value6outPtryx_SvtlF"
-    static func mangle(_ name: String) -> String {
-        return "\(name.utf16.count)\(name)"
-    }
+    // For describing values and appending values to arguments array
+    static var describerFptr = SwiftMeta.bindGeneric(name: "describer")
+    static var appenderFptr = SwiftMeta.bindGeneric(name: "appender")
 
     /**
-     Find pointer for function processing type as generic
+     Default pattern of type names to be excluded from decoration
      */
-    public static func bindGeneric(name: String, owner: String = module,
-                   args: String = argumentMangling) -> UnsafeMutableRawPointer {
-        let symbol = "$s\(owner)\(mangle(name))\(args)"
-        let RTLD_DEFAULT = UnsafeMutableRawPointer(bitPattern: -2)
-        guard let genericFunctionPtr = dlsym(RTLD_DEFAULT, symbol) else {
-            fatalError("Could lot locate generic function for symbol \(symbol)")
+    open class var defaultLookupExclusions: String {
+        return """
+            ^(Foundation\\.|SwiftUI\\.(LocalizedStringKey\\.StringInterpolation|\
+            Color\\.RGBColorSpace|Image\\.ResizingMode|NavigationBarItem\\.TitleDisplayMode|\
+            RoundedRectangle|ToolbarItemPlacement|KeyEquivalent|Text\\.DateStyle|\
+            RoundedCornerStyle|PopoverAttachmentAnchor|SwitchToggleStyle))
+            """
+    }
+
+    static var lookupExclusionRegexp: NSRegularExpression? =
+        NSRegularExpression(regexp: defaultLookupExclusions)
+
+    /**
+     Exclude types with name matching this pattern. If not specified
+     a default regular expression in defaultLookupExclusions is used.
+     */
+    open class var lookupExclusionPattern: String? {
+        get { return lookupExclusionRegexp?.pattern }
+        set(newValue) {
+            lookupExclusionRegexp = newValue == nil ? nil :
+                NSRegularExpression(regexp: newValue!)
         }
-        return genericFunctionPtr
     }
-
-    static var describerFptr = bindGeneric(name: "describer")
-    static var appenderFptr = bindGeneric(name: "appender")
-    static var getOptionalTypeFptr = bindGeneric(name: "getOptionalType",
-                                                 args: "5value6outPtryxSg_SvtlF")
-    static var getArrayTypeFptr = bindGeneric(name: "getArrayType",
-                                              args: "5value6outPtrySayxG_SvtlF")
 
     /**
      Add a type to the map of type arguments that can be formatted
@@ -158,106 +151,8 @@ extension SwiftTrace {
      */
     open class func makeUntracable(typesNamed: [String]) {
         for typeName in typesNamed {
-            typeCache[typeName] = nil
+            SwiftMeta.typeCache[typeName] = nil
         }
-    }
-
-    public static var nameAbbreviations = [
-        "Swift": "s"
-    ]
-
-    public static var typeCache: [String: Any.Type?] = [
-        "Swift.String": String.self,
-        "Swift.Double": Double.self,
-        "Swift.Float": Float.self,
-        "CoreGraphics.CGFloat": CGFloat.self,
-
-        // These types are known to cause problems.
-        // Pre-populating a nil entry prevents them
-        // being lookuped up using getType(named:).
-        "Foundation.URL": nil,
-        "Foundation.UUID": nil,
-        "Foundation.IndexPath": nil,
-//        "SwiftUI.StrokeStyle": nil,
-//        "SwiftUI.CoordinateSpace": nil,
-        "SwiftUI.LocalizedStringKey.StringInterpolation": nil,
-        "SwiftUI.Color.RGBColorSpace": nil,
-        "SwiftUI.Image.ResizingMode": nil,
-        "SwiftUI.NavigationBarItem.TitleDisplayMode": nil,
-        "SwiftUI.RoundedRectangle": nil,
-        "SwiftUI.ToolbarItemPlacement": nil,
-        "SwiftUI.KeyEquivalent": nil,
-        "SwiftUI.Text.DateStyle": nil,
-        "SwiftUI.RoundedCornerStyle": nil,
-        "SwiftUI.PopoverAttachmentAnchor": nil,
-        "SwiftUI.SwitchToggleStyle": nil,
-
-        // Also encountered these
-//        "Kingfisher.Source": nil,
-//        "Backend.Endpoint": nil,
-//        "Backend.Video": nil,
-
-        // This is a cheat as this struct
-        // contains a mix of Float/String
-//        "MovieSwift.ImageData": nil,
-//        "Unwrap.RearrangeTheLinesPractice": nil,
-//        "Curiosity.PostDetailToolbar": nil,
-//        "Kingfisher.ImageLoadingResult": nil,
-    ]
-    static var typeCacheLock = OS_SPINLOCK_INIT
-
-    /**
-     Best effort recovery of type from a qualified name
-     */
-    public static func getType(named: String) -> Any.Type? {
-        OSSpinLockLock(&typeCacheLock)
-        defer { OSSpinLockUnlock(&typeCacheLock) }
-        var out: Any.Type?
-        if let type = typeCache[named] {
-            return type
-        } else if named.hasPrefix("Swift.Optional<"),
-            let wrapped = named[safe: .start+15 ..< .end-1] {
-            OSSpinLockUnlock(&typeCacheLock)
-            if let wrappedType = SwiftTrace.getType(named: wrapped) {
-                thunkToGeneric(funcPtr: getOptionalTypeFptr,
-                               valuePtr: nil,
-                               type: wrappedType, outPtr: &out)
-            }
-            OSSpinLockLock(&typeCacheLock)
-        } else if named.hasPrefix("Swift.Array<"),
-            let element = named[safe: .start+12 ..< .end-1] {
-            OSSpinLockUnlock(&typeCacheLock)
-            if let elementType = SwiftTrace.getType(named: element) {
-                thunkToGeneric(funcPtr: getArrayTypeFptr,
-                               valuePtr: nil,
-                               type: elementType, outPtr: &out)
-            }
-            OSSpinLockLock(&typeCacheLock)
-        } else {
-            var mangled = ""
-            var first = true
-            for name in named.components(separatedBy: ".") {
-                mangled += nameAbbreviations[name] ?? mangle(name)
-                out = nil
-                if !first {
-                    if let type = _typeByName(mangled+"V") {
-                        mangled += "V" // value type
-                        out = type
-                    } else if let type = _typeByName(mangled+"C") {
-                        mangled += "C" // class type
-                        out = type
-                    } else if let type = _typeByName(mangled+"O") {
-                        mangled += "O" // enum type?
-                        out = type
-                    } else {
-                        break
-                    }
-                }
-                first = false
-            }
-        }
-        typeCache[named] = out
-        return out
     }
 
     /**
@@ -273,7 +168,7 @@ extension SwiftTrace {
     }
 
     /**
-     Returns a pointer to tye type handlers dictionary - no longer used
+     Returns a pointer to the type handlers dictionary - no longer used
      */
     @objc class var swiftTypeHandlers: UnsafeMutableRawPointer {
         return UnsafeMutableRawPointer(&Decorated.swiftTypeHandlers)
@@ -311,7 +206,7 @@ extension SwiftTrace {
                 signature.range(of: "(", range: signature.index(after:
                     signature.startIndex)..<signature.endIndex)?.upperBound ??
                     signature.startIndex : signature.startIndex
-            let end = signature.contains("Foundation.URL") ? start :
+            let end = signature.contains("Foundation.URL") ? start : // WHY??
                 parser == Decorated.argumentParser ?
                 signature.range(of: " -> ")?.lowerBound ?? signature.endIndex :
                 signature.endIndex
@@ -328,10 +223,8 @@ extension SwiftTrace {
         open override func entryDecorate(stack: inout EntryStack) -> String {
             let invocation = self.invocation()!
             return objcMethod != nil ?
-                objcDecorate(signature: nil,
-                             invocation: invocation) :
-                swiftDecorate(signature: signature,
-                              invocation: invocation,
+                objcDecorate(signature: nil, invocation: invocation) :
+                swiftDecorate(signature: signature, invocation: invocation,
                               parser: Decorated.argumentParser)
         }
 
@@ -386,7 +279,7 @@ extension SwiftTrace {
                 signature.startIndex : signature.startIndex
             invocation.floatArgumentOffset = 0
             invocation.intArgumentOffset = 0
-
+            
             for range in typeRanges {
                 output += signature[position ..< range.lowerBound]
                 var value: String?
@@ -395,8 +288,9 @@ extension SwiftTrace {
                 if let typeHandler = Decorated.swiftTypeHandlers[type],
                     let handled = typeHandler(invocation, isReturn) {
                     value = handled
-                } else if typeLookup || type.hasPrefix("Swift."),
-                      let anyType = SwiftTrace.getType(named: type) {
+                } else if typeLookup || type.hasPrefix("Swift"),
+                      let anyType = SwiftMeta.getType(named: type,
+                                              exclude: lookupExclusionRegexp) {
                     value = Decorated.handleArg(invocation: invocation,
                                             isReturn: isReturn, type: anyType)
                 } else if NSClassFromString(type) != nil {

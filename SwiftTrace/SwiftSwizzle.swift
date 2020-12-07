@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#42 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#46 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -18,6 +18,15 @@ import SwiftTraceGuts
 #endif
 
 extension SwiftTrace {
+
+    public typealias SIMP = SwiftMeta.SIMP
+
+    /**
+     Hook to intercept all trace output
+     */
+    public static var logOutput: (String) -> () = {
+        print($0, terminator: "")
+    }
 
     /** Used for real time filtering */
     static var includeFilter: NSRegularExpression?
@@ -204,8 +213,8 @@ extension SwiftTrace {
                    ThreadLocal.current().caller()?.subLogged = true
                    let decorated = entryDecorate(stack: &stack)
                    let indent = String(repeating: SwiftTrace.traceIndent,
-                                    count: invocation.stackDepth)
-                   print("\(subLogging() ? "\n" : "")\(indent)\(decorated)", terminator: "")
+                                       count: invocation.stackDepth)
+                   logOutput("\(subLogging() ? "\n" : "")\(indent)\(decorated)")
                }
            }
        }
@@ -232,7 +241,14 @@ extension SwiftTrace {
                let elapsed = Invocation.usecTime() - invocation.timeEntered
                if invocation.shouldDecorate && shouldTrace() {
                    let returnValue = exitDecorate(stack: &stack)
-                   print("\(invocation.subLogged ? "\n\(String(repeating: "  ", count: invocation.stackDepth))<-" : objcMethod != nil ? " ->" : "") \(returnValue)\(String(format: SwiftTrace.timeFormat, elapsed * 1000.0))", terminator: subLogging() ? "" : "\n")
+                   logOutput("""
+                        \(invocation.subLogged ? """
+                            \n\(String(repeating: "  ",
+                                       count: invocation.stackDepth))<-
+                            """ : objcMethod != nil ? " ->" : "") \
+                        \(returnValue)\(String(format: SwiftTrace.timeFormat,
+                                elapsed * 1000.0))\(subLogging() ? "" : "\n")
+                        """)
                }
                totalElapsed += elapsed
                invocationCount += 1

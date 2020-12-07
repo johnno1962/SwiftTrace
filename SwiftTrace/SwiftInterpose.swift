@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#42 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#43 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -67,7 +67,7 @@ extension SwiftTrace {
 
         for suffix in swiftFunctionSuffixes {
             findSwiftSymbols(aBundle, suffix, { symval, symname, _, _ in
-                if demangle(symbol: symname) == methodName,
+                if SwiftMeta.demangle(symbol: symname) == methodName,
                     let current = interposed(replacee: symval),
                     let method = patchClass.init(name: methodName,
                          original: OpaquePointer(current),
@@ -108,12 +108,11 @@ extension SwiftTrace {
         for suffix in swiftFunctionSuffixes {
             findSwiftSymbols(inBundlePath, suffix) {
                 symval, symname,  _, _ in
-                if let methodName = demangle(symbol: symname),
+                if let methodName = SwiftMeta.demangle(symbol: symname),
                     packageName == nil ||
                         methodName.hasPrefix(packageName!+".") ||
                         methodName.hasPrefix("(extension in \(packageName!))"),
-                    excludeFunction.firstMatch(in: methodName, options: [],
-                        range: NSMakeRange(0, methodName.utf16.count)) == nil,
+                    !excludeFunction.matches(methodName),
                     let factory = methodFilter(methodName),
                     let current = interposed(replacee: symval),
                     let method = factory.init(name: methodName,

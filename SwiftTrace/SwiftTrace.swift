@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#258 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#259 $
 //
 
 import Foundation
@@ -21,7 +21,7 @@ import SwiftTraceGuts
 @objcMembers
 /// Base namespace of SwiftTrace functions
 open class SwiftTrace: NSObject {
-
+    
     /**
      Format for ms of time spend in method
      */
@@ -359,7 +359,7 @@ open class SwiftTrace: NSObject {
                                    callback: (_ name: String, _ slotIndex: Int,
                                               _ vtableSlot: UnsafeMutablePointer<SIMP>,
                                               _ stop: inout Bool) -> Void) -> Bool {
-        let swiftMeta: UnsafeMutablePointer<TargetClassMetadata> = autoBitCast(aClass)
+        let swiftMeta: UnsafeMutablePointer<SwiftMeta.TargetClassMetadata> = autoBitCast(aClass)
         let className = NSStringFromClass(aClass)
         var stop = false
 
@@ -386,7 +386,7 @@ open class SwiftTrace: NSObject {
                 if fast_dladdr(voidPtr, &info) != 0,
                     let symname = info.dli_sname,
                     symname[strlen(symname)-1] == UInt8(ascii: "F"),
-                    let demangled = demangle(symbol: symname) {
+                    let demangled = SwiftMeta.demangle(symbol: symname) {
                     callback(demangled, slotIndex,
                              &vtableStart[slotIndex]!, &stop)
                     if stop {
@@ -430,7 +430,7 @@ open class SwiftTrace: NSObject {
                 }
                 if fast_dladdr(autoBitCast(witnessTable[slot]),
                                &info) != 0 && info.dli_sname != nil,
-                    let demangled = demangle(symbol: info.dli_sname) {
+                    let demangled = SwiftMeta.demangle(symbol: info.dli_sname) {
                     if demangled.hasPrefix("protocol witness table for") {
                         continue
                     }
@@ -555,26 +555,5 @@ open class SwiftTrace: NSObject {
             name[Int(strlen(name))-1] = 0
             return class_getProperty(aClass, &name[3]) != nil
         }
-    }
-}
-
-/**
- Convenience extension to trap regex errors and report them
- */
-extension NSRegularExpression {
-
-    convenience init(regexp: String) {
-        do {
-            try self.init(pattern: regexp)
-        }
-        catch let error as NSError {
-            fatalError("Invalid regexp: \(regexp): \(error.localizedDescription)")
-        }
-    }
-
-    func matches(_ string: String) -> Bool {
-        return rangeOfFirstMatch(in: string,
-            range: NSRange(string.startIndex ..< string.endIndex,
-                           in: string)).location != NSNotFound
     }
 }

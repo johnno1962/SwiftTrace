@@ -10,7 +10,7 @@ import Cocoa
 
 public typealias XInt = UInt16
 
-public struct Stret {
+public struct Stret: SwiftTraceFloatArg {
     let r1: CGRect, r2: CGRect, r3: CGRect
 }
 
@@ -170,7 +170,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 //        ptest(p: TestClass())
 
+        #if !arch(arm64)
         TestClass.swiftTraceProtocolsInBundle()
+        #endif
 
         ptest(p: TestStruct())
         ptest(p: TestClass())
