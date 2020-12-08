@@ -14,6 +14,19 @@ public struct Stret: SwiftTraceFloatArg {
     let r1: CGRect, r2: CGRect, r3: CGRect
 }
 
+public struct STR: Hashable {
+    let s: String
+    public init(s: String) {
+        self.s = s
+    }
+    public func hash(into hasher: inout Hasher) {
+        s.hash(into: &hasher)
+    }
+    public static func ==(lhs: STR, rhs: STR) -> Bool {
+        return lhs.s == rhs.s
+    }
+}
+
 public protocol P {
     associatedtype myType
     associatedtype myType2
@@ -23,7 +36,8 @@ public protocol P {
     func z( _ d: XInt, f: Double, s: String?, g: Float, h: Double, f1: Double?, g1: Float, h1: Double, f2: Double, g2: Float, h2: myType?, e: myType2? )
     func rect(r1: NSRect, r2: NSRect) -> NSRect
     func rect2(r1: NSRect, r2: NSRect) -> Stret
-    func arr(a: [String?], b: [Int]) -> [String?]
+    func arr(a: [String?], b: [Int]) -> ArraySlice<String?>
+    func arr2(a: [String?], b: [Int]) -> Set<STR>
     func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> ()
     func u(i: Int, u: URL, j: Int) -> URL
 }
@@ -53,8 +67,12 @@ open class TestClass: NSObject, P {
         return Stret(r1: r1, r2: r2, r3: r2)
     }
 
-    public func arr(a: [String?], b: [Int]) -> [String?] {
-        return a
+    public func arr(a: [String?], b: [Int]) -> ArraySlice<String?> {
+        return a[1...]
+    }
+
+    public func arr2(a: [String?], b: [Int]) -> Set<STR> {
+        return Set(a.map {STR(s: $0!)})
     }
 
     public func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> () {
@@ -91,8 +109,12 @@ struct TestStruct: P {
         return Stret(r1: r1, r2: r2, r3: r2)
     }
 
-    public func arr(a: [String?], b: [Int]) -> [String?] {
-        return a
+    public func arr(a: [String?], b: [Int]) -> ArraySlice<String?> {
+        return a[1...]
+    }
+
+    public func arr2(a: [String?], b: [Int]) -> Set<STR> {
+        return Set(a.map {STR(s: $0!)})
     }
 
     public func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> () {
@@ -157,6 +179,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         a.x()
         a.z( 88, f: 66, s: "$%^", g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
         print(a.arr(a: ["a", "b", "c"], b: [1, 2, 3]))
+        print(a.arr2(a: ["a", "b", "c"], b: [1, 2, 3]))
         print(a.c(c: { _ in }))
         print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect(r1: __C.CGRect, r2: __C.CGRect) -> __C.CGRect", args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)) as NSRect)
 

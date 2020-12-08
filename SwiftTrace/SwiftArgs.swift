@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#127 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#129 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -70,12 +70,12 @@ public func sizeof(anyType: Any.Type) -> size_t
 public func describer<Type>(value: Type, outPtr: UnsafeMutableRawPointer) {
     var out = "\(value)"
     if type(of: value) is AnyClass && !(value is CustomStringConvertible) {
-        let mirror = Mirror(reflecting: value)
         var props = [String]()
-        for (name, value) in mirror.children {
-            props.append("\(name ?? "noname"): \(value is String ? "\"\(value)\"" : value)")
+        for (name, value) in Mirror(reflecting: value).children {
+            props.append("\(name ?? "_"): \(value is String ? "\"\(value)\"" : value)")
         }
-        out = "<\(out) 0x\(String(unsafeBitCast(value, to: uintptr_t.self), radix: 16))>(\(props.joined(separator: ", ")))"
+        let ptr = String(unsafeBitCast(value, to: uintptr_t.self), radix: 16)
+        out = "<\(out) 0x\(ptr)>(\(props.joined(separator: ", ")))"
     }
     outPtr.assumingMemoryBound(to: String.self).pointee = out
 }
@@ -98,8 +98,11 @@ extension SwiftTrace {
     static public var maxIntegerArgumentSlots = 4
 
     // For describing values and appending values to arguments array
-    static var describerFptr = SwiftMeta.bindGeneric(name: "describer")
-    static var appenderFptr = SwiftMeta.bindGeneric(name: "appender")
+    static var genericArgumentToPtr = SwiftMeta.genericArgument+"_SvtlF"
+    static var describerFptr = SwiftMeta.bindGeneric(name: "describer",
+                                                     args: genericArgumentToPtr)
+    static var appenderFptr = SwiftMeta.bindGeneric(name: "appender",
+                                                    args: genericArgumentToPtr)
 
     /**
      Default pattern of type names to be excluded from decoration
@@ -490,7 +493,7 @@ extension SwiftTrace {
 
             withUnsafeMutablePointer(to: &invocation.arguments) {
                 thunkToGeneric(funcPtr: appenderFptr, valuePtr: argPointer,
-                               type: type, outPtr: $0)
+                               outPtr: $0, type: type)
             }
 
             return describe(argPointer, type: type)
@@ -533,7 +536,7 @@ extension SwiftTrace {
             } else {
                 var out = ""
                 thunkToGeneric(funcPtr: describerFptr, valuePtr: argPointer,
-                               type: type, outPtr: &out)
+                               outPtr: &out, type: type)
                 return out
             }
         }
@@ -546,7 +549,10 @@ fileprivate protocol OptionalTyping {
 extension Optional: OptionalTyping {
     static func describe(optionalPtr: UnsafeRawPointer) -> String {
         if var value = optionalPtr.load(as: Wrapped?.self) {
-            return SwiftTrace.Decorated.describe(&value, type: Wrapped.self)
+            var out = ""
+            thunkToGeneric(funcPtr: SwiftTrace.describerFptr, valuePtr: &value,
+                           outPtr: &out, type: Wrapped.self)
+            return out
         }
         return "nil"
     }

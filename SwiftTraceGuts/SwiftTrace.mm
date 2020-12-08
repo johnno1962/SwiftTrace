@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#36 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#38 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -775,12 +775,13 @@ struct ValueWitnessTable {
 };
 
 typedef void (*SignatureOfFunctionTakingGenericValue)(const void *valuePtr,
-                                        void *outPtr, const void *metaType);
+              void *outPtr, const void *metaType, const void *witnessTable);
 
 extern "C" {
     size_t sizeofAnyType(struct ValueWitnessTable **metaType);
     void thunkToGeneric(SignatureOfFunctionTakingGenericValue genericFunction,
-                        const void *valuePtr, const void *metaType, void *outPtr);
+                        const void *valuePtr, void *outPtr,
+                        const void *metaType, const void *witnessTable);
 }
 
 /// Just before the MetaType data is a pointer to the ValueWitnessTable
@@ -792,8 +793,9 @@ size_t sizeofAnyType(struct ValueWitnessTable **metaType) {
 /// argument when you have a pointer to the value and its type.
 /// See: https://www.youtube.com/watch?v=ctS8FzqcRug
 void thunkToGeneric(SignatureOfFunctionTakingGenericValue genericFunction,
-                    const void *valuePtr, const void *metaType, void *outPtr) {
-    genericFunction(valuePtr, outPtr, metaType);
+                    const void *valuePtr, void *outPtr,
+                    const void *metaType, const void *witnessTable) {
+    genericFunction(valuePtr, outPtr, metaType, witnessTable);
 }
 
 // https://stackoverflow.com/questions/20481058/find-pathname-from-dlopen-handle-on-osx
@@ -869,7 +871,7 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
                         NSUInteger sufflen = strlen(suffix);
                         void *location;
 
-                        if (sym->n_type == 0xf &&
+                        if ((sym->n_type == 0xf || sym->n_type & 0x1e) &&
                             ((strncmp(sptr, "_$s", 3) == 0 &&
                               strcmp(sptr+strlen(sptr)-sufflen, suffix) == 0) ||
                              (suffix == includeObjcClasses && strncmp(sptr,

@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#11 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#15 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -42,17 +42,32 @@ func _stdlib_demangleImpl(
  }
  */
 @_silgen_name("thunkToGeneric")
-func thunkToGeneric(funcPtr: UnsafeRawPointer, valuePtr: UnsafeRawPointer?,
-                    type: Any.Type, outPtr: UnsafeMutableRawPointer)
+func thunkToGeneric(funcPtr: UnsafeRawPointer, valuePtr: UnsafeRawPointer? = nil,
+                    outPtr: UnsafeMutableRawPointer, type: Any.Type,
+                    witness: UnsafeRawPointer? = nil)
 
-/// generic function to find the optional type for a wrapped type
-public func getOptionalType<Type>(value: Optional<Type>, outPtr: UnsafeMutableRawPointer) {
-    outPtr.assumingMemoryBound(to: Any.Type?.self).pointee = Optional<Type>.self
+/// generic function to find the Optional type for a wrapped type
+public func getOptionalType<Type>(value: Type,
+                                  outPtr: UnsafeMutablePointer<Any.Type?>) {
+    outPtr.pointee = Optional<Type>.self
 }
 
-/// generic function to find the array type for an element type
-public func getArrayType<Type>(value: Array<Type>, outPtr: UnsafeMutableRawPointer) {
-    outPtr.assumingMemoryBound(to: Any.Type?.self).pointee = Array<Type>.self
+/// generic function to find the Array type for an element type
+public func getArrayType<Type>(value: Type,
+                               outPtr: UnsafeMutablePointer<Any.Type?>) {
+    outPtr.pointee = Array<Type>.self
+}
+
+/// generic function to find the ArraySlice slice  type for an element type
+public func getArraySliceType<Type>(value: Type,
+                                    outPtr: UnsafeMutablePointer<Any.Type?>) {
+    outPtr.pointee = ArraySlice<Type>.self
+}
+
+// generic function to find the Set type for a Hashable wrapped type
+public func getSetType<Type: Hashable>(value: Type,
+                                       outPtr: UnsafeMutablePointer<Any.Type?>) {
+    outPtr.pointee = Set<Type>.self
 }
 
 public class SwiftMeta {
@@ -60,20 +75,20 @@ public class SwiftMeta {
     /**
      Definitions related to auto-tracability of types
      */
-    public static let module =
+    public static let modulePrefix =
         mangle(_typeName(SwiftMeta.self).components(separatedBy: ".")[0])
-    public static let argumentMangling = "5value6outPtryx_SvtlF"
+    static let RTLD_DEFAULT = UnsafeMutableRawPointer(bitPattern: -2)
     static func mangle(_ name: String) -> String {
-        return "\(name.utf16.count)\(name)"
+        return "\(name.utf8.count)\(name)"
     }
 
     /**
      Find pointer for function processing type as generic
      */
-    public static func bindGeneric(name: String, owner: String = module,
-                   args: String = argumentMangling) -> UnsafeMutableRawPointer {
+    public static func bindGeneric(name: String, owner: String = modulePrefix,
+                                   args: String = genericValueMangling)
+                                                -> UnsafeMutableRawPointer {
         let symbol = "$s\(owner)\(mangle(name))\(args)"
-        let RTLD_DEFAULT = UnsafeMutableRawPointer(bitPattern: -2)
         guard let genericFunctionPtr = dlsym(RTLD_DEFAULT, symbol) else {
             fatalError("Could lot locate generic function for symbol \(symbol)")
         }
@@ -81,12 +96,17 @@ public class SwiftMeta {
     }
 
     /**
-     Gneric thunks that can be used to convert a type into the Array/Optional for that type
+     Generic thunks that can be used to convert a type into the Optional/Array/Set for that type
      */
-    static var getArrayTypeFptr = bindGeneric(name: "getArrayType",
-                                              args: "5value6outPtrySayxG_SvtlF")
-    static var getOptionalTypeFptr = bindGeneric(name: "getOptionalType",
-                                                 args: "5value6outPtryxSg_SvtlF")
+    public static let genericArgument = "5value6outPtryx"
+    public static let anyTypeOutPtr = "_SpyypXpSgGtlF"
+    public static let genericValueMangling = genericArgument+anyTypeOutPtr
+
+    static var getOptionalTypeFptr = bindGeneric(name: "getOptionalType")
+    static var getArrayTypeFptr = bindGeneric(name: "getArrayType")
+    static var getArraySliceTypeFptr = bindGeneric(name: "getArraySliceType")
+    static var getSetTypeFptr = bindGeneric(name: "getSetType",
+                                    args: genericArgument+"_SpyypXpSgGtSHRzlF")
 
     public static var nameAbbreviations = [
         "Swift": "s"
@@ -96,38 +116,6 @@ public class SwiftMeta {
         "Swift.String": String.self,
         "Swift.Double": Double.self,
         "Swift.Float": Float.self,
-
-        // These types are known to cause problems.
-        // Pre-populating a nil entry prevents them
-        // being lookuped up using getType(named:).
-//        "Foundation.URL": nil,
-//        "Foundation.UUID": nil,
-//        "Foundation.IndexPath": nil,
-////        "SwiftUI.StrokeStyle": nil,
-////        "SwiftUI.CoordinateSpace": nil,
-//        "SwiftUI.LocalizedStringKey.StringInterpolation": nil,
-//        "SwiftUI.Color.RGBColorSpace": nil,
-//        "SwiftUI.Image.ResizingMode": nil,
-//        "SwiftUI.NavigationBarItem.TitleDisplayMode": nil,
-//        "SwiftUI.RoundedRectangle": nil,
-//        "SwiftUI.ToolbarItemPlacement": nil,
-//        "SwiftUI.KeyEquivalent": nil,
-//        "SwiftUI.Text.DateStyle": nil,
-//        "SwiftUI.RoundedCornerStyle": nil,
-//        "SwiftUI.PopoverAttachmentAnchor": nil,
-//        "SwiftUI.SwitchToggleStyle": nil,
-
-        // Also encountered these
-//        "Kingfisher.Source": nil,
-//        "Backend.Endpoint": nil,
-//        "Backend.Video": nil,
-
-        // This is a cheat as this struct
-        // contains a mix of Float/String
-//        "MovieSwift.ImageData": nil,
-//        "Unwrap.RearrangeTheLinesPractice": nil,
-//        "Curiosity.PostDetailToolbar": nil,
-//        "Kingfisher.ImageLoadingResult": nil,
     ]
     static var typeCacheLock = OS_SPINLOCK_INIT
 
@@ -147,8 +135,7 @@ public class SwiftMeta {
             if let wrappedType = SwiftMeta.getType(named: wrapped,
                                                    exclude: exclude) {
                 thunkToGeneric(funcPtr: getOptionalTypeFptr,
-                               valuePtr: nil,
-                               type: wrappedType, outPtr: &out)
+                               outPtr: &out, type: wrappedType)
             }
             OSSpinLockLock(&typeCacheLock)
         } else if named.hasPrefix("Swift.Array<"),
@@ -157,8 +144,47 @@ public class SwiftMeta {
             if let elementType = SwiftMeta.getType(named: element,
                                                    exclude: exclude) {
                 thunkToGeneric(funcPtr: getArrayTypeFptr,
-                               valuePtr: nil,
-                               type: elementType, outPtr: &out)
+                               outPtr: &out, type: elementType)
+            }
+            OSSpinLockLock(&typeCacheLock)
+        } else if named.hasPrefix("Swift.ArraySlice<"),
+            let element = named[safe: .start+17 ..< .end-1] {
+            OSSpinLockUnlock(&typeCacheLock)
+            if let elementType = SwiftMeta.getType(named: element,
+                                                   exclude: exclude) {
+                thunkToGeneric(funcPtr: getArraySliceTypeFptr,
+                               outPtr: &out, type: elementType)
+            }
+            OSSpinLockLock(&typeCacheLock)
+        } else if named.hasPrefix("Swift.Set<"),
+            let element = named[safe: .start+10 ..< .end-1] {
+            OSSpinLockUnlock(&typeCacheLock)
+            if let elementType = SwiftMeta.getType(named: element,
+                                                   exclude: exclude) {
+                var info = Dl_info()
+                dladdr(unsafeBitCast(elementType,
+                                     to: UnsafeRawPointer.self), &info)
+                let mangled = String(cString: info.dli_sname)[..<(.end-1)]
+                if let hashableWitness = dlsym(RTLD_DEFAULT, mangled+"SHsWP") {
+                    thunkToGeneric(funcPtr: getSetTypeFptr,
+                                   outPtr: &out, type: elementType,
+                                   witness: hashableWitness)
+                }
+                else {
+                    typealias GetWitness = @convention(c) () -> UnsafeRawPointer
+                    let witnessSuffix = "ACSHAAWl"
+                    (mangled + witnessSuffix).withCString { witnessSymbol in
+                        findSwiftSymbols(Bundle.main.executablePath!, witnessSuffix) {
+                            (ptr, symbol, _, _) in
+                            if strcmp(symbol, witnessSymbol) == 0 {
+                                let witnessFptr: GetWitness = autoBitCast(ptr)
+                                thunkToGeneric(funcPtr: getSetTypeFptr,
+                                               outPtr: &out, type: elementType,
+                                               witness: witnessFptr())
+                            }
+                        }
+                    }
+                }
             }
             OSSpinLockLock(&typeCacheLock)
         } else if exclude?.matches(named) != true {
