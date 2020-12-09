@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#129 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#131 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -202,17 +202,16 @@ extension SwiftTrace {
         }()
 
         /**
-         Ranges of arguments in signature, there is a lot going on here,,
+         Ranges of arguments in signature. There's a lot going on here..
          */
         open func ranges(in signature: String, parser: NSRegularExpression) -> [Range<String.Index>] {
             let start = parser === Decorated.argumentParser ?
-                signature.range(of: "(", range: signature.index(after:
-                    signature.startIndex)..<signature.endIndex)?.upperBound ??
+                signature.index(of: .start+1 + .first(of: "(")) ??
                     signature.startIndex : signature.startIndex
             let end = signature.contains("Foundation.URL") ? start : // WHY??
                 parser == Decorated.argumentParser ?
-                signature.range(of: " -> ")?.lowerBound ?? signature.endIndex :
-                signature.endIndex
+                signature.index(of: .first(of: " -> ")) ?? signature.endIndex :
+                    signature.endIndex
             return parser.matches(in: signature,
                     range: NSRange(start ..< end, in: signature)).compactMap {
                 Range($0.range(at: 1), in: signature) ??

@@ -9,8 +9,10 @@
 //
 //  Repo: https://github.com/johnno1962/StringIndex.git
 //
-//  $Id: //depot/StringIndex/Sources/StringIndex/StringIndex.swift#9 $
+//  $Id: //depot/StringIndex/Sources/StringIndex/StringIndex.swift#19 $
 //
+
+import Foundation
 
 // Basic operators to offset String.Index when used in a subscript
 public func + (index: String.Index?, offset: Int) -> String.OffsetIndex {
@@ -19,25 +21,50 @@ public func + (index: String.Index?, offset: Int) -> String.OffsetIndex {
 public func - (index: String.Index?, offset: Int) -> String.OffsetIndex {
     return index + -offset
 }
+public func + (index: String.Index?, offset: String.OffsetIndex)
+    -> String.OffsetIndex {
+    return .offsetIndex(index: index, offset: 0) + offset
+}
 
 // Mixed String.Index and OffsetIndex in range
 public func ..< (lhs: String.OffsetIndex, rhs: String.Index?)
     -> Range<String.OffsetIndex> {
-    return lhs ..< rhs + 0
+    return lhs ..< rhs+0
 }
 public func ..< (lhs: String.Index?, rhs: String.OffsetIndex)
     -> Range<String.OffsetIndex> {
-    return lhs + 0 ..< rhs
+    return lhs+0 ..< rhs
+}
+
+extension Range where Bound == String.Index {
+    public init?<S: StringProtocol>(_ range: Range<String.OffsetIndex>, in string: S) {
+        guard let lower = string.index(of: range.lowerBound),
+            let upper = string.index(of: range.upperBound) else {
+            return nil
+        }
+        self = lower ..< upper
+    }
+}
+
+extension NSRange {
+    public init?<S: StringProtocol>(_ range: Range<String.OffsetIndex>, in string: S) {
+        guard let lower = string.index(of: range.lowerBound),
+            let upper = string.index(of: range.upperBound) else {
+            return nil
+        }
+        self.init(lower ..< upper, in: string)
+    }
 }
 
 extension String {
 
     /// Represents an index to be offset
-    public enum OffsetIndex: Comparable {
+    public indirect enum OffsetIndex: Comparable {
         case offsetIndex(index: Index?, offset: Int),
-             start, startOffset(offset: Int), end, endOffset(offset: Int),
-             first(of: Character), firstOffset(of: Character, offset: Int),
-             last(of: Character), lastOffset(of: Character, offset: Int)
+             start, end, first(of: String), last(of: String),
+             chainedOffset(previous: OffsetIndex, offset: Int),
+             chained(previous: OffsetIndex, offset: OffsetIndex),
+             either(_ index: OffsetIndex, or: OffsetIndex)
 
         func safeIndex<S: StringProtocol>(_ index: Index, offsetBy: Int,
                                           in string: S) -> Index? {
@@ -51,65 +78,46 @@ extension String {
                 out = string.index(after: out)
                 offset -= 1
             }
-            if offset == 0 {
-                return out
-            }
-            return nil
+            return offset == 0 ? out : nil
         }
 
-        public func index<S: StringProtocol>(in string: S) -> String.Index? {
+        public func index<S: StringProtocol>(from: Index? = nil, in string: S)
+            -> String.Index? {
             switch self {
             case .offsetIndex(let index, let offset):
                 guard let index = index else { return nil }
                 return safeIndex(index, offsetBy: offset, in: string)
             case .start:
                 return string.startIndex
-            case .startOffset(let offset):
-                return safeIndex(string.startIndex, offsetBy: offset, in: string)
             case .end:
                 return string.endIndex
-            case .endOffset(let offset):
-                return safeIndex(string.endIndex, offsetBy: offset, in: string)
             case .first(of: let c):
-                guard let first = string.firstIndex(of: c) else { return nil }
-                return first
-            case .firstOffset(of: let c, offset: let offset):
-                guard let first = string.firstIndex(of: c) else { return nil }
-                return safeIndex(first, offsetBy: offset, in: string)
+                return string.range(of: c, range:
+                    (from ?? string.startIndex)..<string.endIndex)?.lowerBound
             case .last(of: let c):
-                guard let last = string.lastIndex(of: c) else { return nil }
-                return last
-            case .lastOffset(of: let c, offset: let offset):
-                guard let last = string.lastIndex(of: c) else { return nil }
+                return string.range(of: c, options: .backwards, range:
+                    string.startIndex..<(from ?? string.endIndex))?.lowerBound
+            case .chainedOffset(let previous, let offset):
+                guard let last = previous.index(in: string) else { return nil }
                 return safeIndex(last, offsetBy: offset, in: string)
+            case .chained(let previous, let offset):
+                guard let last = previous.index(in: string) else { return nil }
+                return offset.index(from: last, in: string)
+            case .either(let index, let or):
+                return index.index(in: string) ?? or.index(in: string)
             }
         }
 
         // Chaining offsets in expressions
         public static func + (index: OffsetIndex, offset: Int) -> OffsetIndex {
-            switch index {
-            case .offsetIndex(let index, let offset0):
-                return .offsetIndex(index: index, offset: offset0 + offset)
-            case .start:
-                return .startOffset(offset: offset)
-            case .startOffset(let offset0):
-                return .startOffset(offset: offset0 + offset)
-            case .end:
-                return .endOffset(offset: offset)
-            case .endOffset(let offset0):
-                return .endOffset(offset: offset0 + offset)
-            case .first(of: let c):
-                return .firstOffset(of: c, offset: offset)
-            case .firstOffset(of: let c, offset: let offset0):
-                return .firstOffset(of: c, offset: offset0 + offset)
-            case .last(of: let c):
-                return .lastOffset(of: c, offset: offset)
-            case .lastOffset(of: let c, offset: let offset0):
-                return .lastOffset(of: c, offset: offset0 + offset)
-            }
+            return .chainedOffset(previous: index, offset: offset)
         }
         public static func - (index: OffsetIndex, offset: Int) -> OffsetIndex {
             return index + -offset
+        }
+        public static func + (index: OffsetIndex,
+                              offset: OffsetIndex) -> OffsetIndex {
+            return .chained(previous: index, offset: offset)
         }
 
         /// Required by Comparable check when creating ranges
@@ -124,7 +132,12 @@ extension StringProtocol {
     public typealias OISubstring = String // Can/should? be Substring
     public typealias OOISubstring = OISubstring? // "safe:" prefixed subscripts
 
-    // Subscripts on StringProtocol for OffsetIndex type
+    /// realise index from OffsetIndex
+    public func index(of: OffsetIndex) -> String.Index? {
+        return of.index(in: self)
+    }
+
+    /// Subscripts on StringProtocol for OffsetIndex type
     public subscript (offset: OffsetIndex) -> Character {
         get {
             guard let result = self[safe: offset] else {
@@ -133,7 +146,7 @@ extension StringProtocol {
             return result
         }
         set (newValue) {
-            guard let start = offset.index(in: self) else {
+            guard let start = index(of: offset) else {
                 fatalError("Invalid offset index \(offset), \(#function)")
             }
             // Assigning Chacater to endIndex is an append.
@@ -151,8 +164,8 @@ extension StringProtocol {
             return result
         }
         set (newValue) {
-            guard let from = range.lowerBound.index(in: self),
-                let to = range.upperBound.index(in: self) else {
+            guard let from = index(of: range.lowerBound),
+                let to = index(of: range.upperBound) else {
                 fatalError("Invalid range of offset index \(range), \(#function)")
             }
             let before = self[..<from], after = self[to...]
@@ -174,14 +187,14 @@ extension StringProtocol {
     // "safe" nil returning subscripts on StringProtocol for OffsetIndex
     // from:  https://forums.swift.org/t/optional-safe-subscripting-for-arrays
     public subscript (safe offset: OffsetIndex) -> Character? {
-        get { return offset.index(in: self).flatMap { self[$0] } }
+        get { return index(of: offset).flatMap { self[$0] } }
         set (newValue) { self[offset] = newValue! }
     }
     // lhs ..< rhs operator
     public subscript (safe range: Range<OffsetIndex>) -> OOISubstring {
         get {
-            guard let from = range.lowerBound.index(in: self),
-                let to = range.upperBound.index(in: self) else { return nil }
+            guard let from = index(of: range.lowerBound),
+                let to = index(of: range.upperBound) else { return nil }
             return OISubstring(self[from ..< to])
         }
         set (newValue) { self[range] = newValue! }
