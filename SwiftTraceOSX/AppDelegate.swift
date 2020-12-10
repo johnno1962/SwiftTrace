@@ -27,6 +27,11 @@ public struct STR: Hashable {
     }
 }
 
+public protocol P2 {
+}
+extension String: P2 {
+}
+
 public protocol P {
     associatedtype myType
     associatedtype myType2
@@ -38,8 +43,10 @@ public protocol P {
     func rect2(r1: NSRect, r2: NSRect) -> Stret
     func arr(a: [String?], b: [Int]) -> ArraySlice<String?>
     func arr2(a: [String?], b: [Int]) -> Set<STR>
+    func dict(d: [String: Set<STR>]?) -> [String: Set<STR>]?
     func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> ()
     func u(i: Int, u: URL, j: Int) -> URL
+    func p(p: P2) -> P2
 }
 
 open class TestClass: NSObject, P {
@@ -75,12 +82,20 @@ open class TestClass: NSObject, P {
         return Set(a.map {STR(s: $0!)})
     }
 
+    public func dict(d: [String: Set<STR>]?) -> [String: Set<STR>]? {
+        return d
+    }
+
     public func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> () {
         return c
     }
-    
+
     public func u(i: Int, u: URL, j: Int) -> URL {
         return u
+    }
+
+    public func p(p: P2) -> P2 {
+        return p
     }
 }
 
@@ -117,12 +132,20 @@ struct TestStruct: P {
         return Set(a.map {STR(s: $0!)})
     }
 
+    public func dict(d: [String: Set<STR>]?) -> [String: Set<STR>]? {
+        return d
+    }
+
     public func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> () {
         return c
     }
-    
+
     public func u(i: Int, u: URL, j: Int) -> URL {
         return u
+    }
+
+    public func p(p: P2) -> P2 {
+        return p
     }
 }
 
@@ -180,7 +203,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         a.z( 88, f: 66, s: "$%^", g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
         print(a.arr(a: ["a", "b", "c"], b: [1, 2, 3]))
         print(a.arr2(a: ["a", "b", "c"], b: [1, 2, 3]))
+        let d = Optional.some(["test": Set([STR(s: "value")])])
+        print(sizeof(anyType: type(of: d)))
+        print(a.dict(d: d)!)
         print(a.c(c: { _ in }))
+        print(a.p(p: "s"))
         print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect(r1: __C.CGRect, r2: __C.CGRect) -> __C.CGRect", args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)) as NSRect)
 
         NSObject.swiftTraceRemoveAllTraces()
@@ -218,7 +245,4 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ aNotification: Notification) {
         // Insert code here to tear down your application
     }
-
-
 }
-
