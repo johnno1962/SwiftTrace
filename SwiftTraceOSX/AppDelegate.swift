@@ -47,11 +47,14 @@ public protocol P {
     func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> ()
     func u(i: Int, u: URL, j: Int) -> URL
     func p(p: P2) -> P2
+    func c2(c: TestClass) -> TestClass
 }
 
-open class TestClass: NSObject, P {
+open class TestClass: P {
 
     public var i = 999
+    public var s = "8"
+    public var tc: TestClass?
 
     open func x() {
         print( "open func x() \(i)" )
@@ -96,6 +99,10 @@ open class TestClass: NSObject, P {
 
     public func p(p: P2) -> P2 {
         return p
+    }
+
+    public func c2(c: TestClass) -> TestClass {
+        return c
     }
 }
 
@@ -146,6 +153,10 @@ struct TestStruct: P {
 
     public func p(p: P2) -> P2 {
         return p
+    }
+
+    public func c2(c: TestClass) -> TestClass {
+        return c
     }
 }
 
@@ -207,6 +218,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         print(sizeof(anyType: type(of: d)))
         print(a.dict(d: d)!)
         print(a.c(c: { _ in }))
+        a.tc = a
+        print(a.c2(c: a))
         print(a.p(p: "s"))
         print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect(r1: __C.CGRect, r2: __C.CGRect) -> __C.CGRect", args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)) as NSRect)
 
@@ -221,7 +234,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 //        ptest(p: TestClass())
 
         #if !arch(arm64)
-        TestClass.swiftTraceProtocolsInBundle()
+//        TestClass.swiftTraceProtocolsInBundle()
         #endif
 
         ptest(p: TestStruct())

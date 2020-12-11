@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#19 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#28 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -47,33 +47,28 @@ func thunkToGeneric(funcPtr: UnsafeRawPointer, valuePtr: UnsafeRawPointer?,
                     witness: UnsafeRawPointer? = nil)
 
 /// generic function to find the Optional type for a wrapped type
-public func getOptionalType<Type>(value: Type,
-                                  outPtr: UnsafeMutablePointer<Any.Type?>) {
-    outPtr.pointee = Optional<Type>.self
+public func getOptionalType<Type>(value: Type, out: inout Any.Type?) {
+    out = Optional<Type>.self
 }
 
 /// generic function to find the Array type for an element type
-public func getArrayType<Type>(value: Type,
-                               outPtr: UnsafeMutablePointer<Any.Type?>) {
-    outPtr.pointee = Array<Type>.self
+public func getArrayType<Type>(value: Type, out: inout Any.Type?) {
+    out = Array<Type>.self
 }
 
-/// generic function to find the ArraySlice slice  type for an element type
-public func getArraySliceType<Type>(value: Type,
-                                    outPtr: UnsafeMutablePointer<Any.Type?>) {
-    outPtr.pointee = ArraySlice<Type>.self
+/// generic function to find the ArraySlice slice type for an element type
+public func getArraySliceType<Type>(value: Type, out: inout Any.Type?) {
+    out = ArraySlice<Type>.self
 }
 
-/// generic function to find the Dictionary with String key type for an element type
-public func getDictionaryType<Type>(value: Type,
-                                    outPtr: UnsafeMutablePointer<Any.Type?>) {
-    outPtr.pointee = Dictionary<String, Type>.self
+/// generic function to find the Dictionary with String key for an element type
+public func getDictionaryType<Type>(value: Type, out: inout Any.Type?) {
+    out = Dictionary<String, Type>.self
 }
 
 // generic function to find the Set type for a Hashable wrapped type
-public func getSetType<Type: Hashable>(value: Type,
-                                       outPtr: UnsafeMutablePointer<Any.Type?>) {
-    outPtr.pointee = Set<Type>.self
+public func getSetType<Type: Hashable>(value: Type, out: inout Any.Type?) {
+    out = Set<Type>.self
 }
 
 public class SwiftMeta {
@@ -92,7 +87,7 @@ public class SwiftMeta {
      Find pointer for function processing type as generic
      */
     public static func bindGeneric(name: String, owner: String = modulePrefix,
-                                   args: String = genericValueMangling)
+                                   args: String = genericArgumentMangling)
                                                 -> UnsafeMutableRawPointer {
         let symbol = "$s\(owner)\(mangle(name))\(args)"
         guard let genericFunctionPtr = dlsym(RTLD_DEFAULT, symbol) else {
@@ -104,12 +99,12 @@ public class SwiftMeta {
     /**
      Generic thunks that can be used to convert a type into the Optional/Array/Set for that type
      */
-    public static let genericArgument = "5value6outPtryx"
-    public static let anyTypeOutPtr = "_SpyypXpSgGtlF"
-    public static let genericValueMangling = genericArgument+anyTypeOutPtr
+    public static let genericArgument = "5value3outyx"
+    public static let returnAnyType = "_ypXpSgztlF"
+    public static let genericArgumentMangling = genericArgument+returnAnyType
 
     static var getSetTypeFptr = bindGeneric(name: "getSetType",
-                                    args: genericArgument+"_SpyypXpSgGtSHRzlF")
+                                        args: genericArgument+"_ypXpSgztSHRzlF")
 
     /// Handled compund types
     public static var wrapperHandlers = [
@@ -123,72 +118,51 @@ public class SwiftMeta {
         "Swift": "s"
     ]
 
-    public static var typeCache: [String: Any.Type?] = [
+    public static var typeLookupCache: [String: Any.Type?] = [
         // These types have non-standard manglings
         "Swift.String": String.self,
         "Swift.Double": Double.self,
         "Swift.Float": Float.self,
     ]
-    static var typeCacheLock = OS_SPINLOCK_INIT
+    static var typeLookupCacheLock = OS_SPINLOCK_INIT
     
     /**
      Best effort recovery of type from a qualified name
      */
-    public static func getType(named: String,
-                               exclude: NSRegularExpression? = nil) -> Any.Type? {
-        OSSpinLockLock(&typeCacheLock)
-        defer { OSSpinLockUnlock(&typeCacheLock) }
+    public static func lookupType(named: String,
+                             exclude: NSRegularExpression? = nil) -> Any.Type? {
+        OSSpinLockLock(&typeLookupCacheLock)
+        defer { OSSpinLockUnlock(&typeLookupCacheLock) }
         var out: Any.Type?
-        if let type = typeCache[named] {
+        if let type = typeLookupCache[named] {
             return type
         }
         
-        if let prefix = named[safe:..<(.either(.first(of: " "),
-                                               or: .first(of: "<"))+1)],
-            let handler = wrapperHandlers[prefix] {
-            OSSpinLockUnlock(&typeCacheLock)
-            if let wrapped = named[safe: .start+prefix.count ..< .end-1],
-                let wrappedType = SwiftMeta.getType(named: wrapped,
-                                                   exclude: exclude) {
+        for (prefix, handler) in wrapperHandlers {
+            OSSpinLockUnlock(&typeLookupCacheLock)
+            if named.hasPrefix(prefix),
+                let wrapped = named[safe: .start+prefix.count ..< .end-1],
+                let wrappedType = SwiftMeta.lookupType(named: wrapped,
+                                                       exclude: exclude) {
                 thunkToGeneric(funcPtr: handler, valuePtr: nil,
                                outPtr: &out, type: wrappedType)
+                break
             }
-            OSSpinLockLock(&typeCacheLock)
+            OSSpinLockLock(&typeLookupCacheLock)
         }
-        else if named.hasPrefix("Swift.Set<"),
+
+        if out == nil && named.hasPrefix("Swift.Set<"),
             let element = named[safe: .start+10 ..< .end-1] {
-            OSSpinLockUnlock(&typeCacheLock)
-            if let elementType = SwiftMeta.getType(named: element,
-                                                   exclude: exclude) {
-                var info = Dl_info()
-                dladdr(unsafeBitCast(elementType,
-                                     to: UnsafeRawPointer.self), &info)
-                let mangled = String(cString: info.dli_sname)[..<(.end-1)]
-                if let hashableWitness = dlsym(RTLD_DEFAULT, mangled+"SHsWP") {
-                    thunkToGeneric(funcPtr: getSetTypeFptr, valuePtr: nil,
-                                   outPtr: &out, type: elementType,
-                                   witness: hashableWitness)
-                }
-                else {
-                    typealias GetWitness = @convention(c) () -> UnsafeRawPointer
-                    let witnessSuffix = "ACSHAAWl"
-                    (mangled + witnessSuffix).withCString { witnessSymbol in
-                        let mainBundle = Bundle.main.executablePath!
-                        findSwiftSymbols(mainBundle, witnessSuffix) {
-                            (ptr, symbol, _, _) in
-                            if strcmp(symbol, witnessSymbol) == 0 {
-                                let witnessFptr: GetWitness = autoBitCast(ptr)
-                                thunkToGeneric(funcPtr: getSetTypeFptr,
-                                               valuePtr: nil, outPtr: &out,
-                                               type: elementType,
-                                               witness: witnessFptr())
-                            }
-                        }
-                    }
-                }
+            OSSpinLockUnlock(&typeLookupCacheLock)
+            if let elementType = SwiftMeta.lookupType(named: element,
+                                                      exclude: exclude),
+                let hashableWitness = getHashableWitnessTable(for: elementType) {
+                thunkToGeneric(funcPtr: getSetTypeFptr, valuePtr: nil,
+                               outPtr: &out, type: elementType,
+                               witness: hashableWitness)
             }
-            OSSpinLockLock(&typeCacheLock)
-        } else if exclude?.matches(named) != true {
+            OSSpinLockLock(&typeLookupCacheLock)
+        } else if out == nil && exclude?.matches(named) != true {
             var mangled = ""
             var first = true
             for name in named.components(separatedBy: ".") {
@@ -211,8 +185,41 @@ public class SwiftMeta {
                 first = false
             }
         }
-        typeCache[named] = out
+        typeLookupCache[named] = out
         return out
+    }
+
+    public static func mangledName(for type: Any.Type) -> String? {
+        var info = Dl_info()
+        if dladdr(autoBitCast(type), &info) != 0,
+            let metaTypeSymbol = info.dli_sname {
+            return String(cString: metaTypeSymbol)[safe: ..<(.end-1)]
+        }
+        return nil
+    }
+
+    static func getHashableWitnessTable(for elementType: Any.Type)
+        -> UnsafeRawPointer? {
+        var hashableWitnessTable: UnsafeRawPointer?
+        if let mangledName = mangledName(for: elementType) {
+            if let theEasyWay = dlsym(RTLD_DEFAULT, mangledName+"SHsWP") {
+                hashableWitnessTable = UnsafeRawPointer(theEasyWay)
+            } else {
+                let witnessSuffix = "ACSHAAWl"
+                (mangledName + witnessSuffix).withCString { getWitnessSymbol in
+                    typealias GetWitness = @convention(c) () -> UnsafeRawPointer
+                    let bundlePath = Bundle.main.executablePath!
+                    findSwiftSymbols(bundlePath, witnessSuffix) {
+                        (address, symbol, _, _) in
+                        if strcmp(symbol, getWitnessSymbol) == 0,
+                            let witnessFptr: GetWitness = autoBitCast(address) {
+                            hashableWitnessTable = witnessFptr()
+                        }
+                    }
+                }
+            }
+        }
+        return hashableWitnessTable
     }
 
     /** pointer to a function implementing a Swift method */

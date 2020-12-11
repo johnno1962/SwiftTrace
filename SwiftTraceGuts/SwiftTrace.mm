@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#38 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#39 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -867,18 +867,18 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
                                                (symtab->symoff + file_slide));
 
                     for (uint32_t i = 0; i < symtab->nsyms; i++, sym++) {
-                        const char *sptr = strings + sym->n_un.n_strx;
+                        const char *symname = strings + sym->n_un.n_strx;
                         NSUInteger sufflen = strlen(suffix);
-                        void *location;
+                        void *address;
 
                         if ((sym->n_type == 0xf || sym->n_type & 0x1e) &&
-                            ((strncmp(sptr, "_$s", 3) == 0 &&
-                              strcmp(sptr+strlen(sptr)-sufflen, suffix) == 0) ||
-                             (suffix == includeObjcClasses && strncmp(sptr,
+                            ((strncmp(symname, "_$s", 3) == 0 &&
+                              strcmp(symname+strlen(symname)-sufflen, suffix) == 0) ||
+                             (suffix == includeObjcClasses && strncmp(symname,
                               objcClassPrefix, sizeof objcClassPrefix-1) == 0)) &&
-                            (location = (void *)(sym->n_value +
+                            (address = (void *)(sym->n_value +
                              (intptr_t)header - (intptr_t)seg_text->vmaddr))) {
-                            callback(location, sptr+1, typeref_start,
+                            callback(address, symname+1, typeref_start,
                                      typeref_start + typeref_size);
                         }
                     }

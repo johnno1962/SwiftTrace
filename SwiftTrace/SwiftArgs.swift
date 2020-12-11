@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#132 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#142 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -66,23 +66,30 @@ extension OSEdgeInsets: SwiftTraceFloatArg {}
 @_silgen_name("sizeofAnyType")
 public func sizeof(anyType: Any.Type) -> size_t
 
-/// generic function to describe a value of any type
-public func describer<Type>(value: Type, outPtr: UnsafeMutableRawPointer) {
-    var out = "\(value)"
-    if type(of: value) is AnyClass && !(value is CustomStringConvertible) {
-        var props = [String]()
-        for (name, value) in Mirror(reflecting: value).children {
-            props.append("\(name ?? "_"): \(value is String ? "\"\(value)\"" : value)")
-        }
-        let ptr = String(unsafeBitCast(value, to: uintptr_t.self), radix: 16)
-        out = "<\(out) 0x\(ptr)>(\(props.joined(separator: ", ")))"
-    }
-    outPtr.assumingMemoryBound(to: String.self).pointee = out
+/// generic function to append a value to the arguments array
+public func appender<Type>(value: Type, out: inout [Any]) {
+    out.append(value)
 }
 
-/// generic function to append a value to an array
-public func appender<Type>(value: Type, outPtr: UnsafeMutableRawPointer) {
-    outPtr.assumingMemoryBound(to: [Any].self).pointee.append(value)
+/// generic function to describe a value of any type
+public func describer<Type>(value: Type, out: inout String) {
+    if type(of: value) is AnyClass && !(value is CustomStringConvertible) {
+        let address = String(unsafeBitCast(value, to: uintptr_t.self), radix: 16)
+        out += "<\(value) 0x\(address)>("
+        if out.utf8.count < SwiftTrace.maxArgumentDescriptionBytes {
+            var first = true
+            for (name, prop) in Mirror(reflecting: value).children {
+                out += "\(first ? "" : ", ")\(name ?? "_"): "
+                describer(value: prop, out: &out)
+                first = false
+            }
+        } else {
+            out += "..."
+        }
+        out += ")"
+    } else {
+        out += value is String ? "\"\(value)\"" : "\(value)"
+    }
 }
 
 extension SwiftTrace {
@@ -97,12 +104,17 @@ extension SwiftTrace {
      */
     static public var maxIntegerArgumentSlots = 4
 
+    /**
+     A limit on argument description size
+     */
+    static public var maxArgumentDescriptionBytes = 1_000
+
     // For describing values and appending values to arguments array
-    static var genericArgumentToPtr = SwiftMeta.genericArgument+"_SvtlF"
+    static var genericArgumentToRawPtr = SwiftMeta.genericArgument+"_SvtlF"
     static var describerFptr = SwiftMeta.bindGeneric(name: "describer",
-                                                     args: genericArgumentToPtr)
+                                      args: SwiftMeta.genericArgument+"_SSztlF")
     static var appenderFptr = SwiftMeta.bindGeneric(name: "appender",
-                                                    args: genericArgumentToPtr)
+                                  args: SwiftMeta.genericArgument+"_SayypGztlF")
 
     /**
      Default pattern of type names to be excluded from decoration
@@ -112,7 +124,8 @@ extension SwiftTrace {
             ^(Foundation\\.|SwiftUI\\.(LocalizedStringKey\\.StringInterpolation|\
             Color\\.RGBColorSpace|Image\\.ResizingMode|NavigationBarItem\\.TitleDisplayMode|\
             RoundedRectangle|ToolbarItemPlacement|KeyEquivalent|Text\\.DateStyle|\
-            RoundedCornerStyle|PopoverAttachmentAnchor|SwitchToggleStyle))
+            RoundedCornerStyle|PopoverAttachmentAnchor|SwitchToggleStyle))|\
+            \\.[_a-z]\\w*$
             """
     }
 
@@ -133,6 +146,7 @@ extension SwiftTrace {
 
     /**
      Add a type to the map of type arguments that can be formatted
+     (This is now automated by type lookup if you select it)
      */
     open class func makeTraceable(types: [Any.Type]) {
         for type in types {
@@ -141,7 +155,7 @@ extension SwiftTrace {
                 MemoryLayout<intptr_t>.size - 1) /
                 MemoryLayout<intptr_t>.size
             if slotsRequired > (type is SwiftTraceFloatArg ?
-                EntryStack.maxFloatSlots : EntryStack.maxIntSlots) {
+                EntryStack.maxFloatSlots : maxIntegerArgumentSlots) {
                 NSLog("SwiftTrace: ⚠️ Type \(typeName) is too large to be formatted ⚠️")
             }
             Decorated.swiftTypeHandlers[typeName] =
@@ -154,7 +168,7 @@ extension SwiftTrace {
      */
     open class func makeUntracable(typesNamed: [String]) {
         for typeName in typesNamed {
-            SwiftMeta.typeCache[typeName] = nil
+            SwiftMeta.typeLookupCache[typeName] = nil
         }
     }
 
@@ -185,31 +199,31 @@ extension SwiftTrace {
         /**
          Basic Swift argument type detector
          */
-        static let argumentParser =
+        static let swiftArgumentTypeParser =
             NSRegularExpression(regexp: ": ([^,)<]+(?:<.+?>)?)[,)]|\\.setter : (.+)$")
 
         /**
          Very basic return valuue type detector
          */
-        static let returnParser =
-            NSRegularExpression(regexp: ".+\\) -> (.+?)( in conformance .+)?$")
+        static let swiftReturnValueTypeParser =
+            NSRegularExpression(regexp: ".+\\) (?:throws )?-> (.+?)( in conformance .+)?$")
 
         /**
          Cache of positions in signature of arguments
          */
         lazy var argTypeRanges: [Range<String.Index>] = {
-            return ranges(in: signature, parser: Decorated.argumentParser)
+            return ranges(in: signature, parser: Decorated.swiftArgumentTypeParser)
         }()
 
         /**
          Ranges of arguments in signature. There's a lot going on here..
          */
         open func ranges(in signature: String, parser: NSRegularExpression) -> [Range<String.Index>] {
-            let start = parser === Decorated.argumentParser ?
+            let start = parser === Decorated.swiftArgumentTypeParser ?
                 signature.index(of: .start+1 + .first(of: "(")) ??
                     signature.startIndex : signature.startIndex
             let end = signature.contains("Foundation.URL") ? start : // WHY??
-                parser == Decorated.argumentParser ?
+                parser === Decorated.swiftArgumentTypeParser ?
                 signature.index(of: .first(of: " -> ")) ?? signature.endIndex :
                     signature.endIndex
             return parser.matches(in: signature,
@@ -227,7 +241,7 @@ extension SwiftTrace {
             return objcMethod != nil ?
                 objcDecorate(signature: nil, invocation: invocation) :
                 swiftDecorate(signature: signature, invocation: invocation,
-                              parser: Decorated.argumentParser)
+                              parser: Decorated.swiftArgumentTypeParser)
         }
 
         /**
@@ -240,7 +254,7 @@ extension SwiftTrace {
                              invocation: invocation) :
                 swiftDecorate(signature: invocation.decorated ?? signature,
                               invocation: invocation,
-                              parser: Decorated.returnParser)
+                              parser: Decorated.swiftReturnValueTypeParser)
         }
 
         /**
@@ -267,7 +281,7 @@ extension SwiftTrace {
             guard invocation.shouldDecorate else {
                 return signature
             }
-            let isReturn = !(parser === Decorated.argumentParser)
+            let isReturn = !(parser === Decorated.swiftArgumentTypeParser)
             var output = ""
 
             if !isReturn && hasSelf {
@@ -291,8 +305,8 @@ extension SwiftTrace {
                     let handled = typeHandler(invocation, isReturn) {
                     value = handled
                 } else if typeLookup || type.hasPrefix("Swift"),
-                      let anyType = SwiftMeta.getType(named: type,
-                                              exclude: lookupExclusionRegexp) {
+                      let anyType = SwiftMeta.lookupType(named: type,
+                                               exclude: lookupExclusionRegexp) {
                     value = Decorated.handleArg(invocation: invocation,
                                             isReturn: isReturn, type: anyType)
                 } else if NSClassFromString(type) != nil {
@@ -458,9 +472,11 @@ extension SwiftTrace {
             let slotsRequired = (sizeof(anyType: type) +
                 MemoryLayout<intptr_t>.size - 1) /
                 MemoryLayout<intptr_t>.size
+
             if type is SwiftTraceFloatArg.Type {
                 slot = invocation.floatArgumentOffset
-                maxSlots = isReturn ? ExitStack.returnRegs : EntryStack.maxFloatSlots
+                maxSlots = isReturn ?
+                    ExitStack.returnRegs : EntryStack.maxFloatSlots
                 argPointer = UnsafeRawPointer((isReturn ?
                     withUnsafeMutablePointer(to:
                     &invocation.exitStack.pointee.floatReturn1) {$0} :
@@ -468,12 +484,12 @@ extension SwiftTrace {
                     &invocation.entryStack.pointee.floatArg1) {$0})
                     .advanced(by: slot))
                 invocation.floatArgumentOffset += slotsRequired
+            } else if slotsRequired > maxIntegerArgumentSlots && !isReturn {
+                return nil
             } else {
-                if slotsRequired > maxIntegerArgumentSlots {
-                    return nil
-                }
                 slot = invocation.intArgumentOffset
-                maxSlots = isReturn ? ExitStack.returnRegs : EntryStack.maxIntSlots
+                maxSlots = isReturn ?
+                    ExitStack.returnRegs : EntryStack.maxIntSlots
                 argPointer = UnsafeRawPointer((isReturn ?
                     withUnsafeMutablePointer(to:
                     &invocation.exitStack.pointee.intReturn1) {$0} :
@@ -486,8 +502,8 @@ extension SwiftTrace {
             if isReturn && slotsRequired > ExitStack.returnRegs,
                 let structPtr = invocation.structReturn {
                 argPointer = UnsafeRawPointer(structPtr)
-            } else {
-                guard slot + slotsRequired <= maxSlots else { return nil }
+            } else if slot + slotsRequired > maxSlots {
+                return nil
             }
 
             withUnsafeMutablePointer(to: &invocation.arguments) {
@@ -495,64 +511,64 @@ extension SwiftTrace {
                                outPtr: $0, type: type)
             }
 
-            return describe(argPointer, type: type)
+            var out = ""
+            describe(argPointer, type: type, out: &out)
+            return out
         }
 
-        static func describe(_ argPointer: UnsafeRawPointer, type: Any.Type) -> String {
+        static func describe(_ argPointer: UnsafeRawPointer,
+                             type: Any.Type, out: inout String) {
             if type == AnyObject?.self {
                 if let id = argPointer.load(as: AnyObject?.self) {
                     if let cls = object_getClass(id), cls.isSubclass(of: NSProxy.class()) {
-                        return identify(id: id)
-                    }
-                    let thread = ThreadLocal.current()
-                    let describing = thread.describing
-                    defer { thread.describing = describing }
-                    thread.describing = true
-                    if id.isKind(of: NSString.self) {
-                        return "@\"\(id)\""
+                        out += identify(id: id)
                     } else {
-                        return describing ? identify(id: id) : "\(id)"
+                        let thread = ThreadLocal.current()
+                        let describing = thread.describing
+                        defer { thread.describing = describing }
+                        thread.describing = true
+                        if id.isKind(of: NSString.self) {
+                            out += "@\"\(id)\""
+                        } else {
+                            out += describing ? identify(id: id) : "\(id)"
+                        }
                     }
                 } else {
-                    return "nil"
+                    out += "nil"
                 }
             }
             else if type == UnsafePointer<UInt8>?.self {
                 if let str = argPointer.load(as: UnsafePointer<UInt8>?.self) {
-                    return "\"\(String(cString: str))\""
+                    out += "\"\(String(cString: str))\""
                 } else {
-                    return "NULL"
+                    out += "NULL"
                 }
             } else if type == UnsafeRawPointer.self {
-                return String(format: "%p", argPointer.load(as: uintptr_t.self))
+                out += String(argPointer.load(as: uintptr_t.self), radix: 16)
             } else if type == Selector.self {
                 let SEL = argPointer.load(as: Selector.self)
-                return "@selector(\(NSStringFromSelector(SEL)))"
+                out += "@selector(\(NSStringFromSelector(SEL)))"
             } else if type == String.self {
-                return "\"\(argPointer.load(as: String.self))\""
+                out += "\"\(argPointer.load(as: String.self))\""
             } else if let optionalType = type as? OptionalTyping.Type {
-                return optionalType.describe(optionalPtr: argPointer)
+                optionalType.describe(optionalPtr: argPointer, out: &out)
             } else {
-                var out = ""
                 thunkToGeneric(funcPtr: describerFptr, valuePtr: argPointer,
                                outPtr: &out, type: type)
-                return out
             }
         }
     }
 }
 
 fileprivate protocol OptionalTyping {
-    static func describe(optionalPtr: UnsafeRawPointer) -> String
+    static func describe(optionalPtr: UnsafeRawPointer, out: inout String)
 }
 extension Optional: OptionalTyping {
-    static func describe(optionalPtr: UnsafeRawPointer) -> String {
+    static func describe(optionalPtr: UnsafeRawPointer, out: inout String) {
         if var value = optionalPtr.load(as: Wrapped?.self) {
-            var out = ""
-            thunkToGeneric(funcPtr: SwiftTrace.describerFptr, valuePtr: &value,
-                           outPtr: &out, type: Wrapped.self)
-            return out
+            SwiftTrace.Decorated.describe(&value, type: Wrapped.self, out: &out)
+        } else {
+            out += "nil"
         }
-        return "nil"
     }
 }
