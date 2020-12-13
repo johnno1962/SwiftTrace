@@ -14,16 +14,25 @@ public struct Stret: SwiftTraceFloatArg {
     let r1: CGRect, r2: CGRect, r3: CGRect
 }
 
+public typealias uuid_t = (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8)
+public typealias uuid_string_t = (Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8)
+
 public struct STR: Hashable {
     let s: String
+//    let a = 1
+//    let u = URL(string: "https://google.com")
+    let u = URL(string: "")
+//    let b = 2
     public init(s: String) {
         self.s = s
+//        u = UUID()
+//        print(u)
     }
     public func hash(into hasher: inout Hasher) {
-        s.hash(into: &hasher)
+//        s.hash(into: &hasher)
     }
     public static func ==(lhs: STR, rhs: STR) -> Bool {
-        return lhs.s == rhs.s
+        return lhs.s == rhs.s && lhs.u == rhs.u
     }
 }
 
@@ -43,6 +52,7 @@ public protocol P {
     func rect2(r1: NSRect, r2: NSRect) -> Stret
     func arr(a: [String?], b: [Int]) -> ArraySlice<String?>
     func arr2(a: [String?], b: [Int]) -> Set<STR>
+    func str(i: Int, s: STR, j: Int) -> STR
     func dict(d: [String: Set<STR>]?) -> [String: Set<STR>]?
     func c(c: @escaping (_ a: String) -> ()) -> (_ a: String) -> ()
     func u(i: Int, u: URL, j: Int) -> URL
@@ -83,6 +93,10 @@ open class TestClass: P {
 
     public func arr2(a: [String?], b: [Int]) -> Set<STR> {
         return Set(a.map {STR(s: $0!)})
+    }
+
+    public func str(i: Int, s: STR, j: Int) -> STR {
+        return s
     }
 
     public func dict(d: [String: Set<STR>]?) -> [String: Set<STR>]? {
@@ -137,6 +151,10 @@ struct TestStruct: P {
 
     public func arr2(a: [String?], b: [Int]) -> Set<STR> {
         return Set(a.map {STR(s: $0!)})
+    }
+
+    public func str(i: Int, s: STR, j: Int) -> STR {
+        return s
     }
 
     public func dict(d: [String: Set<STR>]?) -> [String: Set<STR>]? {
@@ -215,12 +233,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         print(a.arr(a: ["a", "b", "c"], b: [1, 2, 3]))
         print(a.arr2(a: ["a", "b", "c"], b: [1, 2, 3]))
         let d = Optional.some(["test": Set([STR(s: "value")])])
-        print(sizeof(anyType: type(of: d)))
+        print(a.str(i: 77, s: STR(s: "value"), j: 88))
+        print(SwiftMeta.sizeof(anyType: type(of: d)))
         print(a.dict(d: d)!)
         print(a.c(c: { _ in }))
         a.tc = a
         print(a.c2(c: a))
         print(a.p(p: "s"))
+        print(MemoryLayout<STR>.size)
         print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect(r1: __C.CGRect, r2: __C.CGRect) -> __C.CGRect", args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)) as NSRect)
 
         NSObject.swiftTraceRemoveAllTraces()

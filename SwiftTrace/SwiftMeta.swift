@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#28 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#36 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -29,7 +29,7 @@ func _stdlib_demangleImpl(
 
 /**
  Shenaniggans to be able to decorate any type linked into an app. Requires the following C function:
- 
+
  typedef void (*SignatureOfFunctionTakingGenericValue)(const void *valuePtr,
                                          void *outPtr, const void *metaType);
 
@@ -74,6 +74,20 @@ public func getSetType<Type: Hashable>(value: Type, out: inout Any.Type?) {
 public class SwiftMeta {
 
     /**
+     Get the size in bytes of a type
+     */
+    public class func sizeof(anyType: Any.Type) -> size_t {
+        return getValueWitnessTable(autoBitCast(anyType)).pointee.size
+    }
+
+    /**
+     Get the stride in bytes of a type
+     */
+    public class func strideof(anyType: Any.Type) -> size_t {
+        return getValueWitnessTable(autoBitCast(anyType)).pointee.stride
+    }
+
+    /**
      Definitions related to auto-tracability of types
      */
     public static let modulePrefix =
@@ -105,10 +119,11 @@ public class SwiftMeta {
 
     static var getSetTypeFptr = bindGeneric(name: "getSetType",
                                         args: genericArgument+"_ypXpSgztSHRzlF")
+    static var getOptionalTypeFptr = bindGeneric(name: "getOptionalType")
 
     /// Handled compund types
     public static var wrapperHandlers = [
-        "Swift.Optional<": bindGeneric(name: "getOptionalType"),
+        "Swift.Optional<": getOptionalTypeFptr,
         "Swift.Array<": bindGeneric(name: "getArrayType"),
         "Swift.ArraySlice<": bindGeneric(name: "getArraySliceType"),
         "Swift.Dictionary<Swift.String, ": bindGeneric(name: "getDictionaryType"),
@@ -125,30 +140,34 @@ public class SwiftMeta {
         "Swift.Float": Float.self,
     ]
     static var typeLookupCacheLock = OS_SPINLOCK_INIT
-    
+
     /**
      Best effort recovery of type from a qualified name
      */
     public static func lookupType(named: String,
                              exclude: NSRegularExpression? = nil) -> Any.Type? {
+        if exclude?.matches(named) == true {
+            return nil
+        }
         OSSpinLockLock(&typeLookupCacheLock)
         defer { OSSpinLockUnlock(&typeLookupCacheLock) }
         var out: Any.Type?
         if let type = typeLookupCache[named] {
             return type
         }
-        
+
         for (prefix, handler) in wrapperHandlers {
-            OSSpinLockUnlock(&typeLookupCacheLock)
             if named.hasPrefix(prefix),
-                let wrapped = named[safe: .start+prefix.count ..< .end-1],
-                let wrappedType = SwiftMeta.lookupType(named: wrapped,
-                                                       exclude: exclude) {
-                thunkToGeneric(funcPtr: handler, valuePtr: nil,
-                               outPtr: &out, type: wrappedType)
+               let wrapped = named[safe: .start+prefix.count ..< .end-1] {
+                OSSpinLockUnlock(&typeLookupCacheLock)
+                if let wrappedType = SwiftMeta.lookupType(named: wrapped,
+                                                          exclude: exclude) {
+                    thunkToGeneric(funcPtr: handler, valuePtr: nil,
+                                   outPtr: &out, type: wrappedType)
+                }
+                OSSpinLockLock(&typeLookupCacheLock)
                 break
             }
-            OSSpinLockLock(&typeLookupCacheLock)
         }
 
         if out == nil && named.hasPrefix("Swift.Set<"),
@@ -162,7 +181,7 @@ public class SwiftMeta {
                                witness: hashableWitness)
             }
             OSSpinLockLock(&typeLookupCacheLock)
-        } else if out == nil && exclude?.matches(named) != true {
+        } else if out == nil {
             var mangled = ""
             var first = true
             for name in named.components(separatedBy: ".") {
@@ -221,6 +240,100 @@ public class SwiftMeta {
         }
         return hashableWitnessTable
     }
+
+    /**
+     Information about a field of a struct or class
+     */
+    public struct FieldInfo {
+        let name: String
+        let type: Any.Type
+        let offset: size_t
+    }
+
+    /**
+     Get approximate nformation about the fields of a type
+     */
+    public static func fieldInfo(forAnyType: Any.Type) -> [FieldInfo]? {
+        _ = structsPassedByReference
+        return approximateFieldInfoByTypeName[_typeName(forAnyType)]
+    }
+
+    static var approximateFieldInfoByTypeName = [String: [FieldInfo]]()
+
+    /**
+     Ferforms a one time scan of all property getters in an application to look out
+     for structs that are or contain bridged(?) values and are passed by reference
+     */
+    public static var structsPassedByReference: Set<UnsafeRawPointer> = {
+        var problemTypes = Set<UnsafeRawPointer>()
+        for var type: Any.Type in [
+            URL.self, UUID.self, Date.self, IndexPath.self] {
+            problemTypes.insert(autoBitCast(type))
+            thunkToGeneric(funcPtr: getOptionalTypeFptr,
+                           valuePtr: nil, outPtr: &type, type: type)
+            problemTypes.insert(autoBitCast(type))
+        }
+
+        var offset = 0
+        var floatType: Bool?
+        var currentType = ""
+        var bundlePaths = [UnsafePointer<Int8>]()
+
+        appBundleImages { bundlePath, _ in
+            bundlePaths.append(bundlePath)
+        }
+
+        for bundlePath in bundlePaths {
+            findSwiftSymbols(bundlePath, "g") { (_, symbol, _, _) in
+                if let symbol = SwiftMeta.demangle(symbol: symbol) {
+                    if let typeStart = symbol.index(of: .first(of: ":")+2),
+                       let nameEnd = symbol.index(of: typeStart + .last(of: ".")),
+                       let typeEnd = symbol.index(of: nameEnd + .last(of: ".")),
+                       let typeName = symbol[safe: ..<(typeEnd+0)],
+                       let fieldName = symbol[safe: typeEnd+1 ..< nameEnd],
+                       let fieldTypeName = symbol[safe: (typeStart+0)...],
+    //                    print(typeName, varTypeName)
+                        let type = SwiftMeta.lookupType(named: typeName),
+                        let fieldType = SwiftMeta.lookupType(named: fieldTypeName) {
+                        if currentType != typeName {
+                            currentType = typeName
+                            approximateFieldInfoByTypeName[typeName] = [FieldInfo]()
+                            floatType = fieldType is SwiftTraceFloatArg
+                            offset = type is AnyClass ? 8 * 3 : 0
+                        } // else if floatType != (fieldType is SwiftTraceFloatArg) {
+////                            print("\(typeName) Mixed....")
+//                            if !(type is AnyClass) {
+//                                problemTypes.insert(autoBitCast(type))
+//                            }
+//                        }
+
+                        if problemTypes.contains(autoBitCast(fieldType)) {
+//                            print("\(typeName) Foundation.... \(fieldTypeName)")
+                            if !(type is AnyClass) {
+                                problemTypes.insert(autoBitCast(type))
+                            }
+                        } else if let optional = fieldType as? OptionalTyping.Type,
+                            problemTypes.contains(autoBitCast(optional.wrappedType)){
+//                            print("\(typeName) Foundation.... \(fieldTypeName)")
+                            if !(type is AnyClass) {
+                                problemTypes.insert(autoBitCast(type))
+                                problemTypes.insert(autoBitCast(fieldType))
+                            }
+                        }
+
+                        let strideMinus1 = strideof(anyType: fieldType) - 1
+                        offset = (offset + strideMinus1) & ~strideMinus1
+                        approximateFieldInfoByTypeName[typeName]?.append(
+                            FieldInfo(name: fieldName, type: fieldType, offset: offset))
+                        offset += sizeof(anyType: fieldType)
+                    }
+                }
+            }
+        }
+
+//        print(problemTypes.map {unsafeBitCast($0, to: Any.Type.self)}, approximateFieldInfoByTypeName)
+        return problemTypes
+    }()
 
     /** pointer to a function implementing a Swift method */
     public typealias SIMP = @convention(c) () -> Void
@@ -296,6 +409,21 @@ public class SwiftMeta {
             return demangledName
         }
         return nil
+    }
+}
+
+protocol OptionalTyping {
+    static var wrappedType: Any.Type { get }
+    static func describe(optionalPtr: UnsafeRawPointer, out: inout String)
+}
+extension Optional: OptionalTyping {
+    static var wrappedType: Any.Type { return Wrapped.self }
+    static func describe(optionalPtr: UnsafeRawPointer, out: inout String) {
+        if var value = optionalPtr.load(as: Wrapped?.self) {
+            SwiftTrace.Decorated.describe(&value, type: Wrapped.self, out: &out)
+        } else {
+            out += "nil"
+        }
     }
 }
 

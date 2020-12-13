@@ -44,6 +44,8 @@
 		BB76EA17229544B400E454F0 /* SwiftTrace.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F81D0A445D00520F38 /* SwiftTrace.swift */; };
 		BB76EA18229544B900E454F0 /* SwiftTrace.mm in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F61D0A442F00520F38 /* SwiftTrace.mm */; };
 		BB76EA19229544BD00E454F0 /* xt_forwarding_trampoline_x64.s in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F11D0A43E800520F38 /* xt_forwarding_trampoline_x64.s */; };
+		BBB3A09E258618D000112C65 /* EasyPointer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1C3241254B47CF001EDFCC /* EasyPointer.swift */; };
+		BBB3A0A2258618E500112C65 /* xt_forwarding_trampoline_arm64.s in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F01D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s */; };
 		BBC3D1CB1D0A438800520F38 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1CA1D0A438800520F38 /* AppDelegate.swift */; };
 		BBC3D1CD1D0A438800520F38 /* MasterViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1CC1D0A438800520F38 /* MasterViewController.swift */; };
 		BBC3D1CF1D0A438800520F38 /* DetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1CE1D0A438800520F38 /* DetailViewController.swift */; };
@@ -561,12 +563,14 @@
 				BB76EA19229544BD00E454F0 /* xt_forwarding_trampoline_x64.s in Sources */,
 				BB1C5CD4244D94C900297908 /* SwiftSwizzle.swift in Sources */,
 				BB76EA18229544B900E454F0 /* SwiftTrace.mm in Sources */,
+				BBB3A09E258618D000112C65 /* EasyPointer.swift in Sources */,
 				BB64461D254581BA00A83098 /* StringIndex.swift in Sources */,
 				BBCDA3861D0E64AC007222D3 /* SwiftTraceXTests.swift in Sources */,
 				BB1C5CC1244D8AE300297908 /* SwiftAspects.swift in Sources */,
 				BB1B8183251B69B600F76DC7 /* SwiftInterpose.swift in Sources */,
 				BB76EA17229544B400E454F0 /* SwiftTrace.swift in Sources */,
 				BB1C5CB2244CC92400297908 /* SwiftArgs.swift in Sources */,
+				BBB3A0A2258618E500112C65 /* xt_forwarding_trampoline_arm64.s in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

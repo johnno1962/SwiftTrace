@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#142 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#147 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -60,12 +60,6 @@ extension OSRect: SwiftTraceFloatArg {}
 extension OSEdgeInsets: SwiftTraceFloatArg {}
 #endif
 
-/**
- Use witness value table to get size of any type
- */
-@_silgen_name("sizeofAnyType")
-public func sizeof(anyType: Any.Type) -> size_t
-
 /// generic function to append a value to the arguments array
 public func appender<Type>(value: Type, out: inout [Any]) {
     out.append(value)
@@ -78,9 +72,9 @@ public func describer<Type>(value: Type, out: inout String) {
         out += "<\(value) 0x\(address)>("
         if out.utf8.count < SwiftTrace.maxArgumentDescriptionBytes {
             var first = true
-            for (name, prop) in Mirror(reflecting: value).children {
+            for (name, field) in Mirror(reflecting: value).children {
                 out += "\(first ? "" : ", ")\(name ?? "_"): "
-                describer(value: prop, out: &out)
+                describer(value: field, out: &out)
                 first = false
             }
         } else {
@@ -121,11 +115,11 @@ extension SwiftTrace {
      */
     open class var defaultLookupExclusions: String {
         return """
-            ^(Foundation\\.|SwiftUI\\.(LocalizedStringKey\\.StringInterpolation|\
+            ^SwiftUI\\.(LocalizedStringKey\\.StringInterpolation|\
             Color\\.RGBColorSpace|Image\\.ResizingMode|NavigationBarItem\\.TitleDisplayMode|\
             RoundedRectangle|ToolbarItemPlacement|KeyEquivalent|Text\\.DateStyle|\
-            RoundedCornerStyle|PopoverAttachmentAnchor|SwitchToggleStyle))|\
-            \\.[_a-z]\\w*$
+            RoundedCornerStyle|PopoverAttachmentAnchor|SwitchToggleStyle|\
+            CoordinateSpace|StrokeStyle|DragGesture\\.Value|EnvironmentValues)
             """
     }
 
@@ -151,7 +145,7 @@ extension SwiftTrace {
     open class func makeTraceable(types: [Any.Type]) {
         for type in types {
             let typeName = _typeName(type)
-            let slotsRequired = (sizeof(anyType: type) +
+            let slotsRequired = (SwiftMeta.sizeof(anyType: type) +
                 MemoryLayout<intptr_t>.size - 1) /
                 MemoryLayout<intptr_t>.size
             if slotsRequired > (type is SwiftTraceFloatArg ?
@@ -222,8 +216,7 @@ extension SwiftTrace {
             let start = parser === Decorated.swiftArgumentTypeParser ?
                 signature.index(of: .start+1 + .first(of: "(")) ??
                     signature.startIndex : signature.startIndex
-            let end = signature.contains("Foundation.URL") ? start : // WHY??
-                parser === Decorated.swiftArgumentTypeParser ?
+            let end = parser === Decorated.swiftArgumentTypeParser ?
                 signature.index(of: .first(of: " -> ")) ?? signature.endIndex :
                     signature.endIndex
             return parser.matches(in: signature,
@@ -469,7 +462,7 @@ extension SwiftTrace {
             let slot: Int
             let maxSlots: Int
             var argPointer: UnsafeRawPointer
-            let slotsRequired = (sizeof(anyType: type) +
+            var slotsRequired = (SwiftMeta.sizeof(anyType: type) +
                 MemoryLayout<intptr_t>.size - 1) /
                 MemoryLayout<intptr_t>.size
 
@@ -496,10 +489,15 @@ extension SwiftTrace {
                     withUnsafeMutablePointer(to:
                     &invocation.entryStack.pointee.intArg1) {$0})
                     .advanced(by: slot))
+                if SwiftMeta.structsPassedByReference.contains(autoBitCast(type)) {
+                    argPointer = argPointer.load(as: UnsafeRawPointer.self)
+                    slotsRequired = 1
+                }
                 invocation.intArgumentOffset += slotsRequired
             }
 
-            if isReturn && slotsRequired > ExitStack.returnRegs,
+            if isReturn, slotsRequired > ExitStack.returnRegs ||
+                SwiftMeta.structsPassedByReference.contains(autoBitCast(type)),
                 let structPtr = invocation.structReturn {
                 argPointer = UnsafeRawPointer(structPtr)
             } else if slot + slotsRequired > maxSlots {
@@ -556,19 +554,6 @@ extension SwiftTrace {
                 thunkToGeneric(funcPtr: describerFptr, valuePtr: argPointer,
                                outPtr: &out, type: type)
             }
-        }
-    }
-}
-
-fileprivate protocol OptionalTyping {
-    static func describe(optionalPtr: UnsafeRawPointer, out: inout String)
-}
-extension Optional: OptionalTyping {
-    static func describe(optionalPtr: UnsafeRawPointer, out: inout String) {
-        if var value = optionalPtr.load(as: Wrapped?.self) {
-            SwiftTrace.Decorated.describe(&value, type: Wrapped.self, out: &out)
-        } else {
-            out += "nil"
         }
     }
 }
