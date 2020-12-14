@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#44 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#45 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -762,20 +762,6 @@ const char *sig_argumentType(id signature, NSUInteger index) {
 
 const char *sig_returnType(id signature) {
     return [signature methodReturnType];
-}
-
-/// Just before the MetaType data is a pointer to the ValueWitnessTable
-ValueWitnessTable *getValueWitnessTable(struct ValueWitnessTable **metaType) {
-    return metaType[-1];
-}
-
-/// This can be used to call a Swift function with a generic value
-/// argument when you have a pointer to the value and its type.
-/// See: https://www.youtube.com/watch?v=ctS8FzqcRug
-void thunkToGeneric(SignatureOfFunctionTakingGenericValue genericFunction,
-                    const void *valuePtr, void *outPtr,
-                    const void *metaType, const void *witnessTable) {
-    genericFunction(valuePtr, outPtr, metaType, witnessTable);
 }
 
 // https://stackoverflow.com/questions/20481058/find-pathname-from-dlopen-handle-on-osx

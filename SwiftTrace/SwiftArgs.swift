@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#147 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#148 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -505,8 +505,9 @@ extension SwiftTrace {
             }
 
             withUnsafeMutablePointer(to: &invocation.arguments) {
-                thunkToGeneric(funcPtr: appenderFptr, valuePtr: argPointer,
-                               outPtr: $0, type: type)
+                SwiftMeta.thunkToGeneric(funcPtr: appenderFptr,
+                                         valuePtr: argPointer,
+                                         outPtr: $0, type: type)
             }
 
             var out = ""
@@ -551,8 +552,9 @@ extension SwiftTrace {
             } else if let optionalType = type as? OptionalTyping.Type {
                 optionalType.describe(optionalPtr: argPointer, out: &out)
             } else {
-                thunkToGeneric(funcPtr: describerFptr, valuePtr: argPointer,
-                               outPtr: &out, type: type)
+                SwiftMeta.thunkToGeneric(funcPtr: describerFptr,
+                                         valuePtr: argPointer,
+                                         outPtr: &out, type: type)
             }
         }
     }
