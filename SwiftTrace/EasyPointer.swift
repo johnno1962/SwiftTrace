@@ -5,11 +5,15 @@
 //  Created by John Holdsworth on 29/10/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  Pragmatic extensions to make working with pointers easier
+//  Pragmatic extensions to unify conversions between various pointer types.
+//
+//  You must watch this video for context on why this may be a very bad idea:
+//
+//  https://developer.apple.com/videos/play/wwdc2020/10167/
 //
 //  Repo: https://github.com/johnno1962/EasyPointer.git
 //
-//  $Id: //depot/EasyPointer/Sources/EasyPointer/EasyPointer.swift#4 $
+//  $Id: //depot/EasyPointer/Sources/EasyPointer/EasyPointer.swift#6 $
 //
 
 public func autoBitCast<IN,OUT>(_ x: IN) -> OUT {

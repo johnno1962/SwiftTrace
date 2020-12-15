@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#45 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#46 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -413,6 +413,8 @@ SWIFT_CLASS_PROPERTY(@property (nonatomic, class, strong) SwiftTrace * _Nonnull 
 + (void)setLastSwiftTrace:(SwiftTrace * _Nonnull)value;
 SWIFT_CLASS_PROPERTY(@property (nonatomic, class, readonly) BOOL isTracing;)
 + (BOOL)isTracing SWIFT_WARN_UNUSED_RESULT;
+SWIFT_CLASS_PROPERTY(@property (nonatomic, class, readonly) void *interposedPointer;)
++ (void *)interposedPointer SWIFT_WARN_UNUSED_RESULT;
 SWIFT_CLASS_PROPERTY(@property (nonatomic, class) BOOL typeLookup;)
 + (BOOL)typeLookup SWIFT_WARN_UNUSED_RESULT;
 + (void)setTypeLookup:(BOOL)enabled;
@@ -610,6 +612,9 @@ SWIFT_CLASS_PROPERTY(@property (nonatomic, class, copy) NSString * _Nullable tra
 }
 + (BOOL)swiftTracing {
     return [SwiftTrace isTracing];
+}
++ (void *)swiftTraceInterposed {
+    return [SwiftTrace interposedPointer];
 }
 + (BOOL)swiftTraceTypeLookup {
     return [SwiftTrace typeLookup];

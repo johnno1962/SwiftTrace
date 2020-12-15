@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#259 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#262 $
 //
 
 import Foundation
@@ -33,7 +33,7 @@ open class SwiftTrace: NSObject {
     public static var identifyFormat = "<%@ %p>"
 
     /**
-     Indentation amogst different call levels on the stack
+     Indentation amongst different call levels on the stack
      */
     public static var traceIndent = "  "
 
@@ -56,7 +56,16 @@ open class SwiftTrace: NSObject {
     public static var lastSwiftTrace = SwiftTrace(previous: nil, subLevels: 0)
 
     /// Previous interposes need to be tracked
-    public static var interposed = [UnsafeRawPointer: UnsafeRawPointer]()
+    fileprivate static var interposed = [UnsafeRawPointer: UnsafeRawPointer]()
+
+    /**
+     Returns a pointer to the interposed dictionary. Required to
+     ensure only one interposed dictionary us used if the user
+     includes SwiftTrace as a package or pod in their project.
+     */
+    @objc class var interposedPointer: UnsafeMutableRawPointer {
+        return UnsafeMutableRawPointer(&interposed)
+    }
 
     static var bundlesInterposed = Set<String>()
 
@@ -406,6 +415,7 @@ open class SwiftTrace: NSObject {
      - parameter subLevels: subLevels to log of previous traces to trace
      */
     #if swift(>=5.0) && !arch(arm64)
+    // No longer possible to write to witness tables on arm64 macs.
     @objc open class func traceProtocolsInBundle(containing aClass: AnyClass? = nil, matchingPattern: String? = nil, subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels)
         let regex = matchingPattern != nil ?

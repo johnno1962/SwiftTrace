@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#41 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#46 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -91,7 +91,8 @@ public class SwiftMeta {
     }
 
     /**
-     The signature of a function taking a generic type and an inout pointer
+     The signature of a function taking a generic type and an inout pointer.
+     The witnessTable is for when the type is constrained by a protocol.
      */
     public typealias FunctionTakingGenericValue = @convention(c) (
         _ valuePtr : UnsafeRawPointer?, _ outPtr: UnsafeMutableRawPointer,
@@ -111,20 +112,20 @@ public class SwiftMeta {
     /**
      Definitions related to auto-tracability of types
      */
-    public static let modulePrefix =
-        mangle(_typeName(SwiftMeta.self).components(separatedBy: ".")[0])
     static let RTLD_DEFAULT = UnsafeMutableRawPointer(bitPattern: -2)
-    static func mangle(_ name: String) -> String {
+    public static func mangle(_ name: String) -> String {
         return "\(name.utf8.count)\(name)"
     }
 
     /**
      Find pointer for function processing type as generic
      */
-    public static func bindGeneric(name: String, owner: String = modulePrefix,
+    public static func bindGeneric(name: String,
+                                   owner: Any.Type = SwiftMeta.self,
                                    args: String = genericArgumentMangling)
                                    -> FunctionTakingGenericValue {
-        let symbol = "$s\(owner)\(mangle(name))\(args)"
+        let module = _typeName(owner).components(separatedBy: ".")[0]
+        let symbol = "$s\(mangle(module))\(mangle(name))\(args)"
         guard let genericFunctionPtr = dlsym(RTLD_DEFAULT, symbol) else {
             fatalError("Could lot locate generic function for symbol \(symbol)")
         }
@@ -178,18 +179,16 @@ public class SwiftMeta {
             return type
         }
 
-        for (prefix, handler) in wrapperHandlers {
-            if named.hasPrefix(prefix),
-               let wrapped = named[safe: .start+prefix.count ..< .end-1] {
-                OSSpinLockUnlock(&typeLookupCacheLock)
-                if let wrappedType = SwiftMeta.lookupType(named: wrapped,
-                                                          exclude: exclude) {
-                    thunkToGeneric(funcPtr: handler, valuePtr: nil,
-                                   outPtr: &out, type: wrappedType)
-                }
-                OSSpinLockLock(&typeLookupCacheLock)
-                break
+        for (prefix, handler) in wrapperHandlers where named.hasPrefix(prefix) {
+            OSSpinLockUnlock(&typeLookupCacheLock)
+            if let wrapped = named[safe: .start+prefix.count ..< .end-1],
+                let wrappedType = SwiftMeta.lookupType(named: wrapped,
+                                                      exclude: exclude) {
+                thunkToGeneric(funcPtr: handler, valuePtr: nil,
+                               outPtr: &out, type: wrappedType)
             }
+            OSSpinLockLock(&typeLookupCacheLock)
+            break
         }
 
         if out == nil && named.hasPrefix("Swift.Set<"),
@@ -230,6 +229,9 @@ public class SwiftMeta {
         return out
     }
 
+    /**
+     Take the symbol name for the metaType address and remove the "N" suffix
+     */
     public static func mangledName(for type: Any.Type) -> String? {
         var info = Dl_info()
         if dladdr(autoBitCast(type), &info) != 0,
@@ -239,6 +241,9 @@ public class SwiftMeta {
         return nil
     }
 
+    /**
+     Find the witness table for the conformance of elementType to Hashable
+     */
     static func getHashableWitnessTable(for elementType: Any.Type)
         -> UnsafeRawPointer? {
         var hashableWitnessTable: UnsafeRawPointer?
@@ -283,13 +288,15 @@ public class SwiftMeta {
     static var approximateFieldInfoByTypeName = [String: [FieldInfo]]()
 
     /**
-     Ferforms a one time scan of all property getters in an application to look out
-     for structs that are or contain bridged(?) values and are passed by reference
+     Ferforms a one time scan of all property getters in an application to
+     look out for structs that are or contain bridged(?) values such as URL
+     or UUID and are passed by reference by the compiler for some reason.
      */
     public static var structsPassedByReference: Set<UnsafeRawPointer> = {
         var problemTypes = Set<UnsafeRawPointer>()
         for var type: Any.Type in [
             URL.self, UUID.self, Date.self, IndexPath.self] {
+            typeLookupCache[_typeName(type)] = nil
             problemTypes.insert(autoBitCast(type))
             thunkToGeneric(funcPtr: getOptionalTypeFptr,
                            valuePtr: nil, outPtr: &type, type: type)

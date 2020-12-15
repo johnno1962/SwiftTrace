@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#43 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#44 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -84,8 +84,10 @@ extension SwiftTrace {
     }
 
     open class func interposed(replacee: UnsafeRawPointer) -> UnsafeRawPointer? {
+        let interposed = NSObject.swiftTraceInterposed.bindMemory(to:
+            [UnsafeRawPointer : UnsafeRawPointer].self, capacity: 1)
         var current = replacee
-        while let replacement = interposed[current] {
+        while let replacement = interposed.pointee[current] {
             current = replacement
         }
         return current
@@ -157,8 +159,10 @@ extension SwiftTrace {
     open class func apply(interposes: [dyld_interpose_tuple],
                           symbols: [String]? = nil,
                           onInjection: ((UnsafePointer<mach_header>) -> Void)? = nil) {
+        let interposed = NSObject.swiftTraceInterposed.bindMemory(to:
+            [UnsafeRawPointer : UnsafeRawPointer].self, capacity: 1)
         for toapply in interposes {
-            interposed[toapply.replacee] = toapply.replacement
+            interposed.pointee[toapply.replacee] = toapply.replacement
         }
         interposes.withUnsafeBufferPointer { interposes in
             let debugInterpose = getenv("DEBUG_INTERPOSE") != nil
@@ -186,16 +190,18 @@ extension SwiftTrace {
 
     /// Revert all previous interposes
     @objc open class func revertInterposes() {
-        let replacements = Set(interposed.values)
+        let interposed = NSObject.swiftTraceInterposed.bindMemory(to:
+            [UnsafeRawPointer : UnsafeRawPointer].self, capacity: 1)
+        let replacements = Set(interposed.pointee.values)
         var reverses = [dyld_interpose_tuple]()
 
-        for (replacee, replacement) in interposed {
+        for (replacee, replacement) in interposed.pointee {
             if !replacements.contains(replacee) {
                 var current: UnsafeRawPointer? = replacement
                 while current != nil {
                     reverses.append(dyld_interpose_tuple(
                         replacement: replacee, replacee: current!))
-                    current = interposed[current!]
+                    current = interposed.pointee[current!]
                 }
             }
         }
@@ -204,7 +210,7 @@ extension SwiftTrace {
             dyld_dynamic_interpose(header, reverses, reverses.count)
         }
         
-        interposed.removeAll()
+        interposed.pointee.removeAll()
     }
 }
 #endif
