@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#50 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#51 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -301,7 +301,7 @@ public class SwiftMeta {
             problemTypes.insert(autoBitCast(type))
         }
         for var type: Any.Type in [
-            URL.self, UUID.self, Date.self, IndexPath.self] {
+            URL.self, UUID.self, Date.self, IndexPath.self, IndexSet.self] {
             passedByReference(type)
             thunkToGeneric(funcPtr: getOptionalTypeFptr,
                            valuePtr: nil, outPtr: &type, type: type)
@@ -346,42 +346,19 @@ public class SwiftMeta {
                     let symend = symbol+strlen(symbol)
                     if fieldTypeName.hasPrefix("Foundation.") ||
                         strcmp(symend-3, "Ovg") == 0 || // enum
-                        strcmp(symend-5, "OSgvg") == 0 {
-                        if !(type is AnyClass) {
-//                            print("\(typeName) enum prop \(fieldTypeName)")
-                            typeLookupCache[typeName] = PreventLookup
-                            return
-                        }
+                        strcmp(symend-5, "OSgvg") == 0, !(type is AnyClass) {
+//                        print("\(typeName) enum prop \(fieldTypeName)")
+                        typeLookupCache[typeName] = PreventLookup
+                        return
                     }
 
                     if let fieldType = SwiftMeta.lookupType(named: fieldTypeName) {
-                        let floatType = fieldType is SwiftTraceFloatArg.Type
+                        let isFloatType = fieldType is SwiftTraceFloatArg.Type
                         if currentType != typeName {
                             currentType = typeName
-                            wasFloatType = floatType
+                            wasFloatType = isFloatType
                             approximateFieldInfoByTypeName[typeName] = [FieldInfo]()
                             offset = type is AnyClass ? 8 * 3 : 0
-                        } else if floatType != wasFloatType &&
-                            !(type is SwiftTraceFloatArg.Type) {
-//                            print("\(typeName) Mixed properties")
-                            if !(type is AnyClass) {
-                                typeLookupCache[typeName] = PreventLookup
-                            }
-                        }
-
-                        if problemTypes.pointee.contains(autoBitCast(fieldType)) {
-//                            print("\(typeName) Problem prop \(fieldTypeName)")
-                            if !(type is AnyClass) {
-                                typeLookupCache[typeName] = PreventLookup
-                                passedByReference(type)
-                            }
-                        } else if let optional = fieldType as? OptionalTyping.Type,
-                            problemTypes.pointee.contains(autoBitCast(optional.wrappedType)) {
-//                            print("\(typeName) Problem optional prop \(fieldTypeName)")
-                            if !(type is AnyClass) {
-                                passedByReference(type)
-                                passedByReference(fieldType)
-                            }
                         }
 
                         let strideMinus1 = strideof(anyType: fieldType) - 1
@@ -389,6 +366,27 @@ public class SwiftMeta {
                         approximateFieldInfoByTypeName[typeName]?.append(
                             FieldInfo(name: fieldName, type: fieldType, offset: offset))
                         offset += sizeof(anyType: fieldType)
+
+                        if type is AnyClass {
+                            return
+                        }
+
+                        if isFloatType != wasFloatType &&
+                            !(type is SwiftTraceFloatArg.Type) {
+//                            print("\(typeName) Mixed properties")
+                            typeLookupCache[typeName] = PreventLookup
+                        }
+
+                        if problemTypes.pointee.contains(autoBitCast(fieldType)) {
+//                            print("\(typeName) Problem prop \(fieldTypeName)")
+//                            typeLookupCache[typeName] = PreventLookup
+                            passedByReference(type)
+                        } else if let optional = fieldType as? OptionalTyping.Type,
+                            problemTypes.pointee.contains(autoBitCast(optional.wrappedType)) {
+//                            print("\(typeName) Problem optional prop \(fieldTypeName)")
+                            passedByReference(type)
+                            passedByReference(fieldType)
+                        }
                     }
                 }
             }
