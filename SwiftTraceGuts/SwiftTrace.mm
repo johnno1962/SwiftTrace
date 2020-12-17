@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#46 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#50 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -767,6 +767,16 @@ const char *sig_argumentType(id signature, NSUInteger index) {
 
 const char *sig_returnType(id signature) {
     return [signature methodReturnType];
+}
+
+const char *swiftUIBundlePath() {
+    static char classInSwiftUIMangled[] = "$s7SwiftUI14AnyTextStorageCN";
+    if (void *AnyText = dlsym(RTLD_DEFAULT, classInSwiftUIMangled)) {
+        Dl_info info;
+        if (dladdr(AnyText, &info) != 0)
+            return info.dli_fname;
+    }
+    return nullptr;
 }
 
 // https://stackoverflow.com/questions/20481058/find-pathname-from-dlopen-handle-on-osx

@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#148 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#152 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -68,8 +68,8 @@ public func appender<Type>(value: Type, out: inout [Any]) {
 /// generic function to describe a value of any type
 public func describer<Type>(value: Type, out: inout String) {
     if type(of: value) is AnyClass && !(value is CustomStringConvertible) {
-        let address = String(unsafeBitCast(value, to: uintptr_t.self), radix: 16)
-        out += "<\(value) 0x\(address)>("
+        out += String(format: SwiftTrace.identifyFormat, "\(value)" as NSString,
+                      unsafeBitCast(value, to: uintptr_t.self))+"("
         if out.utf8.count < SwiftTrace.maxArgumentDescriptionBytes {
             var first = true
             for (name, field) in Mirror(reflecting: value).children {
@@ -115,11 +115,10 @@ extension SwiftTrace {
      */
     open class var defaultLookupExclusions: String {
         return """
-            ^SwiftUI\\.(LocalizedStringKey\\.StringInterpolation|\
-            Color\\.RGBColorSpace|Image\\.ResizingMode|NavigationBarItem\\.TitleDisplayMode|\
-            RoundedRectangle|ToolbarItemPlacement|KeyEquivalent|Text\\.DateStyle|\
-            RoundedCornerStyle|PopoverAttachmentAnchor|SwitchToggleStyle|\
-            CoordinateSpace|StrokeStyle|DragGesture\\.Value|EnvironmentValues)
+            SwiftUI\\.(Font\\.Design|ToggleStyleConfiguration|AccessibilityChildBehavior|\
+            LocalizedStringKey\\.StringInterpolation|RoundedCornerStyle|Image\\.ResizingMode|\
+            PopoverAttachmentAnchor|KeyEquivalent|Text\\.DateStyle|ToolbarItemPlacement|\
+            Color\\.RGBColorSpace)
             """
     }
 
@@ -288,7 +287,7 @@ extension SwiftTrace {
                 signature.startIndex : signature.startIndex
             invocation.floatArgumentOffset = 0
             invocation.intArgumentOffset = 0
-            
+
             for range in typeRanges {
                 output += signature[position ..< range.lowerBound]
                 var value: String?
