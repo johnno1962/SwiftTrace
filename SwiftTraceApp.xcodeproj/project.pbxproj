@@ -35,6 +35,8 @@
 		BB1C5CD3244D94B300297908 /* SwiftSwizzle.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1C5CD2244D94B300297908 /* SwiftSwizzle.swift */; };
 		BB1C5CD4244D94C900297908 /* SwiftSwizzle.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1C5CD2244D94B300297908 /* SwiftSwizzle.swift */; };
 		BB1C5CD5244D94CB00297908 /* SwiftSwizzle.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1C5CD2244D94B300297908 /* SwiftSwizzle.swift */; };
+		BB1EBC49258DE0DA001F2AA4 /* fishhook.c in Sources */ = {isa = PBXBuildFile; fileRef = BB1EBC48258DE0D9001F2AA4 /* fishhook.c */; };
+		BB1EBC4B258DE0E8001F2AA4 /* fishhook.h in Headers */ = {isa = PBXBuildFile; fileRef = BB1EBC4A258DE0E8001F2AA4 /* fishhook.h */; };
 		BB64461B2545816500A83098 /* StringIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB64461A2545816300A83098 /* StringIndex.swift */; };
 		BB64461C2545816500A83098 /* StringIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB64461A2545816300A83098 /* StringIndex.swift */; };
 		BB64461D254581BA00A83098 /* StringIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB64461A2545816300A83098 /* StringIndex.swift */; };
@@ -127,6 +129,8 @@
 		BB1C5CB7244D8A2F00297908 /* SwiftInvoke.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftInvoke.swift; sourceTree = "<group>"; };
 		BB1C5CB9244D8A6B00297908 /* SwiftStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftStack.swift; sourceTree = "<group>"; };
 		BB1C5CD2244D94B300297908 /* SwiftSwizzle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftSwizzle.swift; sourceTree = "<group>"; };
+		BB1EBC48258DE0D9001F2AA4 /* fishhook.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fishhook.c; path = SwiftTraceGuts/fishhook.c; sourceTree = SOURCE_ROOT; };
+		BB1EBC4A258DE0E8001F2AA4 /* fishhook.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fishhook.h; path = SwiftTraceGuts/include/fishhook.h; sourceTree = SOURCE_ROOT; };
 		BB64461A2545816300A83098 /* StringIndex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StringIndex.swift; sourceTree = "<group>"; };
 		BB76EA1122953F9B00E454F0 /* SwiftTwaceOSX-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SwiftTwaceOSX-Bridging-Header.h"; sourceTree = "<group>"; };
 		BBC3D1C71D0A438800520F38 /* SwiftTwaceApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftTwaceApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -263,6 +267,8 @@
 				BB1C3241254B47CF001EDFCC /* EasyPointer.swift */,
 				BBC3D1F11D0A43E800520F38 /* xt_forwarding_trampoline_x64.s */,
 				BBC3D1F01D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s */,
+				BB1EBC4A258DE0E8001F2AA4 /* fishhook.h */,
+				BB1EBC48258DE0D9001F2AA4 /* fishhook.c */,
 				BBC3D1E71D0A43B300520F38 /* Info.plist */,
 			);
 			path = SwiftTrace;
@@ -315,6 +321,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BBC3D1E61D0A43B200520F38 /* SwiftTrace.h in Headers */,
+				BB1EBC4B258DE0E8001F2AA4 /* fishhook.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -527,6 +534,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BB1C5CB8244D8A2F00297908 /* SwiftInvoke.swift in Sources */,
+				BB1EBC49258DE0DA001F2AA4 /* fishhook.c in Sources */,
 				BB1B8179251B631900F76DC7 /* SwiftStats.swift in Sources */,
 				BB1C5CD3244D94B300297908 /* SwiftSwizzle.swift in Sources */,
 				BB1C5CBA244D8A6B00297908 /* SwiftStack.swift in Sources */,

@@ -22,3 +22,6 @@ This software contains code written by Oliver Letterer obtained from the
 following github project which is licensed under the terms of that project:
 
 https://github.com/OliverLetterer/imp_implementationForwardingToSelector
+
+Now uses the very handy https://github.com/facebook/fishhook.
+See the source and header files for licensing details.

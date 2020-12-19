@@ -243,8 +243,14 @@ then restored and control is passed to the original function implementing the me
 Please file an issue if you encounter a project that doesn't work while tracing. It should
 be 100% reliable as it uses assembly language trampolines rather than Swizzling like Xtrace.
 Otherwise, the author can be contacted on Twitter [@Injection4Xcode](https://twitter.com/@Injection4Xcode). 
+
 Thanks to Oliver Letterer for the [imp_implementationForwardingToSelector](https://github.com/OliverLetterer/imp_implementationForwardingToSelector) project adapted to set up the
-trampolines. Thanks also  to [@twostraws](https://twitter.com/twostraws)'
+trampolines. 
+
+Now uses the very handy https://github.com/facebook/fishhook.
+See the source and header files for licensing details.
+
+Thanks also  to [@twostraws](https://twitter.com/twostraws)'
 [Unwrap](https://github.com/twostraws/Unwrap) and [@artsy](https://twitter.com/ArtsyOpenSource)'s
 [eidolon](https://github.com/artsy/eidolon) used extensively during testing.
 
