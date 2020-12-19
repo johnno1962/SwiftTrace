@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#153 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#156 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -118,7 +118,7 @@ extension SwiftTrace {
             SwiftUI\\.(Font\\.Design|ToggleStyleConfiguration|AccessibilityChildBehavior|\
             LocalizedStringKey\\.StringInterpolation|RoundedCornerStyle|Image\\.ResizingMode|\
             PopoverAttachmentAnchor|KeyEquivalent|Text\\.DateStyle|ToolbarItemPlacement|\
-            Color\\.RGBColorSpace|SwitchToggleStyle)
+            Color\\.RGBColorSpace|SwitchToggleStyle|RoundedRectangle|Capsule|ButtonStyleConfiguration)
             """
     }
 

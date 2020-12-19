@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#51 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#53 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -326,6 +326,9 @@ public class SwiftMeta {
         func passedByReference(_ type: Any.Type) {
             problemTypes.pointee.insert(autoBitCast(type))
         }
+        func debug(_ str: String) {
+//            print(str)
+        }
 
         var offset = 0
         var currentType = ""
@@ -344,10 +347,10 @@ public class SwiftMeta {
                    let type = SwiftMeta.lookupType(named: typeName) {
 //                    print(typeName, "\(fieldName):", fieldTypeName)
                     let symend = symbol+strlen(symbol)
-                    if fieldTypeName.hasPrefix("Foundation.") ||
+                    if fieldTypeName.contains("Foundation.") ||
                         strcmp(symend-3, "Ovg") == 0 || // enum
                         strcmp(symend-5, "OSgvg") == 0, !(type is AnyClass) {
-//                        print("\(typeName) enum prop \(fieldTypeName)")
+                        debug("\(typeName) enum prop \(fieldTypeName)")
                         typeLookupCache[typeName] = PreventLookup
                         return
                     }
@@ -373,17 +376,17 @@ public class SwiftMeta {
 
                         if isFloatType != wasFloatType &&
                             !(type is SwiftTraceFloatArg.Type) {
-//                            print("\(typeName) Mixed properties")
+                            debug("\(typeName) Mixed properties")
                             typeLookupCache[typeName] = PreventLookup
                         }
 
                         if problemTypes.pointee.contains(autoBitCast(fieldType)) {
-//                            print("\(typeName) Problem prop \(fieldTypeName)")
+                            debug("\(typeName) Problem prop \(fieldTypeName)")
 //                            typeLookupCache[typeName] = PreventLookup
                             passedByReference(type)
                         } else if let optional = fieldType as? OptionalTyping.Type,
                             problemTypes.pointee.contains(autoBitCast(optional.wrappedType)) {
-//                            print("\(typeName) Problem optional prop \(fieldTypeName)")
+                            debug("\(typeName) Problem optional prop \(fieldTypeName)")
                             passedByReference(type)
                             passedByReference(fieldType)
                         }

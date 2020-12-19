@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#44 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#47 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -24,7 +24,7 @@ extension SwiftTrace {
 
     /// Regexp pattern for functions to exclude from interposing
     public static var excludeFunction = NSRegularExpression(regexp:
-        "^\\w+\\.\\w+\\(|SwiftTrace")
+        "^\\w+\\.\\w+\\(|SwiftTrace|(extension in )?SwiftT[rw]ace|out: inout|autoBitCast")
 
     /// "interpose" aspects onto Swift function name.
     /// If the symbol is not in a different framework
@@ -105,7 +105,7 @@ extension SwiftTrace {
                                            subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels)
         var interposes = [dyld_interpose_tuple]()
-        var symbols = [String]()
+        var symbols = [UnsafePointer<Int8>]()
 
         for suffix in swiftFunctionSuffixes {
             findSwiftSymbols(inBundlePath, suffix) {
@@ -123,7 +123,7 @@ extension SwiftTrace {
                     interposes.append(dyld_interpose_tuple(
                         replacement: autoBitCast(method.forwardingImplementation),
                         replacee: current))
-                    symbols.append(methodName)
+                    symbols.append(symname)
                 }
             }
         }
@@ -157,13 +157,22 @@ extension SwiftTrace {
     }
 
     open class func apply(interposes: [dyld_interpose_tuple],
-                          symbols: [String]? = nil,
+                          symbols: [UnsafePointer<Int8>],
                           onInjection: ((UnsafePointer<mach_header>) -> Void)? = nil) {
         let interposed = NSObject.swiftTraceInterposed.bindMemory(to:
             [UnsafeRawPointer : UnsafeRawPointer].self, capacity: 1)
         for toapply in interposes {
             interposed.pointee[toapply.replacee] = toapply.replacement
         }
+        #if true // use fishhook
+        var rebindings = [rebinding]()
+        for i in 0..<interposes.count {
+            rebindings.append(rebinding(name: symbols[i],
+                replacement: UnsafeMutableRawPointer(mutating:
+                interposes[i].replacement), replaced: nil))
+        }
+        rebind_symbols(&rebindings, rebindings.count)
+        #else
         interposes.withUnsafeBufferPointer { interposes in
             let debugInterpose = getenv("DEBUG_INTERPOSE") != nil
             var lastLoaded = true
@@ -176,7 +185,7 @@ extension SwiftTrace {
 
                 if debugInterpose {
                     for symno in 0 ..< interposes.count {
-                        print("Interposing: \(symbols?[symno] ?? "unknown")")
+                        print("Interposing: \(SwiftMeta.demangle(symbol: symbols[symno]) ?? String(cString: symbols[symno]))")
                         dyld_dynamic_interpose(header,
                                                interposes.baseAddress!+symno, 1)
                     }
@@ -186,6 +195,7 @@ extension SwiftTrace {
                 }
             }
         }
+        #endif
     }
 
     /// Revert all previous interposes
@@ -206,10 +216,23 @@ extension SwiftTrace {
             }
         }
 
+        #if true // use fishhook
+        var info = Dl_info()
+        var rebindings = [rebinding]()
+        for interpose in reverses {
+            if dladdr(interpose.replacement, &info) != 0 {
+                rebindings.append(rebinding(name: info.dli_sname,
+                    replacement: UnsafeMutableRawPointer(mutating:
+                    interpose.replacement), replaced: nil))
+            }
+        }
+        rebind_symbols(&rebindings, rebindings.count)
+        #else
         appBundleImages { (imageName, header) in
             dyld_dynamic_interpose(header, reverses, reverses.count)
         }
-        
+        #endif
+
         interposed.pointee.removeAll()
     }
 }

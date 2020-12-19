@@ -213,9 +213,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         objcTester.a(44, i:45, b: 55, c: "66", o: self, s: Selector(("jjj:")))
 
+//        SwiftTrace.excludeFunction = NSRegularExpression(regexp:
+//                                                            "^\\w+\\.\\w+\\(|extension in S|SwiftTrace|out: inout|autoBitCast")
+        SwiftTrace.traceMainBundleMethods()
 
-        let a/*: P*/ = TestClass()
-        print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect(r1: __C.CGRect, r2: __C.CGRect) -> __C.CGRect", args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)) as NSRect)
+        var a/*: P*/ = TestClass()
+//        print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect(r1: __C.CGRect, r2: __C.CGRect) -> __C.CGRect", args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)) as NSRect)
 
         print(a.rect2(r1: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), r2:NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)))
 
@@ -237,8 +240,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         print(SwiftMeta.sizeof(anyType: type(of: d)))
         print(a.dict(d: d)!)
         print(a.c(c: { _ in }))
-        a.tc = a
-        print(a.c2(c: a))
+//        a.tc = a
+//        print(a.c2(c: a))
         print(a.p(p: "s"))
         print(MemoryLayout<STR>.size)
         print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect(r1: __C.CGRect, r2: __C.CGRect) -> __C.CGRect", args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)) as NSRect)
