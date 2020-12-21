@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#53 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#56 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -164,6 +164,8 @@ public class SwiftMeta {
 
         // Has private enum property containg a Locale
         "Fruta.ContentView" : nil,
+        // Snother problem Foundation inside enum
+        "Kingfisher.ExpirationExtending": nil,
     ]
     static var typeLookupCacheLock = OS_SPINLOCK_INIT
 
@@ -176,40 +178,44 @@ public class SwiftMeta {
      Best effort recovery of type from a qualified name
      */
     public static func lookupType(named: String,
-                             exclude: NSRegularExpression? = nil) -> Any.Type? {
+                           exclude: NSRegularExpression? = nil) -> Any.Type? {
         if exclude?.matches(named) == true {
             return nil
         }
         OSSpinLockLock(&typeLookupCacheLock)
         defer { OSSpinLockUnlock(&typeLookupCacheLock) }
+        return lockedType(named: named, exclude: exclude)
+    }
+
+    static func lockedType(named: String,
+                           exclude: NSRegularExpression? = nil) -> Any.Type? {
         if let type = typeLookupCache[named] {
             return type
         }
 
         var out: Any.Type?
         for (prefix, handler) in wrapperHandlers where named.hasPrefix(prefix) {
-            OSSpinLockUnlock(&typeLookupCacheLock)
             if let wrapped = named[safe: .start+prefix.count ..< .end-1],
-                let wrappedType = SwiftMeta.lookupType(named: wrapped,
+                let wrappedType = SwiftMeta.lockedType(named: wrapped,
                                                       exclude: exclude) {
                 thunkToGeneric(funcPtr: handler, valuePtr: nil,
                                outPtr: &out, type: wrappedType)
             }
-            OSSpinLockLock(&typeLookupCacheLock)
             break
         }
 
-        if out == nil && named.hasPrefix("Swift.Set<"),
+        if named.hasSuffix("..."),
+           let element = named[safe: ..<(.end-3)] {
+            out = lockedType(named: "Swift.Array<\(element)>")
+        } else if out == nil && named.hasPrefix("Swift.Set<"),
             let element = named[safe: .start+10 ..< .end-1] {
-            OSSpinLockUnlock(&typeLookupCacheLock)
-            if let elementType = SwiftMeta.lookupType(named: element,
+            if let elementType = SwiftMeta.lockedType(named: element,
                                                       exclude: exclude),
                 let hashableWitness = getHashableWitnessTable(for: elementType) {
                 thunkToGeneric(funcPtr: getSetTypeFptr, valuePtr: nil,
                                outPtr: &out, type: elementType,
                                witnessTable: hashableWitness)
             }
-            OSSpinLockLock(&typeLookupCacheLock)
         } else if out == nil {
             var mangled = ""
             var first = true

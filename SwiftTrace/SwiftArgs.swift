@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#156 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#158 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -193,7 +193,7 @@ extension SwiftTrace {
          Basic Swift argument type detector
          */
         static let swiftArgumentTypeParser =
-            NSRegularExpression(regexp: "(?:[:,] |(?<![<(,])\\()([^:,)<]+(?:<.+?>)?)(?=[,)])|\\.setter : (.+)$")
+            NSRegularExpression(regexp: "(?:[:] |(?<![<(,])\\()([^:,)<]+(?:<.+?>)?)(?=[,)])|\\.setter : (.+)$")
 
         /**
          Very basic return valuue type detector
