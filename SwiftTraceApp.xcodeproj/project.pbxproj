@@ -37,6 +37,7 @@
 		BB1C5CD5244D94CB00297908 /* SwiftSwizzle.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1C5CD2244D94B300297908 /* SwiftSwizzle.swift */; };
 		BB1EBC49258DE0DA001F2AA4 /* fishhook.c in Sources */ = {isa = PBXBuildFile; fileRef = BB1EBC48258DE0D9001F2AA4 /* fishhook.c */; };
 		BB1EBC4B258DE0E8001F2AA4 /* fishhook.h in Headers */ = {isa = PBXBuildFile; fileRef = BB1EBC4A258DE0E8001F2AA4 /* fishhook.h */; };
+		BB1EBC5125925D9B001F2AA4 /* fishhook.c in Sources */ = {isa = PBXBuildFile; fileRef = BB1EBC48258DE0D9001F2AA4 /* fishhook.c */; };
 		BB64461B2545816500A83098 /* StringIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB64461A2545816300A83098 /* StringIndex.swift */; };
 		BB64461C2545816500A83098 /* StringIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB64461A2545816300A83098 /* StringIndex.swift */; };
 		BB64461D254581BA00A83098 /* StringIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB64461A2545816300A83098 /* StringIndex.swift */; };
@@ -592,6 +593,7 @@
 				BB1C5CBC244D8AD800297908 /* SwiftMeta.swift in Sources */,
 				BB76EA16229540C200E454F0 /* xt_forwarding_trampoline_x64.s in Sources */,
 				BB1C5CD5244D94CB00297908 /* SwiftSwizzle.swift in Sources */,
+				BB1EBC5125925D9B001F2AA4 /* fishhook.c in Sources */,
 				BB1C5CAF244CB41B00297908 /* SwiftArgs.swift in Sources */,
 				BB64461B2545816500A83098 /* StringIndex.swift in Sources */,
 				BB1C3242254B47CF001EDFCC /* EasyPointer.swift in Sources */,

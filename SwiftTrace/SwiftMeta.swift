@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#56 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#57 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
