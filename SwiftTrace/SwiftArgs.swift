@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#159 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#163 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -118,7 +118,8 @@ extension SwiftTrace {
             SwiftUI\\.(Font\\.Design|ToggleStyleConfiguration|AccessibilityChildBehavior|\
             LocalizedStringKey\\.StringInterpolation|RoundedCornerStyle|Image\\.ResizingMode|\
             PopoverAttachmentAnchor|KeyEquivalent|Text\\.DateStyle|ToolbarItemPlacement|\
-            Color\\.RGBColorSpace|SwitchToggleStyle|RoundedRectangle|Capsule|ButtonStyleConfiguration)
+            Color\\.RGBColorSpace|SwitchToggleStyle|RoundedRectangle|Capsule|\
+            ButtonStyleConfiguration|NavigationBarItem\\.TitleDisplayMode)
             """
     }
 
@@ -193,13 +194,13 @@ extension SwiftTrace {
          Basic Swift argument type detector
          */
         static let swiftArgumentTypeParser =
-            NSRegularExpression(regexp: "(?:[:] |(?<![<(,])\\()([^:,)<]+(?:<.+?>)?)(?=[,)])|\\.setter : (.+)$")
+            NSRegularExpression(regexp: "(?:[:,] |(?<![<(,])\\()([^:,)<]+(?:<.+?>)?)(?=[,)])|\\.setter : (.+)$")
 
         /**
          Very basic return valuue type detector
          */
         static let swiftReturnValueTypeParser =
-            NSRegularExpression(regexp: ".+\\) (?:throws )?-> (.+?)( in conformance .+)?$")
+            NSRegularExpression(regexp: " -> (.+?)( in conformance .+)?$")
 
         /**
          Cache of positions in signature of arguments
@@ -212,17 +213,25 @@ extension SwiftTrace {
          Ranges of arguments in signature. There's a lot going on here..
          */
         open func ranges(in signature: String, parser: NSRegularExpression) -> [Range<String.Index>] {
-            let start = parser === Decorated.swiftArgumentTypeParser ?
+            let parsingArguments = parser === Decorated.swiftArgumentTypeParser
+            let start = parsingArguments ?
                 signature.index(of: .start+1 + .first(of: "(")) ??
-                    signature.startIndex : signature.startIndex
-            let end = parser === Decorated.swiftArgumentTypeParser ?
+                    signature.startIndex :
+                signature.index(of: .last(of: " -> ")) ?? signature.startIndex
+            let end = parsingArguments ?
                 signature.index(of: .first(of: " -> ")) ?? signature.endIndex :
                     signature.endIndex
-            return parser.matches(in: signature,
+            var matches = parser.matches(in: signature,
                     range: NSRange(start ..< end, in: signature)).compactMap {
                 Range($0.range(at: 1), in: signature) ??
                 Range($0.range(at: 2), in: signature)
             }
+            if parsingArguments {
+                matches = matches.filter {
+                    !signature[start+1..<$0.lowerBound].contains("(")
+                }
+            }
+            return matches
         }
 
         /**
@@ -464,8 +473,10 @@ extension SwiftTrace {
             var slotsRequired = (SwiftMeta.sizeof(anyType: type) +
                 MemoryLayout<intptr_t>.size - 1) /
                 MemoryLayout<intptr_t>.size
+            let typePtr = unsafeBitCast(type, to: UnsafeRawPointer.self)
 
-            if type is SwiftTraceFloatArg.Type {
+            if type is SwiftTraceFloatArg.Type ||
+                SwiftMeta.structsAllFloats.contains(typePtr) {
                 slot = invocation.floatArgumentOffset
                 maxSlots = isReturn ?
                     ExitStack.returnRegs : EntryStack.maxFloatSlots
@@ -488,7 +499,7 @@ extension SwiftTrace {
                     withUnsafeMutablePointer(to:
                     &invocation.entryStack.pointee.intArg1) {$0})
                     .advanced(by: slot))
-                if SwiftMeta.structsPassedByReference.contains(autoBitCast(type)) {
+                if SwiftMeta.structsPassedByReference.contains(typePtr) {
                     argPointer = argPointer.load(as: UnsafeRawPointer.self)
                     slotsRequired = 1
                 }
@@ -496,7 +507,7 @@ extension SwiftTrace {
             }
 
             if isReturn, slotsRequired > ExitStack.returnRegs ||
-                SwiftMeta.structsPassedByReference.contains(autoBitCast(type)),
+                SwiftMeta.structsPassedByReference.contains(typePtr),
                 let structPtr = invocation.structReturn {
                 argPointer = UnsafeRawPointer(structPtr)
             } else if slot + slotsRequired > maxSlots {
@@ -534,20 +545,21 @@ extension SwiftTrace {
                 } else {
                     out += "nil"
                 }
-            }
-            else if type == UnsafePointer<UInt8>?.self {
+            } else if type == UnsafePointer<UInt8>?.self {
                 if let str = argPointer.load(as: UnsafePointer<UInt8>?.self) {
                     out += "\"\(String(cString: str))\""
                 } else {
                     out += "NULL"
                 }
             } else if type == UnsafeRawPointer.self {
-                out += String(argPointer.load(as: uintptr_t.self), radix: 16)
+                out += "0x"+String(argPointer.load(as: uintptr_t.self), radix: 16)
             } else if type == Selector.self {
                 let SEL = argPointer.load(as: Selector.self)
                 out += "@selector(\(NSStringFromSelector(SEL)))"
             } else if type == String.self {
                 out += "\"\(argPointer.load(as: String.self))\""
+            } else if type == Bool.self {
+                out += argPointer.load(as: Bool.self) ? "true" : "false"
             } else if let optionalType = type as? OptionalTyping.Type {
                 optionalType.describe(optionalPtr: argPointer, out: &out)
             } else {

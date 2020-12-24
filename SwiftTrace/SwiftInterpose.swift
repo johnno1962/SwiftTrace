@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#47 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#51 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -24,7 +24,7 @@ extension SwiftTrace {
 
     /// Regexp pattern for functions to exclude from interposing
     public static var excludeFunction = NSRegularExpression(regexp:
-        "^\\w+\\.\\w+\\(|SwiftTrace|(extension in )?SwiftT[rw]ace|out: inout|autoBitCast")
+        "^\\w+\\.\\w+\\(|SwiftTrace|(extension in )?SwiftT[rw]ace|out: inout|autoBitCast|fieldEntr(y|ies): ")
 
     /// "interpose" aspects onto Swift function name.
     /// If the symbol is not in a different framework
