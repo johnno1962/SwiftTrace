@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#163 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#177 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -94,6 +94,15 @@ extension SwiftTrace {
     static public var typeLookup = false
 
     /**
+     Decorating "Any" is not fully understood.
+     */
+    public static var decorateAny = false {
+        didSet {
+            SwiftMeta.typeLookupCache["Any"] = decorateAny ? Any.self : nil
+        }
+    }
+
+    /**
      A "pagmatic" limit on the size of structs that will be decorated
      */
     static public var maxIntegerArgumentSlots = 4
@@ -104,18 +113,17 @@ extension SwiftTrace {
     static public var maxArgumentDescriptionBytes = 1_000
 
     // For describing values and appending values to arguments array
-    static var genericArgumentToRawPtr = SwiftMeta.genericArgument+"_SvtlF"
     static var describerFptr = SwiftMeta.bindGeneric(name: "describer",
-                                      args: SwiftMeta.genericArgument+"_SSztlF")
+                                                     args: "SSzt")
     static var appenderFptr = SwiftMeta.bindGeneric(name: "appender",
-                                  args: SwiftMeta.genericArgument+"_SayypGztlF")
+                                                    args: "SayypGzt")
 
     /**
      Default pattern of type names to be excluded from decoration
      */
     open class var defaultLookupExclusions: String {
         return """
-            SwiftUI\\.(Font\\.Design|ToggleStyleConfiguration|AccessibilityChildBehavior|\
+            ^SwiftUI\\.(Font\\.Design|ToggleStyleConfiguration|AccessibilityChildBehavior|\
             LocalizedStringKey\\.StringInterpolation|RoundedCornerStyle|Image\\.ResizingMode|\
             PopoverAttachmentAnchor|KeyEquivalent|Text\\.DateStyle|ToolbarItemPlacement|\
             Color\\.RGBColorSpace|SwitchToggleStyle|RoundedRectangle|Capsule|\
@@ -210,7 +218,7 @@ extension SwiftTrace {
         }()
 
         /**
-         Ranges of arguments in signature. There's a lot going on here..
+         Ranges of argument/return typs in signature. There's a lot going on here..
          */
         open func ranges(in signature: String, parser: NSRegularExpression) -> [Range<String.Index>] {
             let parsingArguments = parser === Decorated.swiftArgumentTypeParser
@@ -227,6 +235,7 @@ extension SwiftTrace {
                 Range($0.range(at: 2), in: signature)
             }
             if parsingArguments {
+                // filter out any types detected in closure arguments
                 matches = matches.filter {
                     !signature[start+1..<$0.lowerBound].contains("(")
                 }
@@ -481,29 +490,36 @@ extension SwiftTrace {
                 maxSlots = isReturn ?
                     ExitStack.returnRegs : EntryStack.maxFloatSlots
                 argPointer = UnsafeRawPointer((isReturn ?
-                    withUnsafeMutablePointer(to:
+                    withUnsafePointer(to:
                     &invocation.exitStack.pointee.floatReturn1) {$0} :
-                    withUnsafeMutablePointer(to:
+                    withUnsafePointer(to:
                     &invocation.entryStack.pointee.floatArg1) {$0})
                     .advanced(by: slot))
                 invocation.floatArgumentOffset += slotsRequired
             } else if slotsRequired > maxIntegerArgumentSlots && !isReturn {
                 return nil
             } else {
+                if !isReturn, type == Any.self || type == Any?.self,
+                    invocation.swizzle.signature.contains("er.accept(fieldEntry: ") {
+                    // Not sure what's going on here. Problems with two methods:
+                    // Apollo.GraphQLSelectionSetMapper.accept(fieldEntry:
+                    // Apollo.GraphQLResultNormalizer.accept(fieldEntry:
+                    invocation.intArgumentOffset += 1
+                }
                 slot = invocation.intArgumentOffset
                 maxSlots = isReturn ?
                     ExitStack.returnRegs : EntryStack.maxIntSlots
                 argPointer = UnsafeRawPointer((isReturn ?
-                    withUnsafeMutablePointer(to:
+                    withUnsafePointer(to:
                     &invocation.exitStack.pointee.intReturn1) {$0} :
-                    withUnsafeMutablePointer(to:
+                    withUnsafePointer(to:
                     &invocation.entryStack.pointee.intArg1) {$0})
                     .advanced(by: slot))
                 if SwiftMeta.structsPassedByReference.contains(typePtr) {
                     argPointer = argPointer.load(as: UnsafeRawPointer.self)
                     slotsRequired = 1
                 }
-                invocation.intArgumentOffset += slotsRequired
+                invocation.intArgumentOffset = slot + slotsRequired
             }
 
             if isReturn, slotsRequired > ExitStack.returnRegs ||

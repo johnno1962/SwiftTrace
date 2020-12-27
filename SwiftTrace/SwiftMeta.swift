@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#61 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#65 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -15,17 +15,6 @@
 //
 
 import Foundation
-
-// Taken from stdlib, not public Swift3+
-@_silgen_name("swift_demangle")
-private
-func _stdlib_demangleImpl(
-    _ mangledName: UnsafePointer<CChar>?,
-    mangledNameLength: UInt,
-    outputBuffer: UnsafeMutablePointer<UInt8>?,
-    outputBufferSize: UnsafeMutablePointer<UInt>?,
-    flags: UInt32
-    ) -> UnsafeMutablePointer<CChar>?
 
 /**
  Shenaniggans to be able to decorate any type linked into an app.
@@ -128,10 +117,10 @@ public class SwiftMeta {
      */
     public static func bindGeneric(name: String,
                                    owner: Any.Type = SwiftMeta.self,
-                                   args: String = genericArgumentMangling)
+                                   args: String = returnAnyType)
                                    -> FunctionTakingGenericValue {
         let module = _typeName(owner).components(separatedBy: ".")[0]
-        let symbol = "$s\(mangle(module))\(mangle(name))\(args)"
+        let symbol = "$s\(mangle(module))\(mangle(name))5value3outyx_\(args)lF"
         guard let genericFunctionPtr = dlsym(RTLD_DEFAULT, symbol) else {
             fatalError("Could lot locate generic function for symbol \(symbol)")
         }
@@ -142,13 +131,11 @@ public class SwiftMeta {
      Generic function pointers that can be used to convert a type
      into the Optional/Array/Set/Dictionary for that type.
      */
-    public static let genericArgument = "5value3outyx"
-    public static let returnAnyType = "_ypXpSgztlF"
-    public static let genericArgumentMangling = genericArgument+returnAnyType
+    public static let returnAnyType = "ypXpSgzt"
 
     static var getOptionalTypeFptr = bindGeneric(name: "getOptionalType")
     static var getSetTypeFptr = bindGeneric(name: "getSetType",
-                                        args: genericArgument+"_ypXpSgztSHRzlF")
+                                            args: "ypXpSgztSHRz")
 
     /// Handled compund types
     public static var wrapperHandlers = [
@@ -157,7 +144,7 @@ public class SwiftMeta {
         "Swift.ArraySlice<": bindGeneric(name: "getArraySliceType"),
         "Swift.Dictionary<Swift.String, ": bindGeneric(name: "getDictionaryType"),
         "Foundation.Measurement<": bindGeneric(name: "getMeasurementType",
-                                args: genericArgument+"_ypXpSgztSo6NSUnitCRbzlF"),
+                                               args: "ypXpSgztSo6NSUnitCRbz"),
     ]
 
     public static var nameAbbreviations = [
@@ -169,11 +156,14 @@ public class SwiftMeta {
         "Swift.String": String.self,
         "Swift.Double": Double.self,
         "Swift.Float": Float.self,
-//        "Any": Any.self,
+
+        // Special cases
+        "Any": nil, // not reliable
+        "()": Void.self,
 
         // Has private enum property containg a Locale
         "Fruta.ContentView" : nil,
-        // Snother problem Foundation inside enum
+        // Also uses Foundation type inside enum
         "Kingfisher.ExpirationExtending": nil,
     ]
     static var typeLookupCacheLock = OS_SPINLOCK_INIT
@@ -217,13 +207,14 @@ public class SwiftMeta {
             let element = named[safe: ..<(.end-3)] {
             out = lockedType(named: "Swift.Array<\(element)>")
         } else if out == nil && named.hasPrefix("Swift.Set<"),
-            let element = named[safe: .start+10 ..< .end-1],
-            let elementType = SwiftMeta.lockedType(named: element,
-                                                   exclude: exclude),
-            let hashableWitness = getHashableWitnessTable(for: elementType) {
-            thunkToGeneric(funcPtr: getSetTypeFptr, valuePtr: nil,
-                           outPtr: &out, type: elementType,
-                           witnessTable: hashableWitness)
+            let element = named[safe: .start+10 ..< .end-1] {
+            if let elementType = SwiftMeta.lockedType(named: element,
+                                                      exclude: exclude),
+                let hashableWitness = getHashableWitnessTable(for: elementType) {
+                thunkToGeneric(funcPtr: getSetTypeFptr, valuePtr: nil,
+                               outPtr: &out, type: elementType,
+                               witnessTable: hashableWitness)
+            }
         } else if out == nil {
             var mangled = ""
             var first = true
@@ -507,6 +498,20 @@ public class SwiftMeta {
     }
 }
 
+// Taken from stdlib, not public Swift3+
+@_silgen_name("swift_demangle")
+private
+func _stdlib_demangleImpl(
+    _ mangledName: UnsafePointer<CChar>?,
+    mangledNameLength: UInt,
+    outputBuffer: UnsafeMutablePointer<UInt8>?,
+    outputBufferSize: UnsafeMutablePointer<UInt>?,
+    flags: UInt32
+    ) -> UnsafeMutablePointer<CChar>?
+
+/**
+ Used to deocrate optioanals without wrapping value in Opotional()
+ */
 protocol OptionalTyping {
     static var wrappedType: Any.Type { get }
     static func describe(optionalPtr: UnsafeRawPointer, out: inout String)
@@ -515,6 +520,7 @@ extension Optional: OptionalTyping {
     static var wrappedType: Any.Type { return Wrapped.self }
     static func describe(optionalPtr: UnsafeRawPointer, out: inout String) {
         if var value = optionalPtr.load(as: Wrapped?.self) {
+            // Slight coupling to SwitArgs.swift here alas
             SwiftTrace.Decorated.describe(&value, type: Wrapped.self, out: &out)
         } else {
             out += "nil"

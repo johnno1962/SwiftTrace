@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#51 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#52 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -23,8 +23,7 @@ extension SwiftTrace {
     public static var swiftFunctionSuffixes = ["fC", "yF", "lF", "tF", "Qrvg"]
 
     /// Regexp pattern for functions to exclude from interposing
-    public static var excludeFunction = NSRegularExpression(regexp:
-        "^\\w+\\.\\w+\\(|SwiftTrace|(extension in )?SwiftT[rw]ace|out: inout|autoBitCast|fieldEntr(y|ies): ")
+    public static var interposeEclusions: NSRegularExpression? = nil
 
     /// "interpose" aspects onto Swift function name.
     /// If the symbol is not in a different framework
@@ -114,12 +113,12 @@ extension SwiftTrace {
                     packageName == nil ||
                         methodName.hasPrefix(packageName!+".") ||
                         methodName.hasPrefix("(extension in \(packageName!))"),
-                    !excludeFunction.matches(methodName),
+                    interposeEclusions?.matches(methodName) != true,
                     let factory = methodFilter(methodName),
                     let current = interposed(replacee: symval),
                     let method = factory.init(name: methodName,
                                               original: OpaquePointer(current)) {
-//                    print(interposes.count, methodName)
+//                    print(interposes.count, methodName, String(cString: symname))
                     interposes.append(dyld_interpose_tuple(
                         replacement: autoBitCast(method.forwardingImplementation),
                         replacee: current))

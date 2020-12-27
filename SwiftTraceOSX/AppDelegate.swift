@@ -58,6 +58,7 @@ public protocol P {
     func u(i: Int, u: URL, j: Int) -> URL
     func p(p: P2) -> P2
     func c2(c: TestClass) -> TestClass
+    func any(a: Any) -> Any
 }
 
 open class TestClass: P {
@@ -118,6 +119,10 @@ open class TestClass: P {
     public func c2(c: TestClass) -> TestClass {
         return c
     }
+
+    public func any(a: Any) -> Any {
+        return a
+    }
 }
 
 struct TestStruct: P {
@@ -176,6 +181,10 @@ struct TestStruct: P {
     public func c2(c: TestClass) -> TestClass {
         return c
     }
+
+    public func any(a: Any) -> Any {
+        return a
+    }
 }
 
 @NSApplicationMain
@@ -191,6 +200,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // any inclusions or exlusiona need to come before trace enabled
         //SwiftTrace.include( "Swift.Optiona|TestClass" )
         SwiftTrace.typeLookup = true
+        SwiftTrace.decorateAny = true
 
         class MyTracer: SwiftTrace.Swizzle {
 
@@ -225,6 +235,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         print(SwiftTrace.methodNames(ofClass: TestClass.self))
         print(SwiftTrace.swiftClassList(bundlePath: class_getImageName(TestClass.self)))
 
+        let d = Optional.some(["test": Set([STR(s: "value")])])
+        let any: Any = d
+        print(a.any(a: any))
+
         print(a.u(i: 99, u: URL(string: "http://google.com")!, j: 89))
 
         a.i = 888
@@ -235,7 +249,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         a.z( 88, f: 66, s: "$%^", g: 55, h: 44, f1: 66, g1: 55, h1: 44, f2: 66, g2: 55, h2: 44, e: 77 )
         print(a.arr(a: ["a", "b", "c"], b: [1, 2, 3]))
         print(a.arr2(a: ["a", "b", "c"], b: [1, 2, 3]))
-        let d = Optional.some(["test": Set([STR(s: "value")])])
         print(a.str(i: 77, s: STR(s: "value"), j: 88))
         print(SwiftMeta.sizeof(anyType: type(of: d)))
         print(a.dict(d: d)!)
