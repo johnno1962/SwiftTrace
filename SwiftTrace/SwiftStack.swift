@@ -5,10 +5,13 @@
 //  Created by John Holdsworth on 20/04/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStack.swift#11 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStack.swift#12 $
 //
 //  Stack layout used by assemby trampolines
 //  ========================================
+//
+//  See: https://github.com/apple/swift/blob/main/docs/ABI/RegisterUsage.md
+//  https://github.com/apple/swift/blob/main/docs/ABI/CallingConvention.rst
 //
 
 import Foundation
@@ -21,7 +24,7 @@ extension SwiftTrace {
      */
     public struct EntryStack {
         static let maxFloatSlots = 8
-        static let maxIntSlots = 6
+        static let maxIntSlots = 6 // Conservative here, actually it's 8
 
         public var floatArg1: Double = 0.0
         public var floatArg2: Double = 0.0

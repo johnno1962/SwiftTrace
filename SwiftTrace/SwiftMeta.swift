@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#65 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#68 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -178,9 +178,6 @@ public class SwiftMeta {
      */
     public static func lookupType(named: String,
                            exclude: NSRegularExpression? = nil) -> Any.Type? {
-        if exclude?.matches(named) == true {
-            return nil
-        }
         OSSpinLockLock(&typeLookupCacheLock)
         defer { OSSpinLockUnlock(&typeLookupCacheLock) }
         return lockedType(named: named, exclude: exclude)
@@ -188,6 +185,9 @@ public class SwiftMeta {
 
     static func lockedType(named: String,
                            exclude: NSRegularExpression? = nil) -> Any.Type? {
+        if exclude?.matches(named) == true {
+            return nil
+        }
         if let type = typeLookupCache[named] {
             return type
         }
@@ -314,7 +314,7 @@ public class SwiftMeta {
             passedByReference(type)
         }
 
-        appBundleImages { bundlePath, _ in
+        appBundleImages { bundlePath, _, _ in
             process(bundlePath: bundlePath, problemTypes: &problemTypes)
         }
 
@@ -520,7 +520,7 @@ extension Optional: OptionalTyping {
     static var wrappedType: Any.Type { return Wrapped.self }
     static func describe(optionalPtr: UnsafeRawPointer, out: inout String) {
         if var value = optionalPtr.load(as: Wrapped?.self) {
-            // Slight coupling to SwitArgs.swift here alas
+            // Slight coupling to SwiftArgs.swift here alas
             SwiftTrace.Decorated.describe(&value, type: Wrapped.self, out: &out)
         } else {
             out += "nil"

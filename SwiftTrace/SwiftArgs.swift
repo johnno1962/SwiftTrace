@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#177 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#179 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -127,7 +127,7 @@ extension SwiftTrace {
             LocalizedStringKey\\.StringInterpolation|RoundedCornerStyle|Image\\.ResizingMode|\
             PopoverAttachmentAnchor|KeyEquivalent|Text\\.DateStyle|ToolbarItemPlacement|\
             Color\\.RGBColorSpace|SwitchToggleStyle|RoundedRectangle|Capsule|\
-            ButtonStyleConfiguration|NavigationBarItem\\.TitleDisplayMode)
+            ButtonStyleConfiguration|NavigationBarItem\\.TitleDisplayMode|LayoutDirection)
             """
     }
 
@@ -515,7 +515,8 @@ extension SwiftTrace {
                     withUnsafePointer(to:
                     &invocation.entryStack.pointee.intArg1) {$0})
                     .advanced(by: slot))
-                if SwiftMeta.structsPassedByReference.contains(typePtr) {
+                if !isReturn &&
+                    SwiftMeta.structsPassedByReference.contains(typePtr) {
                     argPointer = argPointer.load(as: UnsafeRawPointer.self)
                     slotsRequired = 1
                 }

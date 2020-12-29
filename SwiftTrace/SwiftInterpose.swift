@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#52 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#53 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -147,7 +147,7 @@ extension SwiftTrace {
 
     /// Apply a trace to all methods in framesworks in app bundle
     @objc open class func traceFrameworkMethods() {
-        appBundleImages { imageName, _ in
+        appBundleImages { imageName, _, _ in
             if strstr(imageName, ".framework") != nil {
                 interposeMethods(inBundlePath: imageName)
                 trace(bundlePath: imageName)
@@ -163,20 +163,23 @@ extension SwiftTrace {
         for toapply in interposes {
             interposed.pointee[toapply.replacee] = toapply.replacement
         }
-        #if true // use fishhook
+        #if true // use fishhook now
         var rebindings = [rebinding]()
         for i in 0..<interposes.count {
             rebindings.append(rebinding(name: symbols[i],
                 replacement: UnsafeMutableRawPointer(mutating:
                 interposes[i].replacement), replaced: nil))
         }
-        rebind_symbols(&rebindings, rebindings.count)
+        appBundleImages { _, mh, slide in
+            rebind_symbols_image(UnsafeMutableRawPointer(mutating: mh),
+                                 slide, &rebindings, rebindings.count)
+        }
         #else
         interposes.withUnsafeBufferPointer { interposes in
             let debugInterpose = getenv("DEBUG_INTERPOSE") != nil
             var lastLoaded = true
 
-            appBundleImages { (imageName, header) in
+            appBundleImages { (imageName, header, _) in
                 if lastLoaded {
                     onInjection?(header)
                     lastLoaded = false

@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#263 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#264 $
 //
 
 import Foundation
@@ -63,7 +63,7 @@ open class SwiftTrace: NSObject {
      ensure only one interposed dictionary us used if the user
      includes SwiftTrace as a package or pod in their project.
      */
-    @objc class var interposedPointer: UnsafeMutableRawPointer {
+    @objc public class var interposedPointer: UnsafeMutableRawPointer {
         return UnsafeMutableRawPointer(&interposed)
     }
 
@@ -414,9 +414,12 @@ open class SwiftTrace: NSObject {
      - parameter matchingPattern: regex pattern to match entries against
      - parameter subLevels: subLevels to log of previous traces to trace
      */
-    #if swift(>=5.0) && !arch(arm64)
+    #if swift(>=5.0)
     // No longer possible to write to witness tables on arm64 macs.
     @objc open class func traceProtocolsInBundle(containing aClass: AnyClass? = nil, matchingPattern: String? = nil, subLevels: Int = 0) {
+        #if arch(arm64)
+        print("Witness tables cannot be patched on arm64")
+        #endif
         startNewTrace(subLevels: subLevels)
         let regex = matchingPattern != nil ?
             NSRegularExpression(regexp: matchingPattern!) : nil
