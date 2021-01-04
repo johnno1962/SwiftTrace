@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#179 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#184 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -213,14 +213,23 @@ extension SwiftTrace {
         /**
          Cache of positions in signature of arguments
          */
-        lazy var argTypeRanges: [Range<String.Index>] = {
+        lazy var argTypeRanges = {
             return ranges(in: signature, parser: Decorated.swiftArgumentTypeParser)
+        }()
+
+        /**
+         Cache of positions in signature of return type & its type
+         */
+        lazy var returnTypeRange = {
+            return ranges(in: signature, parser:
+                            Decorated.swiftReturnValueTypeParser)
         }()
 
         /**
          Ranges of argument/return typs in signature. There's a lot going on here..
          */
-        open func ranges(in signature: String, parser: NSRegularExpression) -> [Range<String.Index>] {
+        open func ranges(in signature: String, parser: NSRegularExpression)
+            -> [(range: Range<String.Index>, type: Any.Type?)] {
             let parsingArguments = parser === Decorated.swiftArgumentTypeParser
             let start = parsingArguments ?
                 signature.index(of: .start+1 + .first(of: "(")) ??
@@ -241,6 +250,8 @@ extension SwiftTrace {
                 }
             }
             return matches
+                .map {($0, SwiftMeta.lookupType(named: String(signature[$0]),
+                                              exclude: lookupExclusionRegexp))}
         }
 
         /**
@@ -299,14 +310,13 @@ extension SwiftTrace {
                     .append(unsafeBitCast(invocation.swiftSelf, to: AnyObject.self))
             }
 
-            let typeRanges = !isReturn ? argTypeRanges :
-                ranges(in: signature, parser: parser)
-            var position = isReturn ? typeRanges.last?.lowerBound ??
-                signature.startIndex : signature.startIndex
+            let typeRanges = !isReturn ? argTypeRanges : returnTypeRange
+            var position = !isReturn ? signature.startIndex :
+                typeRanges.last?.range.lowerBound ?? signature.startIndex
             invocation.floatArgumentOffset = 0
             invocation.intArgumentOffset = 0
 
-            for range in typeRanges {
+            for (range, lookedUpType) in typeRanges {
                 output += signature[position ..< range.lowerBound]
                 var value: String?
 
@@ -315,31 +325,29 @@ extension SwiftTrace {
                     let handled = typeHandler(invocation, isReturn) {
                     value = handled
                 } else if typeLookup || type.hasPrefix("Swift"),
-                      let anyType = SwiftMeta.lookupType(named: type,
-                                               exclude: lookupExclusionRegexp) {
+                    let anyType = lookedUpType {
                     value = Decorated.handleArg(invocation: invocation,
                                             isReturn: isReturn, type: anyType)
                 } else if NSClassFromString(type) != nil {
                     value = Decorated.handleArg(invocation: invocation,
-                                                isReturn: isReturn,
-                                                type: AnyObject?.self)
+                                    isReturn: isReturn, type: AnyObject?.self)
                 }
 
                 position = range.upperBound
 
                 if value == nil {
-                    output += isReturn ? "" : type
+                    output += !isReturn ? type : "" 
                     break
                 }
 
                 output += value!
             }
 
-            let endIndex = isReturn ?
+            let endIndex = !isReturn ? signature.endIndex :
                 typeRanges.isEmpty ? signature.startIndex :
                     !hasSelf && !typeRanges.isEmpty ?
-                    typeRanges[0].upperBound : signature.endIndex :
-                signature.endIndex
+                    typeRanges[0].range.upperBound : signature.endIndex
+
             return output + signature[position ..< endIndex]
         }
 
