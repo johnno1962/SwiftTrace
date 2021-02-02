@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 20/04/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStack.swift#12 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStack.swift#13 $
 //
 //  Stack layout used by assemby trampolines
 //  ========================================
@@ -95,7 +95,6 @@ extension SwiftTrace {
         public var floatArg6: Double = 0.0
         public var floatArg7: Double = 0.0
         public var floatArg8: Double = 0.0
-        public var framePointer: intptr_t = 0
         public var r10: intptr_t = 0
         public var r12: intptr_t = 0
         public var swiftSelf: intptr_t = 0  // r13
@@ -109,6 +108,7 @@ extension SwiftTrace {
         public var intArg6: intptr_t = 0    // r9
         public var structReturn: intptr_t = 0 // rax
         public var rbx: intptr_t = 0
+        public var framePointer: intptr_t = 0
     }
 
     /**
@@ -127,7 +127,6 @@ extension SwiftTrace {
         public var xmm5: Double = 0.0
         public var xmm6: Double = 0.0
         public var xmm7: Double = 0.0
-        public var framePointer: intptr_t = 0
         public var r10: intptr_t = 0
         public var thrownError: intptr_t = 0 // r12
         public var swiftSelf: intptr_t = 0  // r13
@@ -141,6 +140,7 @@ extension SwiftTrace {
         public var intReturn4: intptr_t = 0 // r8
         public var r9: intptr_t = 0
         public var rbx: intptr_t = 0
+        public var framePointer: intptr_t = 0
         public var structReturn: intptr_t {
             return intReturn1
         }

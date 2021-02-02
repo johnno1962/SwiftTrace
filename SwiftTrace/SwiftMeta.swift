@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#68 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#69 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -107,7 +107,7 @@ public class SwiftMeta {
     /**
      Definitions related to auto-tracability of types
      */
-    static let RTLD_DEFAULT = UnsafeMutableRawPointer(bitPattern: -2)
+    public static let RTLD_DEFAULT = UnsafeMutableRawPointer(bitPattern: -2)
     public static func mangle(_ name: String) -> String {
         return "\(name.utf8.count)\(name)"
     }
