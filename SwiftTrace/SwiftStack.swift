@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 20/04/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStack.swift#13 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStack.swift#20 $
 //
 //  Stack layout used by assemby trampolines
 //  ========================================
@@ -17,6 +17,11 @@
 import Foundation
 
 extension SwiftTrace {
+
+    public struct StackFrame {
+        public var fp: UnsafePointer<StackFrame>? = nil
+        public var lr: UnsafeRawPointer? = nil
+    }
 
     #if arch(arm64)
     /**
@@ -46,6 +51,7 @@ extension SwiftTrace {
         public var framePointer: intptr_t = 0
         public var swiftSelf: intptr_t = 0 // x20
         public var thrownError: intptr_t = 0 // x21
+        public var frame = StackFrame()
     }
 
     /**
@@ -74,11 +80,13 @@ extension SwiftTrace {
         public var framePointer: intptr_t = 0
         public var swiftSelf: intptr_t = 0 // x20
         public var thrownError: intptr_t = 0 // x21
+        public var frame = StackFrame()
 
         mutating func resyncStructReturn() {
             structReturn = autoBitCast(invocation.structReturn)
         }
     }
+
     #else // x86_64
     /**
         Stack layout on entry from xt_forwarding_trampoline_x64.s
@@ -108,7 +116,8 @@ extension SwiftTrace {
         public var intArg6: intptr_t = 0    // r9
         public var structReturn: intptr_t = 0 // rax
         public var rbx: intptr_t = 0
-        public var framePointer: intptr_t = 0
+        public var rbp: intptr_t = 0    // for alignment
+        public var frame = StackFrame()
     }
 
     /**
@@ -117,8 +126,6 @@ extension SwiftTrace {
     public struct ExitStack {
         static let returnRegs = 4
 
-        public var stackShift1: intptr_t = 0
-        public var stackShift2: intptr_t = 0
         public var floatReturn1: Double = 0.0 // xmm0
         public var floatReturn2: Double = 0.0 // xmm1
         public var floatReturn3: Double = 0.0 // xmm2
@@ -140,7 +147,8 @@ extension SwiftTrace {
         public var intReturn4: intptr_t = 0 // r8
         public var r9: intptr_t = 0
         public var rbx: intptr_t = 0
-        public var framePointer: intptr_t = 0
+        public var rbp: intptr_t = 0
+        public var frame = StackFrame()
         public var structReturn: intptr_t {
             return intReturn1
         }

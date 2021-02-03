@@ -1,5 +1,5 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_x64.s#4 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_x64.s#6 $
 
 //  https://en.wikipedia.org/wiki/X86_calling_conventions
 
@@ -82,7 +82,10 @@ _xt_forwarding_trampoline:
     jmpq    *%r11   // forward onto original implementation
 
 returning:
-    pushq   %rbp
+    pushq   %rbp    // make space for real return address
+    pushq   %rbp    // bump frame
+    movq    %rsp, %rbp
+    pushq   %rbp    // align stack to 16 bytes
     pushq   %rbx
     pushq   %r9
     pushq   %r8     // push the 4 regs used for int returns
@@ -106,9 +109,8 @@ returning:
     movsd   %xmm6, 48(%rsp)
     movsd   %xmm7, 56(%rsp)
     leaq    onExit(%rip), %r11
-    callq   *(%r11)          // call tracing exit routine
-    movq    %rax, %r11       // returns original return address
-    movsd   (%rsp), %xmm0 // restore all registers
+    callq   *(%r11)         // call tracing exit routine
+    movsd   (%rsp), %xmm0   // restore all registers
     movsd   8(%rsp), %xmm1
     movsd   16(%rsp), %xmm2
     movsd   24(%rsp), %xmm3
@@ -131,10 +133,8 @@ returning:
     popq    %r9
     popq    %rbx
     popq    %rbp
-    pushq   %r11
-    ret     // return to original caller
-
-    nop
+    popq    %rbp
+    ret     // return to original caller - reset by "onExit()"
     nop
     nop
     nop

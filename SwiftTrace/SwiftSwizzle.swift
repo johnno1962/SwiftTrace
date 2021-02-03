@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#46 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#47 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -169,6 +169,7 @@ extension SwiftTrace {
        static var onExit: @convention(c) () -> UnsafeRawPointer = {
            let threadLocal = ThreadLocal.current()
            let invocation = threadLocal.invocationStack.last!
+           invocation.exitStack.pointee.frame.lr = invocation.returnAddress
            invocation.swizzle.onExit(stack: &invocation.exitStack.pointee)
            threadLocal.levelsTracing = invocation.saveLevelsTracing
            return threadLocal.invocationStack.removeLast().returnAddress

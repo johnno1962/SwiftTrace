@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#19 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#25 $
 //
 //  Invocation interface for Swift
 //  ==============================
@@ -20,6 +20,13 @@ extension SwiftTraceArg {
     public func add(toCall call: SwiftTrace.Call) {
         call.add(arg: self)
     }
+}
+
+extension Array: SwiftTraceArg {
+}
+extension Optional: SwiftTraceArg {
+}
+extension Dictionary: SwiftTraceArg {
 }
 
 extension SwiftTrace {
@@ -102,13 +109,11 @@ extension SwiftTrace {
         }
 
         public func invoke() {
-            resetArgs()
             caller!()
+            resetArgs()
         }
 
         public override func onEntry(stack: inout EntryStack) {
-            input.framePointer = stack.framePointer
-            input.structReturn = stack.structReturn
             backup = stack
             stack = input
         }
@@ -120,6 +125,28 @@ extension SwiftTrace {
 
         public func getReturn<T>() -> T {
             return output.genericReturn(swizzle: self).pointee
+        }
+
+        public func invokeStret<T>(args: Any...) -> T {
+            for arg in args {
+                if let arg = arg as? SwiftTraceArg {
+                    arg.add(toCall: self)
+                }
+                else if type(of: arg) is AnyObject.Type {
+                    self.add(arg: unsafeBitCast(arg, to: Int.self))
+                }
+                else {
+                    fatalError("Unsupported argument type \(type(of: arg))")
+                }
+            }
+            let ptr = UnsafeMutablePointer<T>.allocate(capacity: 1)
+            input.structReturn = autoBitCast(ptr)
+            caller!()
+            resetArgs()
+            let out = ptr.pointee
+            ptr.deinitialize(count: 1)
+            ptr.deallocate()
+            return out
         }
     }
 

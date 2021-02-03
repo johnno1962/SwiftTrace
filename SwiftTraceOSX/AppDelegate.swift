@@ -14,6 +14,12 @@ public struct Stret: SwiftTraceFloatArg {
     let r1: CGRect, r2: CGRect, r3: CGRect
 }
 
+public struct Str3 {
+    let s1 = "s1"
+    let s2 = "s2"
+    let s3 = "s3"
+}
+
 public typealias uuid_t = (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8)
 public typealias uuid_string_t = (Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8)
 
@@ -122,6 +128,10 @@ open class TestClass: P {
 
     public func any(a: Any) -> Any {
         return a
+    }
+
+    public func str3() -> Str3 {
+        return Str3()
     }
 }
 
@@ -258,6 +268,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         print(a.p(p: "s"))
         print(MemoryLayout<STR>.size)
         print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect(r1: __C.CGRect, r2: __C.CGRect) -> __C.CGRect", args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)) as NSRect)
+
+        print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.arr(a: Swift.Array<Swift.Optional<Swift.String>>, b: Swift.Array<Swift.Int>) -> Swift.ArraySlice<Swift.Optional<Swift.String>>", args: ["a", "b", "c"] as [String?], [1, 2, 3]) as ArraySlice<String?>)
+
+        print("invokeStret", SwiftTrace.Call(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect2(r1: __C.CGRect, r2: __C.CGRect) -> SwiftTwaceOSX.Stret")!.invokeStret(args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0)) as Stret)
+
+        print("invokeStr3", SwiftTrace.Call(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.str3() -> SwiftTwaceOSX.Str3")!.invokeStret(args: 0) as Str3)
+
+        print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.dict(d: Swift.Optional<Swift.Dictionary<Swift.String, Swift.Set<SwiftTwaceOSX.STR>>>) -> Swift.Optional<Swift.Dictionary<Swift.String, Swift.Set<SwiftTwaceOSX.STR>>>", args: d) as [String: Set<STR>]? as Any)
 
         NSObject.swiftTraceRemoveAllTraces()
 
