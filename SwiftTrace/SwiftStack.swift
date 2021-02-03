@@ -46,6 +46,7 @@ extension SwiftTrace {
         public var framePointer: intptr_t = 0
         public var swiftSelf: intptr_t = 0 // x20
         public var thrownError: intptr_t = 0 // x21
+        public var frame: (fp: intptr_t, lr: intptr_t) = (0, 0)
     }
 
     /**
@@ -74,6 +75,7 @@ extension SwiftTrace {
         public var framePointer: intptr_t = 0
         public var swiftSelf: intptr_t = 0 // x20
         public var thrownError: intptr_t = 0 // x21
+        public var frame: (fp: intptr_t, lr: intptr_t) = (0, 0)
 
         mutating func resyncStructReturn() {
             structReturn = autoBitCast(invocation.structReturn)
