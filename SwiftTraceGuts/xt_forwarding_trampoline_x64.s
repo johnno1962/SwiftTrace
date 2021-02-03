@@ -1,5 +1,5 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_x64.s#2 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_x64.s#4 $
 
 //  https://en.wikipedia.org/wiki/X86_calling_conventions
 
@@ -20,9 +20,13 @@ onExit:
 
 _xt_forwarding_trampoline_page:
 _xt_forwarding_trampoline:
+    popq    %r11    // recover trampoline return address
+    pushq   %rbp    // save frame pointer
+    movq    %rsp, %rbp
+    pushq   %rbp    // align stack
     pushq   %rbx
     pushq   %rax    // pointer for return of struct
-    pushq   %r9     // push all registers used as paremters
+    pushq   %r9     // push 6 registers for int paremters
     pushq   %r8
     pushq   %rcx
     pushq   %rdx
@@ -33,37 +37,33 @@ _xt_forwarding_trampoline:
     pushq   %r13    // Swift "call context" register for self
     pushq   %r12
     pushq   %r10
-    pushq   %rbp
-    movq    %rsp, %rbp
-    subq    $64, %rsp   // make space for floating point regeisters and save
-    movsd   %xmm7, -8(%rbp)
-    movsd   %xmm6, -16(%rbp)
-    movsd   %xmm5, -24(%rbp)
-    movsd   %xmm4, -32(%rbp)
-    movsd   %xmm3, -40(%rbp)
-    movsd   %xmm2, -48(%rbp)
-    movsd   %xmm1, -56(%rbp)
-    movsd   %xmm0, -64(%rbp)
-    movq    112(%rbp), %r11 // recover trampoline return address
+    subq    $64, %rsp // make space for floating point registers and save
+    movsd   %xmm0, (%rsp)
+    movsd   %xmm1, 8(%rsp)
+    movsd   %xmm2, 16(%rsp)
+    movsd   %xmm3, 24(%rsp)
+    movsd   %xmm4, 32(%rsp)
+    movsd   %xmm5, 40(%rsp)
+    movsd   %xmm6, 48(%rsp)
+    movsd   %xmm7, 56(%rsp)
     subq    $4096+5, %r11   // find trampoline info relative to return address
     movq    (%r11), %rdi    // first argument is pointer to forwarding info
-    movq    120(%rbp), %rsi // recover original return address
+    movq    184(%rsp), %rsi // recover original return address
     movq    %rsp, %rdx      // pass through stack
     leaq    onEntry(%rip), %r11
     callq   *(%r11)          // call tracing entry routine (saves return address)
     leaq    returning(%rip), %r11
-    movq    %r11, 120(%rbp)  // patch return address to "returning" code
+    movq    %r11, 184(%rsp)  // patch return address to "returning" code
     movq    %rax, %r11       // pointer to original implementation returned
-    movsd   -64(%rbp), %xmm0 // restore all registers
-    movsd   -56(%rbp), %xmm1
-    movsd   -48(%rbp), %xmm2
-    movsd   -40(%rbp), %xmm3
-    movsd   -32(%rbp), %xmm4
-    movsd   -24(%rbp), %xmm5
-    movsd   -16(%rbp), %xmm6
-    movsd   -8(%rbp), %xmm7
+    movsd   (%rsp), %xmm0 // restore all registers
+    movsd   8(%rsp), %xmm1
+    movsd   16(%rsp), %xmm2
+    movsd   24(%rsp), %xmm3
+    movsd   32(%rsp), %xmm4
+    movsd   40(%rsp), %xmm5
+    movsd   48(%rsp), %xmm6
+    movsd   56(%rsp), %xmm7
     addq    $64, %rsp
-    popq    %rbp
     popq    %r10
     popq    %r12
     popq    %r13
@@ -77,16 +77,18 @@ _xt_forwarding_trampoline:
     popq    %r9
     popq    %rax
     popq    %rbx
-    addq    $8, %rsp // remove trampoline return address
+    popq    %rbp
+    popq    %rbp    // restore frame pointer
     jmpq    *%r11   // forward onto original implementation
 
 returning:
+    pushq   %rbp
     pushq   %rbx
     pushq   %r9
-    pushq   %r8     // push regs used for int returns
+    pushq   %r8     // push the 4 regs used for int returns
     pushq   %rcx
     pushq   %rdx
-    pushq   %rax    // pointer for return of struct
+    pushq   %rax
     pushq   %rsi
     pushq   %rdi
     pushq   %r15
@@ -94,30 +96,27 @@ returning:
     pushq   %r13    // Swift "call context" register for self
     pushq   %r12
     pushq   %r10
-    pushq   %rbp
-    movq    %rsp, %rbp
     subq    $64, %rsp   // make space for floating point regeisters and save
-    movsd   %xmm7, -8(%rbp)
-    movsd   %xmm6, -16(%rbp)
-    movsd   %xmm5, -24(%rbp)
-    movsd   %xmm4, -32(%rbp)
-    movsd   %xmm3, -40(%rbp)
-    movsd   %xmm2, -48(%rbp)
-    movsd   %xmm1, -56(%rbp)
-    movsd   %xmm0, -64(%rbp)
+    movsd   %xmm0, (%rsp)
+    movsd   %xmm1, 8(%rsp)
+    movsd   %xmm2, 16(%rsp)
+    movsd   %xmm3, 24(%rsp)
+    movsd   %xmm4, 32(%rsp)
+    movsd   %xmm5, 40(%rsp)
+    movsd   %xmm6, 48(%rsp)
+    movsd   %xmm7, 56(%rsp)
     leaq    onExit(%rip), %r11
     callq   *(%r11)          // call tracing exit routine
     movq    %rax, %r11       // returns original return address
-    movsd   -64(%rbp), %xmm0 // restore all registers
-    movsd   -56(%rbp), %xmm1
-    movsd   -48(%rbp), %xmm2
-    movsd   -40(%rbp), %xmm3
-    movsd   -32(%rbp), %xmm4
-    movsd   -24(%rbp), %xmm5
-    movsd   -16(%rbp), %xmm6
-    movsd   -8(%rbp), %xmm7
+    movsd   (%rsp), %xmm0 // restore all registers
+    movsd   8(%rsp), %xmm1
+    movsd   16(%rsp), %xmm2
+    movsd   24(%rsp), %xmm3
+    movsd   32(%rsp), %xmm4
+    movsd   40(%rsp), %xmm5
+    movsd   48(%rsp), %xmm6
+    movsd   56(%rsp), %xmm7
     addq    $64, %rsp
-    popq    %rbp
     popq    %r10
     popq    %r12
     popq    %r13
@@ -131,25 +130,29 @@ returning:
     popq    %r8
     popq    %r9
     popq    %rbx
+    popq    %rbp
     pushq   %r11
     ret     // return to original caller
 
     nop
     nop
+    nop
+    nop
+    nop
 
 _xt_forwarding_trampolines_start:
-callq _xt_forwarding_trampoline
-nop
-nop
-nop
+    callq _xt_forwarding_trampoline
+    nop
+    nop
+    nop
 
 // another 469 trampoline entry points
 _xt_forwarding_trampolines_next:
-.rept 469
-callq _xt_forwarding_trampoline
-nop
-nop
-nop
+.rept 465
+    callq _xt_forwarding_trampoline
+    nop
+    nop
+    nop
 .endr
 
 _xt_forwarding_trampolines_end:

@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#18 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#19 $
 //
 //  Invocation interface for Swift
 //  ==============================
@@ -102,8 +102,8 @@ extension SwiftTrace {
         }
 
         public func invoke() {
-            caller!()
             resetArgs()
+            caller!()
         }
 
         public override func onEntry(stack: inout EntryStack) {

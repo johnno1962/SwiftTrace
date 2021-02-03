@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#265 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#266 $
 //
 
 import Foundation
@@ -210,8 +210,8 @@ open class SwiftTrace: NSObject {
                                   callback: @escaping (_ aClass: AnyClass,
                                     _ stop: inout Bool) -> Void ) -> Bool {
         var stopped = false
+        var seen = Set<UnsafeRawPointer>()
         if bundlePath != nil {
-            var seen = Set<UnsafeRawPointer>()
             findSwiftSymbols(bundlePath, classesIncludingObjc()) {
                 aClass,_,_,_ in
                 if !stopped && seen.insert(aClass).inserted {
@@ -223,8 +223,6 @@ open class SwiftTrace: NSObject {
 
         // The old version of the code...
         var nc: UInt32 = 0
-        var registered = Set<UnsafeRawPointer>()
-
         if let classes = UnsafePointer(objc_copyClassList(&nc)) {
             for i in 0 ..< Int(nc) {
                 let aClass: AnyClass = classes[i]
@@ -233,7 +231,7 @@ open class SwiftTrace: NSObject {
                     strcmp(imageName, bundlePath) == 0 {
                     callback(aClass, &stopped)
                 }
-                registered.insert(autoBitCast(aClass))
+                seen.insert(autoBitCast(aClass))
                 if stopped {
                     break
                 }
@@ -245,7 +243,7 @@ open class SwiftTrace: NSObject {
         Bundle.main.executablePath!.withCString { executable in
             findSwiftSymbols(bundlePath ?? executable, "CN") {
                 aClass, _,  _, _ in
-                if !registered.contains(aClass) && !stopped {
+                if !seen.contains(aClass) && !stopped {
                     callback(autoBitCast(aClass), &stopped)
                 }
             }
