@@ -1,21 +1,23 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_arm64.s#5 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_arm64.s#7 $
+
+// for ARM64 abi see http://infocenter.arm.com/help/topic/com.arm.doc.ihi0055b/IHI0055B_aapcs64.pdf
+//  Layout shadowed in SwiftStack.swift
 
 #if defined(__arm64__)
 .text
 .align 14
 onEntry:
-    .quad 0
+    .quad 0 // pointer to function to trace call extry
 onExit:
-    .quad 0
+    .quad 0 // pointer to function to trace call exit
+    // SwiftTrace.Swizzle instance pointer at trampoline offset
 
 .align 14
 .globl _xt_forwarding_trampoline_page
 .globl _xt_forwarding_trampolines_start
 .globl _xt_forwarding_trampolines_next
 .globl _xt_forwarding_trampolines_end
-
-// for ARM64 abi see http://infocenter.arm.com/help/topic/com.arm.doc.ihi0055b/IHI0055B_aapcs64.pdf
 
 _xt_forwarding_trampoline_page:
 _xt_forwarding_trampoline:
@@ -34,11 +36,11 @@ _xt_forwarding_trampoline:
     stp d4, d5, [sp, #-16]!
     stp d2, d3, [sp, #-16]!
     stp d0, d1, [sp, #-16]!
-    ldr x0, [x16]   // first argument is trace info structure
+    ldr x0, [x16]   // first argument is pointer to Swizzle instance
     mov x1, lr      // second argument is return address
-    mov x2, sp      // fourth argument is pointer to stack
+    mov x2, sp      // third argument is pointer to stack
     ldr x16, onEntry
-    blr x16         // call tracer routine
+    blr x16         // call tracing entry routine (saves return address)
     mov x16, x0     // original implementation to call is returned
     ldp d0, d1, [sp], #16
     ldp d2, d3, [sp], #16
@@ -70,7 +72,7 @@ returning:
     stp d2, d3, [sp, #-16]!
     stp d0, d1, [sp, #-16]!
     ldr x16, onExit
-    blr x16         // call tracer routine
+    blr x16 // call tracing exit routine
     ldp d0, d1, [sp], #16
     ldp d2, d3, [sp], #16
     ldp d4, d5, [sp], #16

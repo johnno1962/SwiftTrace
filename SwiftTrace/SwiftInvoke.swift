@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#25 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#27 $
 //
 //  Invocation interface for Swift
 //  ==============================
@@ -114,6 +114,7 @@ extension SwiftTrace {
         }
 
         public override func onEntry(stack: inout EntryStack) {
+            input.frame = stack.frame
             backup = stack
             stack = input
         }
