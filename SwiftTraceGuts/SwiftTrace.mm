@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#55 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#58 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -151,8 +151,22 @@ static SPLForwardingTrampolinePage *nextTrampolinePage()
     return trampolinePage;
 }
 
+/// Fox for libMiainThreadCheck when using tramplines
+typedef const char * (*image_path_func)(const void *ptr);
+static image_path_func orig_path_func;
+
+static const char *myld_image_path_containing_address(const void* addr) {
+    return orig_path_func(addr) ?: "/trampoline";
+}
+
 IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 {
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        struct rebinding path_rebinding = {"dyld_image_path_containing_address",
+          (void *)myld_image_path_containing_address, (void **)&orig_path_func};
+        rebind_symbols(&path_rebinding, 1);
+    });
     OSSpinLockLock(&lock);
 
     SPLForwardingTrampolinePage *dataPageLayout = nextTrampolinePage();
