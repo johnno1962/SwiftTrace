@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#69 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#71 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -15,6 +15,9 @@
 //
 
 import Foundation
+#if SWIFT_PACKAGE
+import SwiftTraceGuts
+#endif
 
 /**
  Shenaniggans to be able to decorate any type linked into an app.
@@ -49,7 +52,7 @@ public func getSetType<Type: Hashable>(value: Type, out: inout Any.Type?) {
 }
 
 // generic function to find the Foundation.Measurement type for a Unit
-@available(OSX 10.12, iOS 10.0, *)
+@available(OSX 10.12, iOS 10.0, tvOS 10.0, *)
 public func getMeasurementType<Type: Unit>(value: Type, out: inout Any.Type?) {
     out = Foundation.Measurement<Type>.self
 }

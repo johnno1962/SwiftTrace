@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#45 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#46 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -259,7 +259,7 @@ struct dyld_interpose_tuple {
 #include <stddef.h>
 #include <stdint.h>
 
-#if !defined(FISHHOOK_EXPORT)
+#if defined(FISHHOOK_HIDDEN)
 #define FISHHOOK_VISIBILITY __attribute__((visibility("hidden")))
 #else
 #define FISHHOOK_VISIBILITY __attribute__((visibility("default")))
