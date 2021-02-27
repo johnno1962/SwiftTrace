@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		BB07C35F2577F99800FD6ADB /* xt_forwarding_trampoline_arm64.s in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F01D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s */; };
+		BB16653C25EACF3E001407AE /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB16653B25EACF3C001407AE /* Package.swift */; };
 		BB1B8179251B631900F76DC7 /* SwiftStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B8178251B631900F76DC7 /* SwiftStats.swift */; };
 		BB1B817B251B632D00F76DC7 /* SwiftInterpose.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B817A251B632D00F76DC7 /* SwiftInterpose.swift */; };
 		BB1B8180251B69B100F76DC7 /* SwiftStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B8178251B631900F76DC7 /* SwiftStats.swift */; };
@@ -121,6 +122,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		BB16653B25EACF3C001407AE /* Package.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		BB1B8178251B631900F76DC7 /* SwiftStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftStats.swift; sourceTree = "<group>"; };
 		BB1B817A251B632D00F76DC7 /* SwiftInterpose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftInterpose.swift; sourceTree = "<group>"; };
 		BB1C3241254B47CF001EDFCC /* EasyPointer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EasyPointer.swift; sourceTree = "<group>"; };
@@ -213,6 +215,7 @@
 			children = (
 				BBC3D2001D0A941900520F38 /* LICENSE */,
 				BBC3D1FC1D0A85E800520F38 /* README.md */,
+				BB16653B25EACF3C001407AE /* Package.swift */,
 				BBC3D1FE1D0A928000520F38 /* SwiftTrace.podspec */,
 				BBC3D1E41D0A43B200520F38 /* SwiftTrace */,
 				BBC3D1C91D0A438800520F38 /* SwiftTraceApp */,
@@ -524,6 +527,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB16653C25EACF3E001407AE /* Package.swift in Sources */,
 				BBC3D1CF1D0A438800520F38 /* DetailViewController.swift in Sources */,
 				BBC3D1CD1D0A438800520F38 /* MasterViewController.swift in Sources */,
 				BBC3D1CB1D0A438800520F38 /* AppDelegate.swift in Sources */,
