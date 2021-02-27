@@ -1,5 +1,9 @@
 // swift-tools-version:5.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
+//
+//  Repo: https://github.com/johnno1962/SwiftTrace
+//  $Id: //depot/SwiftTrace/Package.swift#3 $
+//
 
 import PackageDescription
 
@@ -7,8 +11,8 @@ let package = Package(
     name: "SwiftTrace",
     platforms: [.macOS("10.12"), .iOS("10.0")],
     products: [
-        .library(name: "SwiftTrace", targets: ["SwiftTrace"]),
-        .library(name: "SwiftTraceGuts", targets: ["SwiftTraceGuts"]),
+        .library(name: "SwiftTrace", type: .dynamic, targets: ["SwiftTrace"]),
+        .library(name: "SwiftTraceGuts", type: .dynamic, targets: ["SwiftTraceGuts"]),
     ],
     dependencies: [],
     targets: [
