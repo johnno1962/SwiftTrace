@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#186 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#187 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -86,7 +86,8 @@ public func describer<Type>(value: Type, out: inout String) {
     }
 }
 
-public func returner<Type>(value: Type, out: inout Any) {
+// generic function to get return value as Any?
+public func returner<Type>(value: Type, out: inout Any?) {
     out = value
 }
 
@@ -122,7 +123,7 @@ extension SwiftTrace {
     static var appenderFptr = SwiftMeta.bindGeneric(name: "appender",
                                                     args: "SayypGzt")
     static var returnerFptr = SwiftMeta.bindGeneric(name: "returner",
-                                                    args: "ypzt")
+                                                    args: "ypSgzt")
 
     /**
      Default pattern of type names to be excluded from decoration
@@ -232,30 +233,29 @@ extension SwiftTrace {
         }()
 
         /// The return value as an Any or the string "nil" if nil
-        open var returnAsAny: Any {
-            var out: Any = "nil"
-            if let returnType = returnTypeRange.first?.type,
-                let exitStack = invocation()?.exitStack {
-                let slotsRequired = (SwiftMeta.sizeof(anyType: returnType) +
-                    MemoryLayout<intptr_t>.size - 1) /
-                    MemoryLayout<intptr_t>.size
-                let valuePtr: UnsafeRawPointer
-                if slotsRequired > ExitStack.returnRegs {
-                    valuePtr = autoBitCast(invocation().structReturn)
-                } else if SwiftMeta.structsPassedByReference
-                    .contains(autoBitCast(returnType)) {
-                    valuePtr = autoBitCast(exitStack.pointee.intReturn1)
-                } else {
-                    valuePtr = returnType is SwiftTraceFloatArg.Type ?
-                    UnsafeRawPointer(withUnsafePointer(to:
-                    &exitStack.pointee.floatReturn1) {$0}) :
-                    UnsafeRawPointer(withUnsafePointer(to:
-                    &exitStack.pointee.intReturn1) {$0})
-                }
-                SwiftMeta.thunkToGeneric(funcPtr: SwiftTrace.returnerFptr,
-                                         valuePtr: valuePtr, outPtr: &out,
-                                         type: returnType)
+        open var returnAsAny: Any? {
+            guard let returnType = returnTypeRange.first?.type,
+                let exitStack = invocation()?.exitStack else { return nil }
+            let slotsRequired = (SwiftMeta.sizeof(anyType: returnType) +
+                MemoryLayout<intptr_t>.size - 1) /
+                MemoryLayout<intptr_t>.size
+            let valuePtr: UnsafeRawPointer
+            if slotsRequired > ExitStack.returnRegs {
+                valuePtr = autoBitCast(invocation().structReturn)
+            } else if SwiftMeta.structsPassedByReference
+                .contains(autoBitCast(returnType)) {
+                valuePtr = autoBitCast(exitStack.pointee.intReturn1)
+            } else {
+                valuePtr = returnType is SwiftTraceFloatArg.Type ?
+                UnsafeRawPointer(withUnsafePointer(to:
+                &exitStack.pointee.floatReturn1) {$0}) :
+                UnsafeRawPointer(withUnsafePointer(to:
+                &exitStack.pointee.intReturn1) {$0})
             }
+            var out: Any?
+            SwiftMeta.thunkToGeneric(funcPtr: SwiftTrace.returnerFptr,
+                                     valuePtr: valuePtr, outPtr: &out,
+                                     type: returnType)
             return out
         }
 
