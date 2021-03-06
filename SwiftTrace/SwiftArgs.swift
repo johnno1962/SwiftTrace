@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#187 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#188 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -232,19 +232,19 @@ extension SwiftTrace {
                             Decorated.swiftReturnValueTypeParser)
         }()
 
-        /// The return value as an Any or the string "nil" if nil
+        /// The return value as an Any or nil
         open var returnAsAny: Any? {
             guard let returnType = returnTypeRange.first?.type,
                 let exitStack = invocation()?.exitStack else { return nil }
+
             let slotsRequired = (SwiftMeta.sizeof(anyType: returnType) +
                 MemoryLayout<intptr_t>.size - 1) /
                 MemoryLayout<intptr_t>.size
             let valuePtr: UnsafeRawPointer
-            if slotsRequired > ExitStack.returnRegs {
+            if slotsRequired > ExitStack.returnRegs ||
+                SwiftMeta.structsPassedByReference
+                    .contains(autoBitCast(returnType)) {
                 valuePtr = autoBitCast(invocation().structReturn)
-            } else if SwiftMeta.structsPassedByReference
-                .contains(autoBitCast(returnType)) {
-                valuePtr = autoBitCast(exitStack.pointee.intReturn1)
             } else {
                 valuePtr = returnType is SwiftTraceFloatArg.Type ?
                 UnsafeRawPointer(withUnsafePointer(to:
