@@ -2,7 +2,7 @@
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/Package.swift#5 $
+//  $Id: //depot/SwiftTrace/Package.swift#7 $
 //
 
 import PackageDescription
