@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#58 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#62 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -42,11 +42,12 @@
 #import <mach/vm_map.h>
 #import <mach/mach_init.h>
 #import <objc/runtime.h>
+#import <os/lock.h>
 
 extern char xt_forwarding_trampoline_page, xt_forwarding_trampolines_start,
             xt_forwarding_trampolines_next, xt_forwarding_trampolines_end;
 
-static OSSpinLock lock = OS_SPINLOCK_INIT;
+static os_unfair_lock lock = OS_UNFAIR_LOCK_INIT;
 
 // trampoline implementation specific stuff...
 typedef struct {
@@ -167,7 +168,7 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
           (void *)myld_image_path_containing_address, (void **)&orig_path_func};
         rebind_symbols(&path_rebinding, 1);
     });
-    OSSpinLockLock(&lock);
+    os_unfair_lock_lock(&lock);
 
     SPLForwardingTrampolinePage *dataPageLayout = nextTrampolinePage();
 
@@ -184,7 +185,7 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 
     IMP implementation = (IMP)&dataPageLayout->trampolineEntryPoints[nextAvailableTrampolineIndex];
     
-    OSSpinLockUnlock(&lock);
+    os_unfair_lock_unlock(&lock);
     
     return implementation;
 }
@@ -945,7 +946,7 @@ const char *callerBundle() {
     return nullptr;
 }
 
-#if !TRY_TO_OPTIMISE_DLADDR
+#if TRY_TO_OPTIMISE_DLADDR
 #import <vector>
 #import <algorithm>
 
