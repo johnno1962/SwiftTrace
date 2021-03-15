@@ -891,12 +891,13 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
                                                (symtab->stroff + file_slide);
                     nlist_t *sym = (nlist_t *)((intptr_t)header +
                                                (symtab->symoff + file_slide));
-                    BOOL witnessFuncSearch = strcmp(suffix+strlen(suffix)-2, "Wl") == 0;
+                    size_t sufflen = strlen(suffix);
+                    BOOL witnessFuncSearch = strcmp(suffix+sufflen-2, "Wl") == 0 ||
+                                             strcmp(suffix+sufflen-5, "pACTK") == 0;
                     uint8_t symbolVisibility = witnessFuncSearch ? 0x1e : 0xf;
 
                     for (uint32_t i = 0; i < symtab->nsyms; i++, sym++) {
                         const char *symname = strings + sym->n_un.n_strx;
-                        NSUInteger sufflen = strlen(suffix);
                         void *address;
 
                         if (sym->n_type == symbolVisibility &&

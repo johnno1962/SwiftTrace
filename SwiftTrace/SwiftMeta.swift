@@ -46,6 +46,11 @@ public func getDictionaryType<Type>(value: Type, out: inout Any.Type?) {
     out = Dictionary<String, Type>.self
 }
 
+// generic function to find the MixedProperties type for a Type
+public func getMixedType<Type>(value: Type, out: inout Any.Type?) {
+    out = SwiftMeta.MixedProperties<Type>.self
+}
+
 // generic function to find the Set type for a Hashable wrapped type
 public func getSetType<Type: Hashable>(value: Type, out: inout Any.Type?) {
     out = Set<Type>.self
@@ -137,6 +142,7 @@ public class SwiftMeta {
     public static let returnAnyType = "ypXpSgzt"
 
     static var getOptionalTypeFptr = bindGeneric(name: "getOptionalType")
+    static var getMixedTypeFptr = bindGeneric(name: "getMixedType")
     static var getSetTypeFptr = bindGeneric(name: "getSetType",
                                             args: "ypXpSgztSHRz")
 
@@ -175,6 +181,11 @@ public class SwiftMeta {
      You need to use this value ro prevent type lookup as assigning nil will just delete the key..
      */
     public static let PreventLookup: Any.Type? = nil
+    public struct MixedProperties<Type>: CustomStringConvertible {
+        public var description: String {
+            return _typeName(Type.self)+"()"
+        }
+    }
 
     /**
      Best effort recovery of type from a qualified name
@@ -235,7 +246,10 @@ public class SwiftMeta {
                     mangled += "V" // value type
                     out = type
                 } else if let type = _typeByName(mangled+"O") {
-                    mangled += "O" // enum type?
+                    mangled += "O" // enum type
+                    out = type
+                } else if let type = _typeByName(mangled+"P") {
+                    mangled += "P" // prptocol
                     out = type
                 } else {
                     break
@@ -303,30 +317,49 @@ public class SwiftMeta {
     }
 
     static var approximateFieldInfoByTypeName = [String: [FieldInfo]]()
+    static var doesntHaveStorage = Set<String>()
 
     public static var structsPassedByReference: Set<UnsafeRawPointer> = {
         var problemTypes = Set<UnsafeRawPointer>()
-        func passedByReference(_ type: Any.Type) {
+
+        for var type: Any.Type in [Any.self, URL.self, UUID.self, Date.self,
+                           IndexPath.self, IndexSet.self, URLRequest.self] {
             problemTypes.insert(autoBitCast(type))
-        }
-        for var type: Any.Type in [
-            URL.self, UUID.self, Date.self, IndexPath.self, IndexSet.self] {
-            passedByReference(type)
             thunkToGeneric(funcPtr: getOptionalTypeFptr,
                            valuePtr: nil, outPtr: &type, type: type)
-            passedByReference(type)
+            problemTypes.insert(autoBitCast(type))
         }
 
-        appBundleImages { bundlePath, _, _ in
-            process(bundlePath: bundlePath, problemTypes: &problemTypes)
+        // properties that have key path getters are not stored?
+        findSwiftSymbols(nil, "pACTK") { (_, symbol, _, _) in
+            doesntHaveStorage.insert(String(cString: symbol)
+                .replacingOccurrences(of: "pACTK", with: "g"))
         }
+        // ...unless they have a field offset
+        findSwiftSymbols(nil, "pWvd") { (_, symbol, _, _) in
+            doesntHaveStorage.remove(String(cString: symbol)
+                .replacingOccurrences(of: "pWvd", with: "g"))
+        }
+        print(doesntHaveStorage)
 
-        passedByReference(Any.self)
-        passedByReference(Any?.self)
+//        var typesFound = 0
+//        repeat {
+//            print("JKJHKJHKHJJHJKJHJKHKHKH")
+//            typesFound = problemTypes.count
+            appBundleImages { bundlePath, _, _ in
+                process(bundlePath: bundlePath, problemTypes: &problemTypes)
+            }
+//        } while problemTypes.count != typesFound
+
 //        print(problemTypes.map {unsafeBitCast($0, to: Any.Type.self)}, approximateFieldInfoByTypeName)
+
+        if let swiftUIClass: AnyClass = autoBitCast(dlsym(RTLD_DEFAULT,
+                                      "$s7SwiftUI14AnyTextStorageCN")),
+           let swiftUIFramework = class_getImageName(swiftUIClass) {
+            process(bundlePath: swiftUIFramework, problemTypes: &problemTypes)
+        }
         return problemTypes
     }()
-
 
     /**
      Structs that have only fields that conform to .SwiftTraceFloatArg
@@ -340,18 +373,20 @@ public class SwiftMeta {
      */
     public static func process(bundlePath: UnsafePointer<Int8>,
                    problemTypes: UnsafeMutablePointer<Set<UnsafeRawPointer>>) {
-        func passedByReference(_ type: Any.Type) {
-            problemTypes.pointee.insert(autoBitCast(type))
-        }
-        func debug(_ str: String) {
-//            print(str)
+        func debug(_ str: @autoclosure () -> String) {
+            print(str())
         }
 
         var offset = 0
         var currentType = ""
         var wasFloatType = false
 
-        findSwiftSymbols(bundlePath, "g") { (_, symbol, _, _) in
+        var symbols = [(symval: UnsafeRawPointer, symname: UnsafePointer<Int8>)]()
+        findSwiftSymbols(bundlePath, "g") { (symval, symbol, _, _) in
+            symbols.append((symval, symbol))
+        }
+
+        for (_, symbol) in symbols.sorted(by: { $0.symval < $1.symval }) {
 //                print(String(cString: symbol))
             if let demangled = SwiftMeta.demangle(symbol: symbol) {
 //                    print(demangled)
@@ -369,7 +404,7 @@ public class SwiftMeta {
                         strcmp(symend-5, "OSgvg") == 0, !typeIsClass {
                         debug("\(typeName) enum prop \(fieldTypeName)")
                         typeLookupCache[typeName] = PreventLookup
-                        return
+                        continue
                     }
 
                     if let fieldType = SwiftMeta.lookupType(named: fieldTypeName) {
@@ -384,6 +419,12 @@ public class SwiftMeta {
                             }
                         }
 
+                        // Ignore non stored properties
+                        if doesntHaveStorage.contains(String(cString: symbol)) {
+                            debug("No Storage \(typeName).\(fieldName)")
+                            continue
+                        }
+
                         let strideMinus1 = strideof(anyType: fieldType) - 1
                         offset = (offset + strideMinus1) & ~strideMinus1
                         approximateFieldInfoByTypeName[typeName]?.append(
@@ -395,26 +436,32 @@ public class SwiftMeta {
                         }
 
                         if typeIsClass {
-                            return
+                            continue
                         }
 
                         if isFloatField != wasFloatType &&
-                            !(type is SwiftTraceFloatArg.Type) {
+                            !(type is SwiftTraceFloatArg.Type) &&
+                            !problemTypes.pointee.contains(autoBitCast(type)) {
                             debug("\(typeName) Mixed properties")
-                            typeLookupCache[typeName] = PreventLookup
+                            var mixedType: Any.Type?
+                            thunkToGeneric(funcPtr: getMixedTypeFptr, valuePtr: nil,
+                                           outPtr: &mixedType, type: type)
+                            typeLookupCache[typeName] = mixedType
                         }
 
-                        if problemTypes.pointee.contains(autoBitCast(fieldType)) {
+                        func passedByReference(_ type: Any.Type) {
+                            problemTypes.pointee.insert(autoBitCast(type))
+                        }
+
+                        if problemTypes.pointee.contains(autoBitCast(fieldType)) ||
+                            fieldTypeName.hasPrefix("Foundation.Measurement<") {
                             debug("\(typeName) Reference prop \(fieldTypeName)")
 //                            typeLookupCache[typeName] = PreventLookup
                             passedByReference(type)
+                            passedByReference(fieldType)
                         } else if let optional = fieldType as? OptionalTyping.Type,
                             problemTypes.pointee.contains(autoBitCast(optional.wrappedType)) {
                             debug("\(typeName) Reference optional prop \(fieldTypeName)")
-                            passedByReference(type)
-                            passedByReference(fieldType)
-                        } else if fieldTypeName.hasPrefix("Foundation.Measurement<") {
-                            debug("\(typeName) Measurement prop \(fieldTypeName)")
                             passedByReference(type)
                             passedByReference(fieldType)
                         }
