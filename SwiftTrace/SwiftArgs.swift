@@ -82,7 +82,9 @@ public func describer<Type>(value: Type, out: inout String) {
         }
         out += ")"
     } else {
+        SwiftTrace.Swizzle.ThreadLocal.current().describing = true
         out += value is String ? "\"\(value)\"" : "\(value)"
+        SwiftTrace.Swizzle.ThreadLocal.current().describing = false
     }
 }
 
@@ -527,7 +529,9 @@ extension SwiftTrace {
                 MemoryLayout<intptr_t>.size
             let typePtr = unsafeBitCast(type, to: UnsafeRawPointer.self)
 
-            if type is SwiftTraceFloatArg.Type ||
+            if type is UnsupportedTyping.Type {
+                return isReturn ? "\(type)(??)" : nil
+            } else if type is SwiftTraceFloatArg.Type ||
                 SwiftMeta.structsAllFloats.contains(typePtr) {
                 slot = invocation.floatArgumentOffset
                 maxSlots = isReturn ?

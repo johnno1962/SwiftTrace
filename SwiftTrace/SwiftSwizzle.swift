@@ -199,7 +199,8 @@ extension SwiftTrace {
         method called before trampoline enters the target "Swizzle"
         */
        open func onEntry(stack: inout EntryStack) {
-           if let invocation = invocation() {
+           let threadLocal = ThreadLocal.current()
+           if let invocation = threadLocal.invocationStack.last {
                _ = objcAdjustStret(invocation: invocation, isReturn: false,
                                    intArgs: &invocation.entryStack.pointee.intArg1)
                if nextCalled == nil && lastCalled != self {
@@ -210,8 +211,8 @@ extension SwiftTrace {
                    }
                }
 
-               if invocation.shouldDecorate && shouldTrace() {
-                   ThreadLocal.current().caller()?.subLogged = true
+               if invocation.shouldDecorate && shouldTrace() && !threadLocal.describing {
+                   threadLocal.caller()?.subLogged = true
                    let decorated = entryDecorate(stack: &stack)
                    let indent = String(repeating: SwiftTrace.traceIndent,
                                        count: invocation.stackDepth)
