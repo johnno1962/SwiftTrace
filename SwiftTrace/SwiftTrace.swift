@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#269 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#270 $
 //
 
 import Foundation

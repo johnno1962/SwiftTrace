@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#71 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#74 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -199,8 +199,6 @@ public class SwiftMeta {
         "Swift.String": String.self,
         "Swift.Double": Double.self,
         "Swift.Float": Float.self,
-//        "Swift.UInt64": UInt64.self,
-//        "Swift.Bool": Bool.self,
 
         // Special cases
         "Any": Any.self, // not reliable
@@ -331,26 +329,25 @@ public class SwiftMeta {
      */
     static func getWitnessTable(enc: String, for elementType: Any.Type)
         -> UnsafeRawPointer? {
-        var hashableWitnessTable: UnsafeRawPointer?
+        var witnessTable: UnsafeRawPointer?
         if let mangledName = mangledName(for: elementType) {
             if let theEasyWay = dlsym(RTLD_DEFAULT, mangledName+"S\(enc)sWP") {
-                hashableWitnessTable = UnsafeRawPointer(theEasyWay)
+                witnessTable = UnsafeRawPointer(theEasyWay)
             } else {
                 let witnessSuffix = "ACS\(enc)AAWl"
                 (mangledName + witnessSuffix).withCString { getWitnessSymbol in
                     typealias GetWitness = @convention(c) () -> UnsafeRawPointer
-                    let bundlePath = Bundle.main.executablePath!
                     findSwiftSymbols(nil, witnessSuffix) {
                         (address, symbol, _, _) in
                         if strcmp(symbol, getWitnessSymbol) == 0,
                             let witnessFptr: GetWitness = autoBitCast(address) {
-                            hashableWitnessTable = witnessFptr()
+                            witnessTable = witnessFptr()
                         }
                     }
                 }
             }
         }
-        return hashableWitnessTable
+        return witnessTable
     }
 
     /**
@@ -375,13 +372,16 @@ public class SwiftMeta {
 
     public static var structsPassedByReference: Set<UnsafeRawPointer> = {
         var problemTypes = Set<UnsafeRawPointer>()
-
-        for type: Any.Type in [URL.self, UUID.self, Date.self,
-                               IndexPath.self, IndexSet.self, URLRequest.self] {
+        func passedByReference(_ type: Any.Type) {
             problemTypes.insert(autoBitCast(type))
             if let type = convert(type: type, handler: getOptionalTypeFptr) {
                 problemTypes.insert(autoBitCast(type))
             }
+        }
+
+        for type: Any.Type in [URL.self, UUID.self, Date.self,
+                               IndexPath.self, IndexSet.self, URLRequest.self] {
+            passedByReference(type)
         }
 
         // properties that have key path getters are not stored?
@@ -394,16 +394,11 @@ public class SwiftMeta {
             doesntHaveStorage.remove(String(cString: symbol)
                 .replacingOccurrences(of: "pWvd", with: "g"))
         }
-        print(doesntHaveStorage)
+//        print(doesntHaveStorage)
 
-//        var typesFound = 0
-//        repeat {
-//            print("JKJHKJHKHJJHJKJHJKHKHKH")
-//            typesFound = problemTypes.count
-            appBundleImages { bundlePath, _, _ in
-                process(bundlePath: bundlePath, problemTypes: &problemTypes)
-            }
-//        } while problemTypes.count != typesFound
+        appBundleImages { bundlePath, _, _ in
+            process(bundlePath: bundlePath, problemTypes: &problemTypes)
+        }
 
 //        print(problemTypes.map {unsafeBitCast($0, to: Any.Type.self)}, approximateFieldInfoByTypeName)
 
@@ -413,8 +408,7 @@ public class SwiftMeta {
             process(bundlePath: swiftUIFramework, problemTypes: &problemTypes)
         }
 
-        problemTypes.insert(autoBitCast(Any.self))
-        problemTypes.insert(autoBitCast(Any?.self))
+        passedByReference(Any.self)
         return problemTypes
     }()
 
@@ -430,10 +424,6 @@ public class SwiftMeta {
      */
     public static func process(bundlePath: UnsafePointer<Int8>,
                    problemTypes: UnsafeMutablePointer<Set<UnsafeRawPointer>>) {
-        func debug(_ str: @autoclosure () -> String) {
-            print(str())
-        }
-
         var offset = 0
         var currentType = ""
         var wasFloatType = false
@@ -443,18 +433,22 @@ public class SwiftMeta {
             symbols.append((symval, symbol))
         }
 
+        // Need to process symbols in emitted order if we are
+        // to have any hope of recovering type memory layout.
         for (_, symbol) in symbols.sorted(by: { $0.symval < $1.symval }) {
-//                print(String(cString: symbol))
             guard let demangled = SwiftMeta.demangle(symbol: symbol) else {
-                debug("Could not demangle: \(String(cString: symbol))")
+                print("Could not demangle: \(String(cString: symbol))")
                 continue
             }
-//            print(demangled)
+            func debug(_ str: @autoclosure () -> String) {
+//                print(demangled)
+//                print(str())
+            }
             guard let fieldStart = demangled.index(of: .first(of: " : ")+3),
                let nameEnd = demangled.index(of: fieldStart + .last(of: ".")),
                let typeEnd = demangled.index(of: nameEnd + .last(of: ".")),
                let typeName = demangled[..<typeEnd][safe:
-                                    .either(.last(of: ":")+1, or:.start)...],
+                                     (.last(of: ":")+1 || .start)...],
                let fieldName = demangled[safe: typeEnd+1 ..< nameEnd],
                let fieldTypeName = demangled[safe: (fieldStart+0)...] else {
                  debug("Could not parse: \(demangled)")
@@ -466,7 +460,7 @@ public class SwiftMeta {
                  continue
              }
 
-            debug("\(typeName).\(fieldName): \(fieldTypeName)")
+//            debug("\(typeName).\(fieldName): \(fieldTypeName)")
             let typeIsClass = type is AnyClass
             let symend = symbol+strlen(symbol)
             if strcmp(symend-3, "Ovg") == 0 || // enum

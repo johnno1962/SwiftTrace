@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#47 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#48 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -199,8 +199,7 @@ extension SwiftTrace {
         method called before trampoline enters the target "Swizzle"
         */
        open func onEntry(stack: inout EntryStack) {
-           let threadLocal = ThreadLocal.current()
-           if let invocation = threadLocal.invocationStack.last {
+           if let invocation = invocation() {
                _ = objcAdjustStret(invocation: invocation, isReturn: false,
                                    intArgs: &invocation.entryStack.pointee.intArg1)
                if nextCalled == nil && lastCalled != self {
@@ -211,8 +210,8 @@ extension SwiftTrace {
                    }
                }
 
-               if invocation.shouldDecorate && shouldTrace() && !threadLocal.describing {
-                   threadLocal.caller()?.subLogged = true
+               if invocation.shouldDecorate && shouldTrace() {
+                   ThreadLocal.current().caller()?.subLogged = true
                    let decorated = entryDecorate(stack: &stack)
                    let indent = String(repeating: SwiftTrace.traceIndent,
                                        count: invocation.stackDepth)
@@ -374,7 +373,11 @@ extension SwiftTrace {
 
            /** This invocation qualifies for tracing */
            lazy public var shouldDecorate: Bool = {
-                if ThreadLocal.current().levelsTracing > 0 && !swizzle.reSwizzled {
+                let threadLocal = ThreadLocal.current()
+                if threadLocal.describing {
+                    return false
+                }
+                if threadLocal.levelsTracing > 0 && !swizzle.reSwizzled {
                     return true
                 }
                 if (swizzle.trace.instanceFilter == nil ||
@@ -491,6 +494,14 @@ extension SwiftTrace {
                    }
                    return unmanaged.takeUnretainedValue()
                }
+           }
+
+           static public func whileDescribing(block: () -> ()) {
+               let threadLocal = current()
+               let saveDescribing = threadLocal.describing
+               threadLocal.describing = true
+               block()
+               threadLocal.describing = saveDescribing
            }
 
            public func caller() -> Invocation? {

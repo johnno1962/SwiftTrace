@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#188 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#189 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -67,24 +67,24 @@ public func appender<Type>(value: Type, out: inout [Any]) {
 
 /// generic function to describe a value of any type
 public func describer<Type>(value: Type, out: inout String) {
-    if type(of: value) is AnyClass && !(value is CustomStringConvertible) {
-        out += String(format: SwiftTrace.identifyFormat, "\(value)" as NSString,
-                      unsafeBitCast(value, to: uintptr_t.self))+"("
-        if out.utf8.count < SwiftTrace.maxArgumentDescriptionBytes {
-            var first = true
-            for (name, field) in Mirror(reflecting: value).children {
-                out += "\(first ? "" : ", ")\(name ?? "_"): "
-                describer(value: field, out: &out)
-                first = false
+    SwiftTrace.Swizzle.ThreadLocal.whileDescribing {
+        if type(of: value) is AnyClass && !(value is CustomStringConvertible) {
+            out += String(format: SwiftTrace.identifyFormat, "\(value)",
+                          unsafeBitCast(value, to: uintptr_t.self))+"("
+            if out.utf8.count < SwiftTrace.maxArgumentDescriptionBytes {
+                var first = true
+                for (name, field) in Mirror(reflecting: value).children {
+                    out += "\(first ? "" : ", ")\(name ?? "_"): "
+                    describer(value: field, out: &out)
+                    first = false
+                }
+            } else {
+                out += "..."
             }
+            out += ")"
         } else {
-            out += "..."
+            out += value is String ? "\"\(value)\"" : "\(value)"
         }
-        out += ")"
-    } else {
-        SwiftTrace.Swizzle.ThreadLocal.current().describing = true
-        out += value is String ? "\"\(value)\"" : "\(value)"
-        SwiftTrace.Swizzle.ThreadLocal.current().describing = false
     }
 }
 
