@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#74 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#80 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -165,21 +165,26 @@ public class SwiftMeta {
     static var getMixedTypeFptr = bindGeneric(name: "getMixedType")
     static var getEnumTypeFptr = bindGeneric(name: "getEnumType")
     static var getMetaTypeFptr = bindGeneric(name: "getMetaType")
-    static var getRangeTypeFptr = bindGeneric(name: "getRangeType",
-                                              args: "ypXpSgztSLRz")
-    static var getSetTypeFptr = bindGeneric(name: "getSetType",
-                                            args: "ypXpSgztSHRz")
 
     /// Handled compund types
     public static var wrapperHandlers = [
         "Swift.Optional<": getOptionalTypeFptr,
         "Swift.Array<": bindGeneric(name: "getArrayType"),
+        "Swift.ArraySlice<": bindGeneric(name: "getArraySliceType"),
+        "Swift.Set<": bindGeneric(name: "getSetType",
+                                  args: "ypXpSgztSHRz"),
+        "Swift.Range<": bindGeneric(name: "getRangeType",
+                                    args: "ypXpSgztSLRz"),
         "Swift.UnsafePointer<": bindGeneric(name: "getPointerType"),
         "Swift.UnsafeMutablePointer<": bindGeneric(name: "getPointerType"),
-        "Swift.ArraySlice<": bindGeneric(name: "getArraySliceType"),
         "Swift.Dictionary<Swift.String, ": bindGeneric(name: "getDictionaryType"),
         "Foundation.Measurement<": bindGeneric(name: "getMeasurementType",
                                                args: "ypXpSgztSo6NSUnitCRbz"),
+    ]
+
+    public static var conformanceEncodings = [
+        "Swift.Set<": "H",
+        "Swift.Range<": "L"
     ]
 
     static func convert(type: Any.Type, handler: FunctionTakingGenericValue,
@@ -205,6 +210,8 @@ public class SwiftMeta {
         "Any.Type": Any.Type.self,
         "Swift.AnyObject": AnyObject.self,
         "Swift.AnyObject.Type": AnyClass.self,
+        "Swift.Optional<Swift.Error>": Error?.self,
+        "Swift.Error": Error.self,
         "()": Void.self,
         "some": nil,
 
@@ -216,16 +223,16 @@ public class SwiftMeta {
     static var typeLookupCacheLock = OS_SPINLOCK_INIT
 
     /**
-     You need to use this value ro prevent type lookup as assigning nil will just delete the key..
+     Fake types used to prevent decorating when unsupported
      */
-//    public static let PreventLookup: Any.Type? = nil
-//    public struct MixedProperties2 {}
-    public struct MixedProperties<Type>: CustomStringConvertible {
+    public struct MixedProperties<Type>: UnsupportedTyping,
+        CustomStringConvertible {
         public var description: String {
             return _typeName(Type.self)+"()"
         }
     }
-    public struct EnumProperties<Type>: CustomStringConvertible {
+    public struct EnumProperties<Type>: UnsupportedTyping,
+        CustomStringConvertible {
         public var description: String {
             return _typeName(Type.self)+"()"
         }
@@ -255,7 +262,11 @@ public class SwiftMeta {
             if let wrapped = named[safe: .start+prefix.count ..< .end-1],
                 let wrappedType = SwiftMeta.lockedType(named: wrapped,
                                                       exclude: exclude) {
-                out = convert(type: wrappedType, handler: handler)
+                let witnessTable = conformanceEncodings[prefix].flatMap {
+                    getWitnessTable(enc: $0, for: wrappedType)
+                }
+                out = convert(type: wrappedType, handler: handler,
+                              witnessTable: witnessTable)
             }
             break
         }
@@ -267,20 +278,6 @@ public class SwiftMeta {
             let element = named[safe: ..<(.end-5)],
             let elementType = lockedType(named: element) {
             out = convert(type: elementType, handler: getMetaTypeFptr)
-        } else if out == nil && named.hasPrefix("Swift.Set<"),
-            let element = named[safe: .start+10 ..< .end-1],
-            let elementType = SwiftMeta.lockedType(named: element,
-                                                   exclude: exclude),
-            let hashableWitness = getWitnessTable(enc: "H", for: elementType) {
-            out = convert(type: elementType, handler: getSetTypeFptr,
-                           witnessTable: hashableWitness)
-        } else if out == nil && named.hasPrefix("Swift.Range<"),
-            let element = named[safe: .start+12 ..< .end-1],
-            let elementType = SwiftMeta.lockedType(named: element,
-                                                      exclude: exclude),
-            let comparableWitness = getWitnessTable(enc: "L", for: elementType) {
-            out = convert(type: elementType, handler: getRangeTypeFptr,
-                           witnessTable: comparableWitness)
         } else if out == nil {
             var mangled = ""
             var first = true
@@ -396,19 +393,18 @@ public class SwiftMeta {
         }
 //        print(doesntHaveStorage)
 
-        appBundleImages { bundlePath, _, _ in
-            process(bundlePath: bundlePath, problemTypes: &problemTypes)
-        }
-
-//        print(problemTypes.map {unsafeBitCast($0, to: Any.Type.self)}, approximateFieldInfoByTypeName)
-
         if let swiftUIClass: AnyClass = autoBitCast(dlsym(RTLD_DEFAULT,
                                       "$s7SwiftUI14AnyTextStorageCN")),
            let swiftUIFramework = class_getImageName(swiftUIClass) {
             process(bundlePath: swiftUIFramework, problemTypes: &problemTypes)
         }
 
+        appBundleImages { bundlePath, _, _ in
+            process(bundlePath: bundlePath, problemTypes: &problemTypes)
+        }
+
         passedByReference(Any.self)
+//        print(problemTypes.map {unsafeBitCast($0, to: Any.Type.self)}, approximateFieldInfoByTypeName)
         return problemTypes
     }()
 
@@ -653,8 +649,6 @@ extension Optional: OptionalTyping {
 }
 
 protocol UnsupportedTyping {}
-extension SwiftMeta.MixedProperties: UnsupportedTyping {}
-extension SwiftMeta.EnumProperties: UnsupportedTyping {}
 
 /**
  Convenience extension to trap regex errors and report them
