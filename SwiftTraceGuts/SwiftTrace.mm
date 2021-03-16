@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#62 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#64 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -815,11 +815,9 @@ const char *sig_returnType(id signature) {
 }
 
 const char *swiftUIBundlePath() {
-    static char classInSwiftUIMangled[] = "$s7SwiftUI14AnyTextStorageCN";
-    if (void *AnyText = dlsym(RTLD_DEFAULT, classInSwiftUIMangled)) {
-        Dl_info info;
-        if (dladdr(AnyText, &info) != 0)
-            return info.dli_fname;
+    if (Class AnyText = (__bridge Class)
+        dlsym(RTLD_DEFAULT, "$s7SwiftUI14AnyTextStorageCN")) {
+        return class_getImageName(AnyText);
     }
     return nullptr;
 }
@@ -891,12 +889,13 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
                                                (symtab->stroff + file_slide);
                     nlist_t *sym = (nlist_t *)((intptr_t)header +
                                                (symtab->symoff + file_slide));
-                    BOOL witnessFuncSearch = strcmp(suffix+strlen(suffix)-2, "Wl") == 0;
+                    size_t sufflen = strlen(suffix);
+                    BOOL witnessFuncSearch = strcmp(suffix+sufflen-2, "Wl") == 0 ||
+                                             strcmp(suffix+sufflen-5, "pACTK") == 0;
                     uint8_t symbolVisibility = witnessFuncSearch ? 0x1e : 0xf;
 
                     for (uint32_t i = 0; i < symtab->nsyms; i++, sym++) {
                         const char *symname = strings + sym->n_un.n_strx;
-                        NSUInteger sufflen = strlen(suffix);
                         void *address;
 
                         if (sym->n_type == symbolVisibility &&

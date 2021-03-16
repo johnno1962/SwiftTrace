@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#269 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#270 $
 //
 
 import Foundation
@@ -120,11 +120,12 @@ open class SwiftTrace: NSObject {
             \\.getter : (?!some)| (?:retain(?:Count)?|_tryRetain|release|autorelease|_isDeallocating|.cxx_destruct|_?dealloc|class|description|\
             debugDescription|contextID|undoManager|_animatorClassForTargetClass|cursorUpdate|_isTrackingAreaObject)]|initWithCoder|\
             ^\\+\\[(?:Reader_Base64|UI(?:NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |\
-            ^.\\[(?:__NSAtom|NS(?:View|Appearance|AnimationContext|Segment|KVONotifying_\\S+)|_NSViewAnimator|UIView|RemoteCapture|SimpleSocket|BCEvent) |\
+            ^.\\[(?:__NSAtom|NS(?:View|Appearance|AnimationContext|Segment|KVONotifying_\\S+)|_NSViewAnimator|UIView|RemoteCapture|BCEvent|SimpleSocket) |\
             _TtGC7SwiftUI|NSTheme|NSTracking|UIDeviceWhiteColor initWithWhite:alpha:|UIButton _defaultBackgroundImageForType:andState:|\
             UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|\
             _UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|\
-            UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose| ns(?:li|is)_|SwiftTrace|HotReloading
+            UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose| ns(?:li|is)_|\
+            SwiftTrace|HotReloading|eraseToAnyView
             """
     }
 

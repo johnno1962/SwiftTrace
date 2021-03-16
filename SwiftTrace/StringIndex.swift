@@ -9,7 +9,7 @@
 //
 //  Repo: https://github.com/johnno1962/StringIndex.git
 //
-//  $Id: //depot/StringIndex/Sources/StringIndex/StringIndex.swift#33 $
+//  $Id: //depot/StringIndex/Sources/StringIndex/StringIndex.swift#34 $
 //
 
 import Foundation
@@ -79,6 +79,10 @@ extension String {
         public static func + (index: OffsetIndex,
                               offset: OffsetIndex) -> OffsetIndex {
             return .chained(previous: index, next: offset, offset: 0)
+        }
+        public static func || (either: OffsetIndex,
+                               or: OffsetIndex) -> OffsetIndex {
+            return .either(either, or: or)
         }
 
         /// Required by Comparable to check when creating ranges

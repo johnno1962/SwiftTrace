@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#47 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#48 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -373,7 +373,11 @@ extension SwiftTrace {
 
            /** This invocation qualifies for tracing */
            lazy public var shouldDecorate: Bool = {
-                if ThreadLocal.current().levelsTracing > 0 && !swizzle.reSwizzled {
+                let threadLocal = ThreadLocal.current()
+                if threadLocal.describing {
+                    return false
+                }
+                if threadLocal.levelsTracing > 0 && !swizzle.reSwizzled {
                     return true
                 }
                 if (swizzle.trace.instanceFilter == nil ||
@@ -490,6 +494,14 @@ extension SwiftTrace {
                    }
                    return unmanaged.takeUnretainedValue()
                }
+           }
+
+           static public func whileDescribing(block: () -> ()) {
+               let threadLocal = current()
+               let saveDescribing = threadLocal.describing
+               threadLocal.describing = true
+               block()
+               threadLocal.describing = saveDescribing
            }
 
            public func caller() -> Invocation? {
