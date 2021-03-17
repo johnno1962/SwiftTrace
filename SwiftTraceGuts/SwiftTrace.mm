@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#64 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#65 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -816,9 +816,8 @@ const char *sig_returnType(id signature) {
 
 const char *swiftUIBundlePath() {
     if (Class AnyText = (__bridge Class)
-        dlsym(RTLD_DEFAULT, "$s7SwiftUI14AnyTextStorageCN")) {
+        dlsym(RTLD_DEFAULT, "$s7SwiftUI14AnyTextStorageCN"))
         return class_getImageName(AnyText);
-    }
     return nullptr;
 }
 
