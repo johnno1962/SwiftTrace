@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#65 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#66 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -46,8 +46,6 @@
 
 extern char xt_forwarding_trampoline_page, xt_forwarding_trampolines_start,
             xt_forwarding_trampolines_next, xt_forwarding_trampolines_end;
-
-static os_unfair_lock lock = OS_UNFAIR_LOCK_INIT;
 
 // trampoline implementation specific stuff...
 typedef struct {
@@ -168,6 +166,8 @@ IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
           (void *)myld_image_path_containing_address, (void **)&orig_path_func};
         rebind_symbols(&path_rebinding, 1);
     });
+
+    static os_unfair_lock lock = OS_UNFAIR_LOCK_INIT;
     os_unfair_lock_lock(&lock);
 
     SPLForwardingTrampolinePage *dataPageLayout = nextTrampolinePage();

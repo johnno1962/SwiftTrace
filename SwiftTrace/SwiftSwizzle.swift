@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#48 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#49 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -24,8 +24,9 @@ extension SwiftTrace {
     /**
      Hook to intercept all trace output
      */
-    public static var logOutput: (String) -> () = {
+    public static var logOutput: (String, UnsafeRawPointer?, Int) -> () = {
         print($0, terminator: "")
+        _ = ($1, $2) // self, indent
     }
 
     /** Used for real time filtering */
@@ -215,7 +216,8 @@ extension SwiftTrace {
                    let decorated = entryDecorate(stack: &stack)
                    let indent = String(repeating: SwiftTrace.traceIndent,
                                        count: invocation.stackDepth)
-                   logOutput("\(subLogging() ? "\n" : "")\(indent)\(decorated)")
+                   logOutput("\(subLogging() ? "\n" : "")\(indent)\(decorated)",
+                             autoBitCast(invocation.swiftSelf), invocation.stackDepth)
                }
            }
        }
@@ -249,7 +251,7 @@ extension SwiftTrace {
                             """ : objcMethod != nil ? " ->" : "") \
                         \(returnValue)\(String(format: SwiftTrace.timeFormat,
                                 elapsed * 1000.0))\(subLogging() ? "" : "\n")
-                        """)
+                        """, autoBitCast(invocation.swiftSelf), invocation.stackDepth)
                }
                totalElapsed += elapsed
                invocationCount += 1
