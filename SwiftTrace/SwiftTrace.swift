@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#272 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#274 $
 //
 
 import Foundation
@@ -425,8 +425,7 @@ open class SwiftTrace: NSObject {
     }
     @objc open class func traceProtocols(inBundle: UnsafePointer<Int8>?, matchingPattern: String? = nil, subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels)
-        let regex = matchingPattern != nil ?
-            NSRegularExpression(regexp: matchingPattern!) : nil
+        let regex = matchingPattern.flatMap { NSRegularExpression(regexp: $0) }
         for witness in ["WP", "Wl"] {
         findSwiftSymbols(inBundle, witness) {
             (address: UnsafeRawPointer, _, typeref, typeend) in
@@ -452,9 +451,9 @@ open class SwiftTrace: NSObject {
                         continue
                     }
                     if demangled.hasPrefix("protocol witness for ") &&
-                            !demangled.contains("SwiftTrace."),
-                        regex == nil || regex!.matches(demangled) {
-                        if let factory = methodFilter(demangled),
+                            !demangled.contains("SwiftTrace.") {
+                        if regex?.matches(demangled) != false,
+                            let factory = methodFilter(demangled),
                             let swizzle = factory.init(name: demangled,
                                            vtableSlot: &witnessTable[slot]) {
 //                            print("Tracing \(slot):", demangled)
