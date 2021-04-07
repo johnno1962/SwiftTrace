@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#274 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#276 $
 //
 
 import Foundation
@@ -408,21 +408,32 @@ open class SwiftTrace: NSObject {
         return stop
     }
 
+    #if swift(>=5.0)
+    /**
+     Trace internal protocol witnesses in SwiftUI.
+     */
+    @objc open class func traceSwiftUIProtocols(matchingPattern: String? = nil,
+                                                subLevels: Int = 0) {
+        traceProtocols(inBundle: swiftUIBundlePath(),
+                       matchingPattern: matchingPattern, subLevels: subLevels)
+    }
     /**
      Trace the protocol witnesses for a bundle containg the specified class
-     - parameter aClass: the class, the methods of which to trace
+     - parameter aClass: the class contained in the bundle to trace
      - parameter matchingPattern: regex pattern to match entries against
      - parameter subLevels: subLevels to log of previous traces to trace
      */
-    #if swift(>=5.0)
-    @objc open class func traceSwiftUIProtocols(matchingPattern: String? = nil) {
-        traceProtocols(inBundle: swiftUIBundlePath(), matchingPattern: matchingPattern)
-    }
     @objc open class func traceProtocolsInBundle(containing aClass: AnyClass? = nil, matchingPattern: String? = nil, subLevels: Int = 0) {
         let bundlePath = aClass == nil ? callerBundle() :
             aClass == NSObject.self ? nil : class_getImageName(aClass)
         traceProtocols(inBundle: bundlePath, matchingPattern: matchingPattern, subLevels: subLevels)
     }
+    /**
+     Trace the protocol witnesses for a bundle specifying the image path
+     - parameter inBundle: Path to image the protocols of which to trace
+     - parameter matchingPattern: regex pattern to match entries against
+     - parameter subLevels: subLevels to log of previous traces to trace
+     */
     @objc open class func traceProtocols(inBundle: UnsafePointer<Int8>?, matchingPattern: String? = nil, subLevels: Int = 0) {
         startNewTrace(subLevels: subLevels)
         let regex = matchingPattern.flatMap { NSRegularExpression(regexp: $0) }
