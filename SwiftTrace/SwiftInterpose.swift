@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#53 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#56 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -39,12 +39,12 @@ extension SwiftTrace {
                               patchClass: Aspect.Type = Aspect.self,
                               onEntry: EntryAspect? = nil,
                               onExit: ExitAspect? = nil,
-                              replaceWith: nullImplementationType? = nil) {
+                              replaceWith: nullImplementationType? = nil) -> Int {
         var info = Dl_info()
         dladdr(autoBitCast(aType), &info)
-        interpose(aBundle: info.dli_fname, methodName: methodName,
-                  patchClass: patchClass, onEntry: onEntry, onExit: onExit,
-                  replaceWith: replaceWith)
+        return interpose(aBundle: info.dli_fname, methodName: methodName,
+                         patchClass: patchClass, onEntry: onEntry, onExit: onExit,
+                         replaceWith: replaceWith)
     }
 
     /// "interpose" aspects onto Swift function name.
@@ -61,7 +61,7 @@ extension SwiftTrace {
                               patchClass: Aspect.Type = Aspect.self,
                               onEntry: EntryAspect? = nil,
                               onExit: ExitAspect? = nil,
-                              replaceWith: nullImplementationType? = nil) {
+                              replaceWith: nullImplementationType? = nil) -> Int {
         var interposes = [dyld_interpose_tuple]()
 
         for suffix in swiftFunctionSuffixes {
@@ -79,7 +79,7 @@ extension SwiftTrace {
             })
         }
 
-        apply(interposes: interposes, symbols: [methodName])
+        return apply(interposes: interposes, symbols: [methodName])
     }
 
     open class func interposed(replacee: UnsafeRawPointer) -> UnsafeRawPointer? {
@@ -101,7 +101,7 @@ extension SwiftTrace {
     ///   - subLevels: not currently used
     @objc open class func interposeMethods(inBundlePath: UnsafePointer<Int8>,
                                            packageName: String? = nil,
-                                           subLevels: Int = 0) {
+                                           subLevels: Int = 0) -> Int {
         startNewTrace(subLevels: subLevels)
         var interposes = [dyld_interpose_tuple]()
         var symbols = [UnsafePointer<Int8>]()
@@ -127,37 +127,39 @@ extension SwiftTrace {
             }
         }
 
-        apply(interposes: interposes, symbols: symbols)
-
+        let replaced = apply(interposes: interposes, symbols: symbols)
         bundlesInterposed.insert(String(cString: inBundlePath))
+        return replaced
     }
 
     /// Use interposing to trace all methods in main bundle
-    @objc open class func traceMainBundleMethods() {
-        interposeMethods(inBundlePath: Bundle.main.executablePath!)
+    @objc open class func traceMainBundleMethods() -> Int {
+        return interposeMethods(inBundlePath: Bundle.main.executablePath!)
     }
 
     /// Use interposing to trace all methods in a framework
     /// Doesn't actually require -Xlinker -interposable
     /// - Parameters:
     ///   - aClass: Class which the framework contains
-    @objc open class func traceMethods(inFrameworkContaining aClass: AnyClass) {
-        interposeMethods(inBundlePath: class_getImageName(aClass)!)
+    @objc open class func traceMethods(inFrameworkContaining aClass: AnyClass) -> Int {
+        return interposeMethods(inBundlePath: class_getImageName(aClass)!)
     }
 
     /// Apply a trace to all methods in framesworks in app bundle
-    @objc open class func traceFrameworkMethods() {
+    @objc open class func traceFrameworkMethods() -> Int {
+        var replaced = 0
         appBundleImages { imageName, _, _ in
             if strstr(imageName, ".framework") != nil {
-                interposeMethods(inBundlePath: imageName)
+                replaced += interposeMethods(inBundlePath: imageName)
                 trace(bundlePath: imageName)
             }
         }
+        return replaced
     }
 
     open class func apply(interposes: [dyld_interpose_tuple],
                           symbols: [UnsafePointer<Int8>],
-                          onInjection: ((UnsafePointer<mach_header>) -> Void)? = nil) {
+                          onInjection: ((UnsafePointer<mach_header>) -> Void)? = nil) -> Int {
         let interposed = NSObject.swiftTraceInterposed.bindMemory(to:
             [UnsafeRawPointer : UnsafeRawPointer].self, capacity: 1)
         for toapply in interposes {
@@ -170,10 +172,25 @@ extension SwiftTrace {
                 replacement: UnsafeMutableRawPointer(mutating:
                 interposes[i].replacement), replaced: nil))
         }
-        appBundleImages { _, mh, slide in
-            rebind_symbols_image(UnsafeMutableRawPointer(mutating: mh),
-                                 slide, &rebindings, rebindings.count)
+        var replaced = 0
+        rebindings.withUnsafeMutableBufferPointer {
+            let buffer = $0.baseAddress!, count = $0.count
+            appBundleImages { _, mh, slide in
+                for i in 0..<count {
+                    buffer[i].replaced =
+                        UnsafeMutablePointer(cast: &buffer[i].replaced)
+                }
+                rebind_symbols_image(UnsafeMutableRawPointer(mutating: mh),
+                                     slide, buffer, count)
+                for i in 0..<count {
+                    if buffer[i].replaced !=
+                        UnsafeMutablePointer(cast: &buffer[i].replaced) {
+                        replaced += 1
+                    }
+                }
+            }
         }
+        return replaced
         #else
         interposes.withUnsafeBufferPointer { interposes in
             let debugInterpose = getenv("DEBUG_INTERPOSE") != nil

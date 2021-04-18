@@ -233,7 +233,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 //        SwiftTrace.excludeFunction = NSRegularExpression(regexp:
 //                                                            "^\\w+\\.\\w+\\(|extension in S|SwiftTrace|out: inout|autoBitCast")
-        SwiftTrace.traceMainBundleMethods()
+        _ = SwiftTrace.traceMainBundleMethods()
 
         var a/*: P*/ = TestClass()
 //        print(SwiftTrace.invoke(target: a as AnyObject, methodName: "SwiftTwaceOSX.TestClass.rect(r1: __C.CGRect, r2: __C.CGRect) -> __C.CGRect", args: NSRect(x: 1111.0, y: 2222.0, width: 3333.0, height: 4444.0), NSRect(x: 11111.0, y: 22222.0, width: 33333.0, height: 44444.0)) as NSRect)
