@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#83 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#87 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -385,18 +385,23 @@ public class SwiftMeta {
             passedByReference(type)
         }
 
-        // properties that have key path getters are not stored?
+        #if true // Attempts to determine which getters have storage
+        // properties that have key path getters are not stored??
         findSwiftSymbols(nil, "pACTK") { (_, symbol, _, _) in
             doesntHaveStorage.insert(String(cString: symbol)
                 .replacingOccurrences(of: "pACTK", with: "g"))
         }
         // ...unless they have a field offset
-        findSwiftSymbols(nil, "pWvd") { (_, symbol, _, _) in
-            doesntHaveStorage.remove(String(cString: symbol)
-                .replacingOccurrences(of: "pWvd", with: "g"))
+        // ...or property wrapper backing initializer ??
+        for suffix in ["pWvd", "pfP"] {
+            findSwiftSymbols(nil, suffix) { (_, symbol, _, _) in
+                doesntHaveStorage.remove(String(cString: symbol)
+                    .replacingOccurrences(of: suffix, with: "g"))
+            }
         }
 //        print(doesntHaveStorage)
-
+        #endif
+        
         if let swiftUIFramework = swiftUIBundlePath() {
             process(bundlePath: swiftUIFramework, problemTypes: &problemTypes)
         }
