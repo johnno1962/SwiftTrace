@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#49 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#50 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -211,9 +211,9 @@ extension SwiftTrace {
                    }
                }
 
-               if invocation.shouldDecorate && shouldTrace() {
+               if invocation.shouldDecorate && shouldTrace(),
+                   let decorated = entryDecorate(stack: &stack) {
                    ThreadLocal.current().caller()?.subLogged = true
-                   let decorated = entryDecorate(stack: &stack)
                    let indent = String(repeating: SwiftTrace.traceIndent,
                                        count: invocation.stackDepth)
                    logOutput("\(subLogging() ? "\n" : "")\(indent)\(decorated)",
@@ -225,7 +225,7 @@ extension SwiftTrace {
        /**
         decorate funcition signature with argument values
         */
-       open func entryDecorate(stack: inout EntryStack) -> String {
+       open func entryDecorate(stack: inout EntryStack) -> String? {
            return signature
        }
 
@@ -242,8 +242,8 @@ extension SwiftTrace {
        open func onExit(stack: inout ExitStack) {
            if let invocation = invocation() {
                let elapsed = Invocation.usecTime() - invocation.timeEntered
-               if invocation.shouldDecorate && shouldTrace() {
-                   let returnValue = exitDecorate(stack: &stack)
+               if invocation.shouldDecorate && shouldTrace(),
+                   let returnValue = exitDecorate(stack: &stack) {
                    logOutput("""
                         \(invocation.subLogged ? """
                             \n\(String(repeating: "  ",
@@ -261,7 +261,7 @@ extension SwiftTrace {
        /**
         Provide the return value
         */
-       open func exitDecorate(stack: inout ExitStack) -> String {
+       open func exitDecorate(stack: inout ExitStack) -> String? {
            return signature
        }
 
@@ -406,7 +406,9 @@ extension SwiftTrace {
            public var swiftSelf: intptr_t
 
            /** for use relaying data from entry to exit */
-           public var userInfo: AnyObject?
+           public var userInfo: Any?
+
+           public var numberLive = 0
 
            /**
             micro-second precision time.

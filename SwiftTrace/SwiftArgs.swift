@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#190 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#191 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -237,8 +237,8 @@ extension SwiftTrace {
 
         /// The return value as an Any or nil
         open var returnAsAny: Any? {
-            guard let returnType = returnTypeRange.first?.type,
-                let exitStack = invocation()?.exitStack else { return nil }
+            let returnType = returnTypeRange.first?.type ?? AnyObject.self
+            let exitStack = invocation().exitStack
 
             let slotsRequired = (SwiftMeta.sizeof(anyType: returnType) +
                 MemoryLayout<intptr_t>.size - 1) /
@@ -295,7 +295,7 @@ extension SwiftTrace {
         /**
          substitute argument values into signature on method entry
          */
-        open override func entryDecorate(stack: inout EntryStack) -> String {
+        open override func entryDecorate(stack: inout EntryStack) -> String? {
             let invocation = self.invocation()!
             return objcMethod != nil ?
                 objcDecorate(signature: nil, invocation: invocation) :
@@ -306,7 +306,7 @@ extension SwiftTrace {
         /**
          Determine return value on method exit
          */
-        open override func exitDecorate(stack: inout ExitStack) -> String {
+        open override func exitDecorate(stack: inout ExitStack) -> String? {
             let invocation = self.invocation()!
             return objcMethod != nil ?
                 objcDecorate(signature: invocation.decorated ?? signature,
@@ -410,9 +410,9 @@ extension SwiftTrace {
         static func identify(id: AnyObject, objcClass: AnyClass? = nil) -> String {
             var subClassed = ""
             let thisClass: AnyClass? = object_getClass(id)
-            let className = NSStringFromClass(thisClass!)
+            let className = _typeName(thisClass!)
             if objcClass != nil &&
-                className != NSStringFromClass(objcClass!) {
+                className != _typeName(objcClass!) {
                 subClassed = "/\(objcClass!)"
             }
             return (object_isClass(id) ? className :

@@ -2,15 +2,17 @@
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/Package.swift#7 $
+//  $Id: //depot/SwiftTrace/Package.swift#8 $
 //
 
 import PackageDescription
-
+u
 let package = Package(
     name: "SwiftTrace",
     platforms: [.macOS("10.12"), .iOS("10.0")],
     products: [
+        // SwiftTrace needs to be .dynamic for
+        // the trampolines to work on intel.
         .library(name: "SwiftTrace", type: .dynamic, targets: ["SwiftTrace"]),
         .library(name: "SwiftTraceGuts", type: .dynamic, targets: ["SwiftTraceGuts"]),
     ],

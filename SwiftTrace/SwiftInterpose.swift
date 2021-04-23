@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#56 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#57 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -20,7 +20,7 @@ import SwiftTraceGuts
 extension SwiftTrace {
 
     /// Function type suffixes at end of mangled symbol name
-    public static var swiftFunctionSuffixes = ["fC", "yF", "lF", "tF", "Qrvg"]
+    public static var swiftFunctionSuffixes = ["fC", "yF", "lF", "tF", "Qrvg", "fD"]
 
     /// Regexp pattern for functions to exclude from interposing
     public static var interposeEclusions: NSRegularExpression? = nil
@@ -127,9 +127,8 @@ extension SwiftTrace {
             }
         }
 
-        let replaced = apply(interposes: interposes, symbols: symbols)
         bundlesInterposed.insert(String(cString: inBundlePath))
-        return replaced
+        return apply(interposes: interposes, symbols: symbols)
     }
 
     /// Use interposing to trace all methods in main bundle
