@@ -166,15 +166,37 @@ Then, add a handler for the type using the following api:
  ```
 #### Object lifetime tracking
 
-You can automatically track the allocations an deallocations of objects 
+You can track the allocations an deallocations of Swift classes 
 that inherit from NSObject  using the SwiftTrace.LifetimeTracker class:
-```
+
+```Swift
 SwiftTrace.swizzleFactory = SwiftTrace.LifetimeTracker.self
 SwiftTrace.traceMainBundleMethods() == 0 {
     print("⚠️ Tracing Swift methods can only work if you have -Xlinker -interposable to your project's \"Other Linker Flags\"")
 }
 SwiftTrace.traceMainBundle()
 ```
+Each time an object is allocated you will see a `.__allocating_init` message
+followed by the result and the resulting count of live objects allocated 
+since tracing was started. Each time an object is deallocated you will
+see a `.cxx_destruct` message followed by the number of objects
+oustanding for that class. If your object does not inherit from NSObject
+it is not possible to track deallocations so the count of allocations is displayed.
+
+If you want to track the lifecycle of Swift structs create a marker class containg a String
+inheriting from NSObject and add an instance variable initialised to an instance of it.
+
+```Swift
+class Marker: NSObject {
+    var s = ""
+}
+
+struct MyView: SwiftUI.View {
+    var marker = Marker()
+}
+```
+This idea is based on the [LifetimeTracker](https://github.com/krzysztofzablocki/LifetimeTracker)
+project by [Krzysztof Zabłocki](https://github.com/krzysztofzablocki).
 #### Aspects
 
 You can add an aspect to a particular method using the method's de-mangled name:
