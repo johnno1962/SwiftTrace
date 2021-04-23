@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#278 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#280 $
 //
 
 import Foundation
@@ -47,6 +47,11 @@ open class SwiftTrace: NSObject {
         specific call to a member function on the "ThreadLocal" stack.
      */
     public static var defaultInvocationFactory = Swizzle.Invocation.self
+
+    /**
+        Does the class have a .cxx_destruct method for tracking deallocs?
+     */
+    public static var tracksDeallocs = Set<UnsafeRawPointer>()
 
     /**
         Type of "null implementation" replacing methods actual implementation
@@ -117,7 +122,7 @@ open class SwiftTrace: NSObject {
      */
     open class var defaultMethodExclusions: String {
         return """
-            \\.getter : (?!some)| (?:retain(?:Count)?|_tryRetain|release|autorelease|_isDeallocating|class|description|\
+            \\.getter : (?!some)| (?:retain(?:Count)?|_tryRetain|release|autorelease|_isDeallocating|_?dealloc|class|description|\
             debugDescription|contextID|undoManager|_animatorClassForTargetClass|cursorUpdate|_isTrackingAreaObject)]|\
             ^\\+\\[(?:Reader_Base64|UI(?:NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |\
             ^.\\[(?:__NSAtom|NS(?:View|Appearance|AnimationContext|Segment|KVONotifying_\\S+)|_NSViewAnimator|UIView|RemoteCapture|BCEvent|SimpleSocket) |\
@@ -385,21 +390,14 @@ open class SwiftTrace: NSObject {
             &swiftMeta.pointee.IVarDestroyer)
         let vtableEnd = UnsafeMutablePointer<SIMP?>(cast: endMeta)
 
-//        print("iterateMethods", className)
         var info = Dl_info()
         for slotIndex in 0..<(vtableEnd - vtableStart) {
-//            print(slotIndex, vtableStart[slotIndex])
             if var impl: IMP = autoBitCast(vtableStart[slotIndex]) {
                 if let swizzle = originalSwizzle(for: impl) {
                     impl = swizzle.implementation
                 }
-//                func p(_ s: String) -> String? {
-//                    print(s)
-//                    return s
-//                }
                 let voidPtr: UnsafeMutableRawPointer = autoBitCast(impl)
                 if fast_dladdr(voidPtr, &info) != 0, let symname = info.dli_sname,
-//                    let s = p(String(cString: symname)),
                     let symlast = info.dli_sname?.advanced(by: strlen(symname)-1),
                     symlast.pointee == UInt8(ascii: "C") ||
                     symlast.pointee == UInt8(ascii: "D") ||
@@ -568,6 +566,9 @@ open class SwiftTrace: NSObject {
 //                    print("Sizzling \(name)")
                     class_replaceMethod(aClass, sel,
                             autoBitCast(swizzle.forwardingImplementation), type)
+                    if selName == ".cxx_destruct" {
+                        tracksDeallocs.insert(autoBitCast(aClass as Any.Type))
+                    }
                 }
             }
             free(methods)

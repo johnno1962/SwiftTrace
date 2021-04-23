@@ -181,10 +181,11 @@ followed by the result and the resulting count of live objects allocated
 since tracing was started. Each time an object is deallocated you will
 see a `.cxx_destruct` message followed by the number of objects
 oustanding for that class. If your object does not inherit from NSObject
-it is not possible to track deallocations so the count of allocations is displayed.
+it is not possible to track deallocations so the allocationed count is displayed.
 
-If you want to track the lifecycle of Swift structs create a marker class containg a String
-inheriting from NSObject and add an instance variable initialised to an instance of it.
+If you want to track the lifecycle of Swift structs, create a marker class containg
+a String and inheriting from NSObject and add an instance variable to the struct 
+initialised to an instance of it.
 
 ```Swift
 class Marker: NSObject {
