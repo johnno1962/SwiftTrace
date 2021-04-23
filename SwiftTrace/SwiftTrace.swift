@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#277 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#278 $
 //
 
 import Foundation
@@ -40,7 +40,7 @@ open class SwiftTrace: NSObject {
     /**
         Class used to create "Sizzle" instances representing a member function
      */
-    public static var swizzleFactory: Swizzle.Type = LifetimeTracker.self
+    public static var swizzleFactory: Swizzle.Type = Decorated.self
 
     /**
         Class used to create "Invocation" instances representing a

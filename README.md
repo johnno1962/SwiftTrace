@@ -164,6 +164,17 @@ Then, add a handler for the type using the following api:
     SwiftTrace.sortedElapsedTimes(onlyFirst: 10))
     SwiftTrace.sortedInvocationCounts(onlyFirst: 10))
  ```
+#### Object lifetime tracking
+
+You can automatically track the allocations an deallocations of objects 
+that inherit from NSObject  using the SwiftTrace.LifetimeTracker class:
+```
+SwiftTrace.swizzleFactory = SwiftTrace.LifetimeTracker.self
+SwiftTrace.traceMainBundleMethods() == 0 {
+    print("⚠️ Tracing Swift methods can only work if you have -Xlinker -interposable to your project's \"Other Linker Flags\"")
+}
+SwiftTrace.traceMainBundle()
+```
 #### Aspects
 
 You can add an aspect to a particular method using the method's de-mangled name:

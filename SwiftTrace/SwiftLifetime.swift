@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftLifetime.swift#3 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftLifetime.swift#5 $
 //
 //  Trace instance life cycle for tracking reference cycles.
 //  ========================================================
@@ -22,7 +22,7 @@ extension SwiftTrace {
     public static var liveObjects = [UnsafeRawPointer: Set<UnsafeRawPointer>]()
     public static var liveObjectsLock = OS_SPINLOCK_INIT
 
-    class LifetimeTracker: Decorated {
+    open class LifetimeTracker: Decorated {
 
         let isAllocator: Bool
         let isDeallocator: Bool
@@ -41,13 +41,11 @@ extension SwiftTrace {
                        original: original, replaceWith: replaceWith)
         }
 
-        func register(typeOf instance: AnyObject) -> UnsafeRawPointer {
+        open func register(typeOf instance: AnyObject) -> UnsafeRawPointer {
             let metaType: UnsafeRawPointer = autoBitCast(type(of: instance))
             if let _ = liveObjects[metaType] {
             } else {
-//                OSSpinLockLock(&liveObjectsLock)
                 liveObjects[metaType] = Set()
-//                OSSpinLockUnlock(&liveObjectsLock)
             }
             return metaType
         }
@@ -56,18 +54,23 @@ extension SwiftTrace {
          Inrement live instance count ofr initialisers
          */
         open override func exitDecorate(stack: inout ExitStack) -> String? {
-            var live = ""
+            var info = "", live = "live"
             if isAllocator || isDeallocator {
                 if isAllocator {
                     let instance = returnAsAny as AnyObject
+                    OSSpinLockLock(&liveObjectsLock)
                     let metaType = register(typeOf: instance)
                     liveObjects[metaType]!
                         .insert(autoBitCast(instance))
                     invocation().numberLive = liveObjects[metaType]!.count
+                    OSSpinLockUnlock(&liveObjectsLock)
+                    if !instance.isKind(of: NSObject.self) {
+                        live = "allocated"
+                    }
                 }
-                live = " [\(invocation().numberLive) live]"
+                info = " [\(invocation().numberLive) \(live)]"
             }
-            return super.exitDecorate(stack: &stack)! + live
+            return super.exitDecorate(stack: &stack)! + info
         }
 
         /**
@@ -76,10 +79,12 @@ extension SwiftTrace {
         open override func entryDecorate(stack: inout EntryStack) -> String? {
             if isDeallocator {
                 let instance = getSelf() as AnyObject
+                OSSpinLockLock(&liveObjectsLock)
                 let metaType = register(typeOf: instance)
                 liveObjects[metaType]!
                     .remove(autoBitCast(instance))
                 invocation().numberLive = liveObjects[metaType]!.count
+                OSSpinLockUnlock(&liveObjectsLock)
             }
             return super.entryDecorate(stack: &stack)
         }
