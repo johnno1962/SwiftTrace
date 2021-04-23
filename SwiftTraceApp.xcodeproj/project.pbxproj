@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		BB07C35F2577F99800FD6ADB /* xt_forwarding_trampoline_arm64.s in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F01D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s */; };
-		BB16653C25EACF3E001407AE /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB16653B25EACF3C001407AE /* Package.swift */; };
 		BB1B8179251B631900F76DC7 /* SwiftStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B8178251B631900F76DC7 /* SwiftStats.swift */; };
 		BB1B817B251B632D00F76DC7 /* SwiftInterpose.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B817A251B632D00F76DC7 /* SwiftInterpose.swift */; };
 		BB1B8180251B69B100F76DC7 /* SwiftStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1B8178251B631900F76DC7 /* SwiftStats.swift */; };
@@ -68,6 +67,9 @@
 		BBCDA3771D0E60C7007222D3 /* SwiftTraceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCDA3761D0E60C7007222D3 /* SwiftTraceTests.swift */; };
 		BBCDA3791D0E60C7007222D3 /* SwiftTrace.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BBC3D1E31D0A43B200520F38 /* SwiftTrace.framework */; };
 		BBCDA3861D0E64AC007222D3 /* SwiftTraceXTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCDA3851D0E64AC007222D3 /* SwiftTraceXTests.swift */; };
+		BBD0AB4E26329651003ED7B1 /* SwiftLifetime.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD0AB4D2632964E003ED7B1 /* SwiftLifetime.swift */; };
+		BBD0AB4F2632966A003ED7B1 /* SwiftLifetime.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD0AB4D2632964E003ED7B1 /* SwiftLifetime.swift */; };
+		BBD0AB502632966C003ED7B1 /* SwiftLifetime.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD0AB4D2632964E003ED7B1 /* SwiftLifetime.swift */; };
 		BBF6EC6E1D0E54F100C5A202 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBF6EC6D1D0E54F100C5A202 /* AppDelegate.swift */; };
 		BBF6EC701D0E54F100C5A202 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BBF6EC6F1D0E54F100C5A202 /* Assets.xcassets */; };
 		BBF6EC731D0E54F100C5A202 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = BBF6EC711D0E54F100C5A202 /* MainMenu.xib */; };
@@ -160,6 +162,7 @@
 		BBCDA3831D0E64AC007222D3 /* SwiftTraceXTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftTraceXTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBCDA3851D0E64AC007222D3 /* SwiftTraceXTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftTraceXTests.swift; sourceTree = "<group>"; };
 		BBCDA3871D0E64AC007222D3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BBD0AB4D2632964E003ED7B1 /* SwiftLifetime.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftLifetime.swift; sourceTree = "<group>"; };
 		BBF6EC6B1D0E54F100C5A202 /* SwiftTwaceOSX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftTwaceOSX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBF6EC6D1D0E54F100C5A202 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BBF6EC6F1D0E54F100C5A202 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -267,6 +270,7 @@
 				BB1C5CB9244D8A6B00297908 /* SwiftStack.swift */,
 				BB1B8178251B631900F76DC7 /* SwiftStats.swift */,
 				BB1B817A251B632D00F76DC7 /* SwiftInterpose.swift */,
+				BBD0AB4D2632964E003ED7B1 /* SwiftLifetime.swift */,
 				BB64461A2545816300A83098 /* StringIndex.swift */,
 				BB1C3241254B47CF001EDFCC /* EasyPointer.swift */,
 				BBC3D1F11D0A43E800520F38 /* xt_forwarding_trampoline_x64.s */,
@@ -527,7 +531,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BB16653C25EACF3E001407AE /* Package.swift in Sources */,
 				BBC3D1CF1D0A438800520F38 /* DetailViewController.swift in Sources */,
 				BBC3D1CD1D0A438800520F38 /* MasterViewController.swift in Sources */,
 				BBC3D1CB1D0A438800520F38 /* AppDelegate.swift in Sources */,
@@ -548,6 +551,7 @@
 				BB1C5CBB244D8AD700297908 /* SwiftMeta.swift in Sources */,
 				BB64461C2545816500A83098 /* StringIndex.swift in Sources */,
 				BB1C3243254B47CF001EDFCC /* EasyPointer.swift in Sources */,
+				BBD0AB4E26329651003ED7B1 /* SwiftLifetime.swift in Sources */,
 				BBC3D1F31D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s in Sources */,
 				BB1C5CB6244D8A1200297908 /* SwiftAspects.swift in Sources */,
 				BB1B817B251B632D00F76DC7 /* SwiftInterpose.swift in Sources */,
@@ -579,6 +583,7 @@
 				BBB3A09E258618D000112C65 /* EasyPointer.swift in Sources */,
 				BB64461D254581BA00A83098 /* StringIndex.swift in Sources */,
 				BBCDA3861D0E64AC007222D3 /* SwiftTraceXTests.swift in Sources */,
+				BBD0AB502632966C003ED7B1 /* SwiftLifetime.swift in Sources */,
 				BB1C5CC1244D8AE300297908 /* SwiftAspects.swift in Sources */,
 				BB1B8183251B69B600F76DC7 /* SwiftInterpose.swift in Sources */,
 				BB76EA17229544B400E454F0 /* SwiftTrace.swift in Sources */,
@@ -600,6 +605,7 @@
 				BB1EBC5125925D9B001F2AA4 /* fishhook.c in Sources */,
 				BB1C5CAF244CB41B00297908 /* SwiftArgs.swift in Sources */,
 				BB64461B2545816500A83098 /* StringIndex.swift in Sources */,
+				BBD0AB4F2632966A003ED7B1 /* SwiftLifetime.swift in Sources */,
 				BB1C3242254B47CF001EDFCC /* EasyPointer.swift in Sources */,
 				BB76EA15229540BD00E454F0 /* SwiftTrace.mm in Sources */,
 				BB1C5CC0244D8AE200297908 /* SwiftAspects.swift in Sources */,
