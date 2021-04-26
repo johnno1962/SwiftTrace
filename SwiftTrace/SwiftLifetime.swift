@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftLifetime.swift#12 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftLifetime.swift#16 $
 //
 //  Trace instance life cycle for tracking reference cycles.
 //  ========================================================
@@ -51,6 +51,7 @@ extension SwiftTrace {
             OSSpinLockLock(&liveObjectsLock)
             if liveObjects.index(forKey: metaType) == nil {
                 liveObjects[metaType] = Set()
+                trackGenerics(metaType, register: metaType)
             }
             if isAllocator {
                 liveObjects[metaType]!
@@ -64,16 +65,48 @@ extension SwiftTrace {
             return metaType
         }
 
+        /// Make sure deallocations of generic classes are tracked.
+        /// - Parameter metaType: pointer to type info
+        /// - Parameter register: generic to actually register
+        open func trackGenerics(_ metaType: UnsafeRawPointer,
+                                register: UnsafeRawPointer) {
+            var methodCount: UInt32 = 0
+            if !tracksDeallocs.contains(register),
+               let generic = autoBitCast(metaType) as Any.Type as? AnyClass,
+               let methods = class_copyMethodList(generic, &methodCount) {
+                for method in (0..<Int(methodCount)).map({ methods[$0] }) {
+                    let sel = method_getName(method)
+                    let selName = NSStringFromSelector(sel)
+                    if selName == ".cxx_destruct",
+                       let type = method_getTypeEncoding(method),
+                       let swizzle = swizzleFactory.init(name:
+                            "-[\(generic) \(selName)] -> \(String(cString: type))",
+                            objcMethod: method, objcClass: generic) {
+                        class_replaceMethod(generic, sel,
+                                autoBitCast(swizzle.forwardingImplementation), type)
+                        tracksDeallocs.insert(register)
+                    }
+                }
+                free(methods)
+                if !tracksDeallocs.contains(register),
+                   let superClass = class_getSuperclass(generic) {
+                    trackGenerics(autoBitCast(superClass), register: register)
+                }
+            }
+
+        }
+
         /**
          Increment live instances for initialisers
          */
         open override func exitDecorate(stack: inout ExitStack) -> String? {
             var info = "", live = "live"
             if isAllocator || isDeallocator {
-                if isAllocator &&
-                    !tracksDeallocs.contains(
-                        update(instance:returnAsAny as AnyObject)) {
-                    live = "allocated"
+                if isAllocator {
+                    let metaType = update(instance:returnAsAny as AnyObject)
+                    if !tracksDeallocs.contains(metaType) {
+                        live = "allocated"
+                    }
                 }
                 info = " [\(invocation().numberLive) \(live)]"
             }

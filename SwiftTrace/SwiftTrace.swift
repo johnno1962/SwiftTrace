@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#280 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#281 $
 //
 
 import Foundation
@@ -196,15 +196,7 @@ open class SwiftTrace: NSObject {
      - parameter subLevels: levels of unqualified traces to show
      */
     open class func traceMainBundle(subLevels: Int = 0) {
-        let RTLD_MAIN_ONLY = UnsafeMutableRawPointer(bitPattern: -5)
-        let main = dlsym(RTLD_MAIN_ONLY, "main")
-        var info = Dl_info()
-        if main != nil && dladdr(main, &info) != 0 && info.dli_fname != nil {
-            trace(bundlePath: info.dli_fname, subLevels: subLevels)
-        }
-        else {
-            fatalError("Could not locate main bundle")
-        }
+        trace(bundlePath: Bundle.main.executablePath!, subLevels: subLevels)
     }
 
     /**
