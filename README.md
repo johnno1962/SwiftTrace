@@ -166,8 +166,8 @@ Then, add a handler for the type using the following api:
  ```
 #### Object lifetime tracking
 
-You can track the allocations an deallocations of Swift classes 
-that inherit from NSObject  using the SwiftTrace.LifetimeTracker class:
+You can track the allocations an deallocations of Swift and
+Objective-C classes using the [SwiftTrace.LifetimeTracker](https://github.com/johnno1962/SwiftTrace/blob/main/SwiftTrace/SwiftLifetime.swift) class:
 
 ```Swift
 SwiftTrace.swizzleFactory = SwiftTrace.LifetimeTracker.self
@@ -179,21 +179,17 @@ SwiftTrace.traceMainBundle()
 Each time an object is allocated you will see a `.__allocating_init` message
 followed by the result and the resulting count of live objects allocated 
 since tracing was started. Each time an object is deallocated you will
-see a `.cxx_destruct` message followed by the number of objects
-oustanding for that class. If your object does not inherit from NSObject
-it is not possible to track deallocations so the allocationed count is displayed.
+see a `cxx_destruct` message followed by the number of objects
+oustanding for that class.
 
-If you want to track the lifecycle of Swift structs, create a marker class containg
-a String and inheriting from NSObject and add an instance variable to the struct 
-initialised to an instance of it.
+If you would like to track the lifecycle of Swift structs, create a marker
+class and add a property to the struct initialised to an instance of it.
 
 ```Swift
-class Marker: NSObject {
-    var s = ""
-}
+class Marker<What> {}
 
 struct MyView: SwiftUI.View {
-    var marker = Marker()
+    var marker = Marker<MyView>()
 }
 ```
 This idea is based on the [LifetimeTracker](https://github.com/krzysztofzablocki/LifetimeTracker)

@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#50 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#51 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -96,11 +96,15 @@ extension SwiftTrace {
        /** Used to gather linked list of call order */
        var nextCalled: Swizzle?
 
+       /** is this method involved in Lifetime tracing? */
+       var isLifetime: Bool { return false }
+
+       /** Always trace allocations & deallocations unless explicitly filtered out */
        func shouldTrace() -> Bool {
            if currentGeneration != SwiftTrace.filterGeneration {
                currentGeneration = SwiftTrace.filterGeneration
-               currentShouldTrace =
-                   SwiftTrace.includeFilter?.matches(signature) != false &&
+               currentShouldTrace = (isLifetime ||
+                   SwiftTrace.includeFilter?.matches(signature) != false) &&
                    SwiftTrace.excludeFilter?.matches(signature) != true
            }
            return currentShouldTrace

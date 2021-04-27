@@ -13,7 +13,7 @@
 //
 //  Repo: https://github.com/johnno1962/EasyPointer.git
 //
-//  $Id: //depot/EasyPointer/Sources/EasyPointer/EasyPointer.swift#6 $
+//  $Id: //depot/EasyPointer/Sources/EasyPointer/EasyPointer.swift#7 $
 //
 
 public func autoBitCast<IN,OUT>(_ x: IN) -> OUT {
@@ -46,6 +46,14 @@ extension UnsafePointer {
                            rhs: UnsafePointer) -> Bool {
         return UnsafePointer(cast: lhs) == lhs
     }
+    public static func != (lhs: UnsafePointer,
+                           rhs: UnsafeMutablePointer<Pointee>) -> Bool {
+        return lhs != UnsafePointer(cast: rhs)
+    }
+    public static func != (lhs: UnsafeMutablePointer<Pointee>,
+                           rhs: UnsafePointer) -> Bool {
+        return UnsafePointer(cast: lhs) != lhs
+    }
     public static func < (lhs: UnsafePointer,
                           rhs: UnsafeMutablePointer<Pointee>) -> Bool {
         return lhs == UnsafePointer(cast: rhs)
@@ -68,5 +76,33 @@ extension UnsafeMutablePointer {
     }
     public init(cast: OpaquePointer) {
         self = autoBitCast(cast)
+    }
+}
+
+// Mutable-unmutable comparisons
+extension UnsafeRawPointer {
+    public static func == (lhs: UnsafeRawPointer,
+                           rhs: UnsafeMutableRawPointer) -> Bool {
+        return lhs == UnsafeRawPointer(rhs)
+    }
+    public static func == (lhs: UnsafeMutableRawPointer,
+                           rhs: UnsafeRawPointer) -> Bool {
+        return UnsafeRawPointer(lhs) == rhs
+    }
+    public static func != (lhs: UnsafeRawPointer,
+                           rhs: UnsafeMutableRawPointer) -> Bool {
+        return lhs != UnsafeRawPointer(rhs)
+    }
+    public static func != (lhs: UnsafeMutableRawPointer,
+                           rhs: UnsafeRawPointer) -> Bool {
+        return UnsafeRawPointer(lhs) != rhs
+    }
+    public static func < (lhs: UnsafeRawPointer,
+                          rhs: UnsafeMutableRawPointer) -> Bool {
+        return lhs < UnsafeRawPointer(rhs)
+    }
+    public static func < (lhs: UnsafeMutableRawPointer,
+                          rhs: UnsafeRawPointer) -> Bool {
+        return UnsafeRawPointer(lhs) < rhs
     }
 }
