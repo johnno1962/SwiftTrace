@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#51 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#52 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -100,11 +100,11 @@ extension SwiftTrace {
        var isLifetime: Bool { return false }
 
        /** Always trace allocations & deallocations unless explicitly filtered out */
-       func shouldTrace() -> Bool {
+       open func notFilteredOut() -> Bool {
            if currentGeneration != SwiftTrace.filterGeneration {
                currentGeneration = SwiftTrace.filterGeneration
-               currentShouldTrace = (isLifetime ||
-                   SwiftTrace.includeFilter?.matches(signature) != false) &&
+               currentShouldTrace =
+                   SwiftTrace.includeFilter?.matches(signature) != false &&
                    SwiftTrace.excludeFilter?.matches(signature) != true
            }
            return currentShouldTrace
@@ -215,8 +215,9 @@ extension SwiftTrace {
                    }
                }
 
-               if invocation.shouldDecorate && shouldTrace(),
-                   let decorated = entryDecorate(stack: &stack) {
+               let shouldPrint = invocation.shouldDecorate && notFilteredOut()
+               if shouldPrint || isLifetime,
+                   let decorated = entryDecorate(stack: &stack), shouldPrint {
                    ThreadLocal.current().caller()?.subLogged = true
                    let indent = String(repeating: SwiftTrace.traceIndent,
                                        count: invocation.stackDepth)
@@ -246,8 +247,9 @@ extension SwiftTrace {
        open func onExit(stack: inout ExitStack) {
            if let invocation = invocation() {
                let elapsed = Invocation.usecTime() - invocation.timeEntered
-               if invocation.shouldDecorate && shouldTrace(),
-                   let returnValue = exitDecorate(stack: &stack) {
+               let shouldPrint = invocation.shouldDecorate && notFilteredOut()
+               if shouldPrint || isLifetime,
+                   let returnValue = exitDecorate(stack: &stack), shouldPrint {
                    logOutput("""
                         \(invocation.subLogged ? """
                             \n\(String(repeating: "  ",
@@ -516,7 +518,7 @@ extension SwiftTrace {
                 var caller = invocationStack.count - 2
                 while caller >= 0 {
                     let invocation = invocationStack[caller]
-                    if invocation.swizzle.shouldTrace() {
+                    if invocation.swizzle.notFilteredOut() {
                         return invocation
                     }
                     caller -= 1
