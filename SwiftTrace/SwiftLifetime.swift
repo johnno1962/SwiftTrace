@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftLifetime.swift#21 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftLifetime.swift#22 $
 //
 //  Trace instance life cycle for tracking down reference cycles.
 //  =============================================================
@@ -121,7 +121,7 @@ extension SwiftTrace {
                                             #selector(Reaper._cxx_destruct)),
                            let type = method_getTypeEncoding(tracker),
                            let originalClass = autoBitCast(register) as Any.Type as? AnyClass,
-                           let swizzle = LifetimeTracker(name:
+                           let swizzle = swizzleFactory.init(name:
                                  "-[\(generic) _cxx_destruct] -> \(String(cString: type))",
                                  objcMethod: tracker, objcClass: originalClass) {
                             class_replaceMethod(originalClass,
