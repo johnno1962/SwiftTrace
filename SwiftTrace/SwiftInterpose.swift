@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#57 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#58 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -161,7 +161,8 @@ extension SwiftTrace {
                           onInjection: ((UnsafePointer<mach_header>) -> Void)? = nil) -> Int {
         let interposed = NSObject.swiftTraceInterposed.bindMemory(to:
             [UnsafeRawPointer : UnsafeRawPointer].self, capacity: 1)
-        for toapply in interposes {
+        for toapply in interposes
+            where toapply.replacee != toapply.replacement {
             interposed.pointee[toapply.replacee] = toapply.replacement
         }
         #if true // use fishhook now
