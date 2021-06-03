@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#282 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#283 $
 //
 
 import Foundation
@@ -210,12 +210,14 @@ open class SwiftTrace: NSObject {
         var stopped = false
         var seen = Set<UnsafeRawPointer>()
         if bundlePath != nil {
+            let resilientSuperclass = 1 // dummy value for superclass
             let resilientPrefix = "OBJC_CLASS_$__TtC"
             findSwiftSymbols(bundlePath, classesIncludingObjc()) {
                 aClass, symbol, _,_ in
                 var aClass = aClass
                 let symname = String(cString: symbol)
-                if symname.hasPrefix(resilientPrefix),
+                if aClass.load(as: intptr_t.self) == resilientSuperclass,
+                    symname.hasPrefix(resilientPrefix),
                     let mangled = symname[safe: (.start+resilientPrefix.count)...],
                     let resilientClass = _typeByName(mangled+"C") as? AnyClass {
                     aClass = autoBitCast(resilientClass)
