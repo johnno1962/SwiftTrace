@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#67 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#69 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -150,22 +150,26 @@ static SPLForwardingTrampolinePage *nextTrampolinePage()
     return trampolinePage;
 }
 
-/// Fox for libMiainThreadCheck when using tramplines
+#if 00
+/// Fix for libMainThreadCheck when using trampolines
 typedef const char * (*image_path_func)(const void *ptr);
 static image_path_func orig_path_func;
 
 static const char *myld_image_path_containing_address(const void* addr) {
     return orig_path_func(addr) ?: "/trampoline";
 }
+#endif
 
 IMP imp_implementationForwardingToTracer(void *patch, IMP onEntry, IMP onExit)
 {
+#if 00
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         struct rebinding path_rebinding = {"dyld_image_path_containing_address",
           (void *)myld_image_path_containing_address, (void **)&orig_path_func};
         rebind_symbols(&path_rebinding, 1);
     });
+#endif
 
     static os_unfair_lock lock = OS_UNFAIR_LOCK_INIT;
     os_unfair_lock_lock(&lock);
