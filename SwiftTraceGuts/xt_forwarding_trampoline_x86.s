@@ -1,5 +1,5 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_x86.s#2 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_x86.s#3 $
 
 // *** This architecture is no longer supported *** //
 
@@ -34,21 +34,21 @@ _xt_forwarding_trampoline:
     nop
     nop
 
-_xt_forwarding_trampolines_start:
 // 508 trampoline entry points
-call _xt_forwarding_trampoline
-nop
-nop
-nop
+_xt_forwarding_trampolines_start:
+    call _xt_forwarding_trampoline
+    nop
+    nop
+    nop
 
 _xt_forwarding_trampolines_next:
 .rept 507
-call _xt_forwarding_trampoline
-nop
-nop
-nop
+    call _xt_forwarding_trampoline
+    nop
+    nop
+    nop
 .endr
 
 _xt_forwarding_trampolines_end:
-
+    nop
 #endif

@@ -1,5 +1,5 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_arm64.s#7 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_arm64.s#8 $
 
 // for ARM64 abi see http://infocenter.arm.com/help/topic/com.arm.doc.ihi0055b/IHI0055B_aapcs64.pdf
 //  Layout shadowed in SwiftStack.swift
@@ -100,6 +100,6 @@ _xt_forwarding_trampolines_next:
 .endr
 
 _xt_forwarding_trampolines_end:
-nop
+    nop
 
 #endif

@@ -5,10 +5,10 @@
 //  Created by John Holdsworth on 20/04/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStack.swift#21 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStack.swift#22 $
 //
-//  Stack layout used by assemby trampolines
-//  ========================================
+//  Stack layout used by assembly trampolines
+//  =========================================
 //
 //  See: https://github.com/apple/swift/blob/main/docs/ABI/RegisterUsage.md
 //  https://github.com/apple/swift/blob/main/docs/ABI/CallingConvention.rst

@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#283 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#284 $
 //
 
 import Foundation
@@ -122,7 +122,7 @@ open class SwiftTrace: NSObject {
      */
     open class var defaultMethodExclusions: String {
         return """
-            \\.getter : (?!some)| (?:retain(?:Count)?|_tryRetain|release|autorelease|_isDeallocating|_?dealloc|class|description|\
+            \\.getter : (?!some)| (?:retain(?:Count)?|_tryRetain|release|autorelease|_isDeallocating|_?dealloc|class|self|description|\
             debugDescription|contextID|undoManager|_animatorClassForTargetClass|cursorUpdate|_isTrackingAreaObject)]|\
             ^\\+\\[(?:Reader_Base64|UI(?:NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |\
             ^.\\[(?:__NSAtom|NS(?:View|Appearance|AnimationContext|Segment|KVONotifying_\\S+)|_NSViewAnimator|UIView|RemoteCapture|BCEvent|SimpleSocket) |\
