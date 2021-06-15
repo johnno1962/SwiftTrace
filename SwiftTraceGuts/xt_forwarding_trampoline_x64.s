@@ -1,5 +1,5 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_x64.s#10 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_x64.s#11 $
 
 //  https://en.wikipedia.org/wiki/X86_calling_conventions
 //  Layout shadowed in SwiftStack.swift
@@ -157,6 +157,6 @@ _xt_forwarding_trampolines_next:
 .endr
 
 _xt_forwarding_trampolines_end:
-nop
+    nop
 
 #endif
