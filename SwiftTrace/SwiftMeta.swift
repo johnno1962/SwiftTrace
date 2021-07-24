@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#87 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#88 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -383,6 +383,13 @@ public class SwiftMeta {
         for type: Any.Type in [URL.self, UUID.self, Date.self,
                                IndexPath.self, IndexSet.self, URLRequest.self] {
             passedByReference(type)
+        }
+
+        for iOS15ResilientTypeName in ["Foundation.AttributedString",
+                                       "Foundation.AttributedString.Index"] {
+            if let resilientType = lookupType(named: iOS15ResilientTypeName) {
+                passedByReference(resilientType)
+            }
         }
 
         #if true // Attempts to determine which getters have storage
