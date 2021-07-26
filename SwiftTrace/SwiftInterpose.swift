@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#59 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#60 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -159,8 +159,8 @@ extension SwiftTrace {
     }
 
     open class func apply(interposes: [dyld_interpose_tuple],
-                          symbols: [UnsafePointer<Int8>],
-                          onInjection: ((UnsafePointer<mach_header>) -> Void)? = nil) -> Int {
+                          symbols: [UnsafePointer<Int8>], onInjection:
+        ((UnsafePointer<mach_header>, intptr_t) -> Void)? = nil) -> Int {
         let interposed = NSObject.swiftTraceInterposed.bindMemory(to:
             [UnsafeRawPointer : UnsafeRawPointer].self, capacity: 1)
         for toapply in interposes
@@ -177,7 +177,13 @@ extension SwiftTrace {
         var replaced = 0
         rebindings.withUnsafeMutableBufferPointer {
             let buffer = $0.baseAddress!, count = $0.count
-            appBundleImages { _, mh, slide in
+            var lastLoaded = true
+            appBundleImages { img, mh, slide in
+                if lastLoaded {
+                    onInjection?(mh, slide)
+                    lastLoaded = false
+                }
+
                 for i in 0..<count {
                     buffer[i].replaced =
                         UnsafeMutablePointer(cast: &buffer[i].replaced)

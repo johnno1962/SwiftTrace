@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#71 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#72 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -903,7 +903,7 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
                         const char *symname = strings + sym->n_un.n_strx;
                         void *address;
 
-                        if (//sym->n_type == symbolVisibility &&
+                        if (sym->n_type == symbolVisibility &&
                             sym->n_sect != NO_SECT &&
                             ((strncmp(symname, "_$s", 3) == 0 &&
                               strcmp(symname+strlen(symname)-sufflen, suffix) == 0) ||
