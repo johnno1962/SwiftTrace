@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#72 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#73 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -855,7 +855,12 @@ const char *classesIncludingObjc() {
 }
 
 void findSwiftSymbols(const char *bundlePath, const char *suffix,
-                      void (^callback)(const void *symval, const char *symname, void *typeref, void *typeend)) {
+        void (^callback)(const void *symval, const char *symname, void *typeref, void *typeend)) {
+    findHiddenSwiftSymbols(bundlePath, suffix, ST_GLOBAL_VISIBILITY, callback);
+}
+
+void findHiddenSwiftSymbols(const char *bundlePath, const char *suffix, int visibility,
+        void (^callback)(const void *symval, const char *symname, void *typeref, void *typeend)) {
     for (int32_t i = _dyld_image_count()-1; i >= 0 ; i--) {
         const char *imageName = _dyld_get_image_name(i);
         if (!(imageName && (!bundlePath || imageName == bundlePath ||
@@ -895,15 +900,14 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
                     nlist_t *sym = (nlist_t *)((intptr_t)header +
                                                (symtab->symoff + file_slide));
                     size_t sufflen = strlen(suffix);
-                    BOOL witnessFuncSearch = strcmp(suffix+sufflen-2, "Wl") == 0 ||
-                                             strcmp(suffix+sufflen-5, "pACTK") == 0;
-                    uint8_t symbolVisibility = witnessFuncSearch ? 0x1e : 0xf;
 
                     for (uint32_t i = 0; i < symtab->nsyms; i++, sym++) {
                         const char *symname = strings + sym->n_un.n_strx;
                         void *address;
 
-                        if (sym->n_type == symbolVisibility &&
+//                        printf("%d %s %d\n", visibility, symname, sym->n_type);
+
+                        if (sym->n_type == visibility &&
                             sym->n_sect != NO_SECT &&
                             ((strncmp(symname, "_$s", 3) == 0 &&
                               strcmp(symname+strlen(symname)-sufflen, suffix) == 0) ||

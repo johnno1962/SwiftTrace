@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#60 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#61 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -67,7 +67,7 @@ extension SwiftTrace {
         var interposes = [dyld_interpose_tuple]()
 
         for suffix in swiftFunctionSuffixes {
-            findSwiftSymbols(aBundle, suffix, { symval, symname, _, _ in
+            findSwiftSymbols(aBundle, suffix) { symval, symname, _, _ in
                 if SwiftMeta.demangle(symbol: symname) == methodName,
                     let current = interposed(replacee: symval),
                     let method = patchClass.init(name: methodName,
@@ -78,7 +78,7 @@ extension SwiftTrace {
                         replacement: autoBitCast(method.forwardingImplementation),
                         replacee: current))
                 }
-            })
+            }
         }
 
         return apply(interposes: interposes, symbols: [methodName])
