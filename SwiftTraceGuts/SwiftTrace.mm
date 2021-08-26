@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#73 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#74 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -130,9 +130,10 @@ static SPLForwardingTrampolinePage *SPLForwardingTrampolinePageAlloc()
     return (SPLForwardingTrampolinePage *)newTrampolinePage;
 }
 
+static NSMutableArray *normalTrampolinePages = nil;
+
 static SPLForwardingTrampolinePage *nextTrampolinePage()
 {
-    static NSMutableArray *normalTrampolinePages = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         normalTrampolinePages = [NSMutableArray array];
@@ -825,6 +826,16 @@ const char *swiftUIBundlePath() {
     return nullptr;
 }
 
+id findSwizzleOf(void * _Nonnull trampoline) {
+    for (NSValue *allocated in normalTrampolinePages) {
+        SPLForwardingTrampolinePage *trampolinePage =
+            (SPLForwardingTrampolinePage *)allocated.pointerValue;
+        if (trampoline >= trampolinePage->trampolineInstructions && trampoline <
+            trampolinePage->trampolineInstructions + numberOfTrampolinesPerPage)
+            return *(id const *)(void *)((char *)trampoline - PAGE_SIZE);
+    }
+    return nil;
+}
 // https://stackoverflow.com/questions/20481058/find-pathname-from-dlopen-handle-on-osx
 
 #import <dlfcn.h>

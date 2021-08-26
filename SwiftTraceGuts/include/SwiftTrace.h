@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#47 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#48 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -210,6 +210,7 @@ extern "C" {
     void appBundleImages(void (^ _Nonnull callback)(const char * _Nonnull imageName, const struct mach_header * _Nonnull header, intptr_t slide));
     const char * _Nullable swiftUIBundlePath();
     const char * _Nullable callerBundle(void);
+    id _Nullable findSwizzleOf(void * _Nonnull trampoline);
     int fast_dladdr(const void * _Nonnull, Dl_info * _Nonnull);
 #ifdef __cplusplus
 }
