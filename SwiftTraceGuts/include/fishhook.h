@@ -42,9 +42,9 @@ extern "C" {
  * name to its replacement
  */
 struct rebinding {
-  const char *name;
-  void *replacement;
-  void **replaced;
+  const char * _Nonnull name;
+  void * _Nonnull replacement;
+  void * _Nonnull * _Nullable replaced;
 };
 
 /*
@@ -56,16 +56,16 @@ struct rebinding {
  * is rebound more than once, the later rebinding will take precedence.
  */
 FISHHOOK_VISIBILITY
-int rebind_symbols(struct rebinding rebindings[], size_t rebindings_nel);
+int rebind_symbols(struct rebinding rebindings[_Nonnull], size_t rebindings_nel);
 
 /*
  * Rebinds as above, but only in the specified image. The header should point
  * to the mach-o header, the slide should be the slide offset. Others as above.
  */
 FISHHOOK_VISIBILITY
-int rebind_symbols_image(void *header,
+int rebind_symbols_image(void * _Nonnull header,
                          intptr_t slide,
-                         struct rebinding rebindings[],
+                         struct rebinding rebindings[_Nonnull],
                          size_t rebindings_nel);
 
 #ifdef __cplusplus
