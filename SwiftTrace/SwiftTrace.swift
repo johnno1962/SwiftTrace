@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#286 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#289 $
 //
 
 import Foundation
@@ -375,6 +375,26 @@ open class SwiftTrace: NSObject {
                                    callback: (_ name: String, _ slotIndex: Int,
                                               _ vtableSlot: UnsafeMutablePointer<SIMP>,
                                               _ stop: inout Bool) -> Void) -> Bool {
+        forEachVTableEntry(ofClass: aClass) {
+            (symname, slotIndex, vtableSlot, stop) in
+            if let demangled = SwiftMeta.demangle(symbol: symname) {
+                callback(demangled, slotIndex, vtableSlot, &stop)
+            }
+        }
+    }
+
+    /**
+     Iterate over all methods in the vtable that follows the class information
+     of a Swift class (TargetClassMetadata)
+     - parameter aClass: the class, the methods of which to trace
+     - parameter callback: per method callback
+     */
+    @discardableResult
+    open class func forEachVTableEntry(ofClass aClass: AnyClass,
+                               callback: (_ symname: UnsafePointer<CChar>,
+                                          _ slotIndex: Int,
+                                          _ vtableSlot: UnsafeMutablePointer<SIMP>,
+                                          _ stop: inout Bool) -> Void) -> Bool {
         let swiftMeta: UnsafeMutablePointer<SwiftMeta.TargetClassMetadata> = autoBitCast(aClass)
         let className = NSStringFromClass(aClass)
         var stop = false
@@ -403,9 +423,8 @@ open class SwiftTrace: NSObject {
                     let symlast = info.dli_sname?.advanced(by: strlen(symname)-1),
                     symlast.pointee == UInt8(ascii: "C") ||
                     symlast.pointee == UInt8(ascii: "D") ||
-                    symlast.pointee == UInt8(ascii: "F"),
-                    let demangled = SwiftMeta.demangle(symbol: symname) {
-                    callback(demangled, slotIndex,
+                    symlast.pointee == UInt8(ascii: "F") {
+                    callback(symname, slotIndex,
                              &vtableStart[slotIndex]!, &stop)
                     if stop {
                         break

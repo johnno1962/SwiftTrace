@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#53 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#54 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -157,7 +157,7 @@ extension SwiftTrace {
                implementation = autoBitCast(vtableSlot.pointee)
            }
            else if let objcMethod = objcMethod {
-               implementation = method_getImplementation(objcMethod)
+               implementation = original ?? method_getImplementation(objcMethod)
            } else {
                implementation = original!
            }
