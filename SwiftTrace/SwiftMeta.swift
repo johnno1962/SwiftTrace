@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#89 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#90 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -211,6 +211,7 @@ public class SwiftMeta {
         "Swift.AnyObject": AnyObject.self,
         "Swift.AnyObject.Type": AnyClass.self,
         "Swift.Optional<Swift.Error>": Error?.self,
+        "Swift.Dictionary<Swift.AnyHashable, Any>": [AnyHashable: Any].self,
         "Swift.Error": Error.self,
         "()": Void.self,
         "some": nil,

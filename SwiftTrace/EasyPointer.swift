@@ -17,6 +17,10 @@
 //
 
 public func autoBitCast<IN,OUT>(_ x: IN) -> OUT {
+    if SwiftMeta.sizeof(anyType: IN.self) !=
+        SwiftMeta.sizeof(anyType: OUT.self) {
+        print("⚠️ size mismatch, autoBitCast(\(IN.self)[\(SwiftMeta.sizeof(anyType: IN.self))]) -> \(OUT.self)[\(SwiftMeta.sizeof(anyType: OUT.self))]")
+    }
     return unsafeBitCast(x, to: OUT.self)
 }
 

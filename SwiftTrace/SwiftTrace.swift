@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#289 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#291 $
 //
 
 import Foundation
@@ -325,16 +325,20 @@ open class SwiftTrace: NSObject {
         }
         trace(objcClass: aClass, which: "-")
 
-        if let bundle = class_getImageName(aClass),
-            bundlesInterposed.contains(String(cString: bundle)) {
-            return
-        }
+//        if let bundle = class_getImageName(aClass),
+//            bundlesInterposed.contains(String(cString: bundle)) {
+//            return
+//        }
 
         iterateMethods(ofClass: aClass) {
             (name, slotIndex, vtableSlot, stop) in
-            if let factory = methodFilter(name),
-                let swizzle = factory.init(name: name, vtableSlot: vtableSlot) {
-                vtableSlot.pointee = swizzle.forwardingImplementation
+            if let factory = methodFilter(name) {
+                if let swizzle = factory.init(name: name, vtableSlot: vtableSlot) {
+//                    print("Patching #\(slotIndex) \(name)")
+                    vtableSlot.pointee = swizzle.forwardingImplementation
+                }
+            } else {
+                print("Excluding SwiftTrace of \(name)")
             }
         }
     }
