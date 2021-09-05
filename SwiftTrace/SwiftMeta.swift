@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#90 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#92 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -218,7 +218,8 @@ public class SwiftMeta {
 
         // Has private enum property containg a Locale
         "Fruta.ContentView" : nil,
-        // Also uses Foundation type inside enum
+        "Fruta_iOS.ContentView" : nil,
+        // Also uses resilient Foundation type inside enum
         "Kingfisher.ExpirationExtending": nil,
     ]
     static var typeLookupCacheLock = OS_SPINLOCK_INIT
