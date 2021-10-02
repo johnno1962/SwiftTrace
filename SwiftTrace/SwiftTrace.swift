@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#291 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#293 $
 //
 
 import Foundation
@@ -425,9 +425,12 @@ open class SwiftTrace: NSObject {
                 let voidPtr: UnsafeMutableRawPointer = autoBitCast(impl)
                 if fast_dladdr(voidPtr, &info) != 0, let symname = info.dli_sname,
                     let symlast = info.dli_sname?.advanced(by: strlen(symname)-1),
+                    // patch constructors, destructors, methods, getters, setters.
                     symlast.pointee == UInt8(ascii: "C") ||
                     symlast.pointee == UInt8(ascii: "D") ||
-                    symlast.pointee == UInt8(ascii: "F") {
+                    symlast.pointee == UInt8(ascii: "F") ||
+                    symlast.pointee == UInt8(ascii: "g") ||
+                    symlast.pointee == UInt8(ascii: "s") {
                     callback(symname, slotIndex,
                              &vtableStart[slotIndex]!, &stop)
                     if stop {
