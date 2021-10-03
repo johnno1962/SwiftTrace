@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#62 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#64 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -20,9 +20,10 @@ import SwiftTraceGuts
 extension SwiftTrace {
 
     /// Function type suffixes at end of mangled symbol name
-    /// i.e. constructors, functions, getters returning
-    /// an Opaque type (for SwiftUI) and destructors.
-    public static var swiftFunctionSuffixes = ["fC", "F", "Qrvg", "fD"]
+    /// to interpose i.e. constructors, functions (methods),
+    /// getters of Opaque type (for SwiftUI body properties)
+    /// and setters and destructors.
+    public static var swiftFunctionSuffixes = ["fC", "F", "Qrvg", "s", "fD"]
 
     /// Regexp pattern for functions to exclude from interposing
     public static var interposeEclusions: NSRegularExpression? = nil
