@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#293 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#294 $
 //
 
 import Foundation
@@ -430,7 +430,12 @@ open class SwiftTrace: NSObject {
                     symlast.pointee == UInt8(ascii: "D") ||
                     symlast.pointee == UInt8(ascii: "F") ||
                     symlast.pointee == UInt8(ascii: "g") ||
-                    symlast.pointee == UInt8(ascii: "s") {
+                    symlast.pointee == UInt8(ascii: "s") ||
+                    // and class methods, getters, setters
+                    symlast.pointee == UInt8(ascii: "Z") &&
+                        (symlast[-1] == UInt8(ascii: "F") ||
+                         symlast[-1] == UInt8(ascii: "g") ||
+                         symlast[-1] == UInt8(ascii: "s")) {
                     callback(symname, slotIndex,
                              &vtableStart[slotIndex]!, &stop)
                     if stop {
