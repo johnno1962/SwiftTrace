@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#92 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#93 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -243,14 +243,14 @@ public class SwiftMeta {
     /**
      Best effort recovery of type from a qualified name
      */
-    public static func lookupType(named: String,
+    public static func lookupType(named: String, protocols: Bool = false,
                            exclude: NSRegularExpression? = nil) -> Any.Type? {
         OSSpinLockLock(&typeLookupCacheLock)
         defer { OSSpinLockUnlock(&typeLookupCacheLock) }
-        return lockedType(named: named, exclude: exclude)
+        return lockedType(named: named, protocols: protocols, exclude: exclude)
     }
 
-    static func lockedType(named: String,
+    static func lockedType(named: String, protocols: Bool = false,
                            exclude: NSRegularExpression? = nil) -> Any.Type? {
         if exclude?.matches(named) == true {
             return nil
@@ -303,9 +303,9 @@ public class SwiftMeta {
                 } else if let type = _typeByName(mangled+"O") {
                     mangled += "O" // enum type
                     out = type
-//                } else if let type = _typeByName(mangled+"P") {
-//                    mangled += "P" // prptocol
-//                    out = type
+                } else if protocols, let type = _typeByName(mangled+"P") {
+                    mangled += "P" // protocol
+                    out = type
                 } else {
                     break
                 }
