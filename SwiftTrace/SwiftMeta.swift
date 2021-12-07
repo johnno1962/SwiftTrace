@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#93 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#95 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -263,7 +263,7 @@ public class SwiftMeta {
         for (prefix, handler) in wrapperHandlers where named.hasPrefix(prefix) {
             if let wrapped = named[safe: .start+prefix.count ..< .end-1],
                 let wrappedType = SwiftMeta.lockedType(named: wrapped,
-                                                      exclude: exclude) {
+                                       protocols: true, exclude: exclude) {
                 if let enc = conformanceManglings[prefix] {
                     if let witnessTable =
                         getWitnessTable(enc: enc, for: wrappedType) {
@@ -279,7 +279,7 @@ public class SwiftMeta {
 
         if named.hasSuffix("..."),
             let element = named[safe: ..<(.end-3)] {
-            out = lockedType(named: "Swift.Array<\(element)>")
+            out = lockedType(named: "Swift.Array<\(element)>", protocols: true)
         } else if named.hasSuffix(".Type"),
             let element = named[safe: ..<(.end-5)],
             let elementType = lockedType(named: element) {
