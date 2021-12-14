@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#64 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#65 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -219,24 +219,34 @@ extension SwiftTrace {
         rebindings.withUnsafeMutableBufferPointer {
             let buffer = $0.baseAddress!, count = $0.count
             var lastLoaded = true
-            appBundleImages { img, mh, slide in
+            appBundleImages { path, header, slide in
                 if lastLoaded {
-                    onInjection?(mh, slide)
+                    onInjection?(header, slide)
                     lastLoaded = false
                 }
 
-                for i in 0..<count {
-                    buffer[i].replaced =
-                        UnsafeMutablePointer(cast: &buffer[i].replaced)
-                }
-                rebind_symbols_image(UnsafeMutableRawPointer(mutating: mh),
-                                     slide, buffer, count)
-                for i in 0..<count {
-                    if buffer[i].replaced !=
-                        UnsafeMutablePointer(cast: &buffer[i].replaced) {
-                        interposed.append(buffer[i].name)
-                    }
-                }
+                interposed += apply(rebindings: buffer, count: count,
+                                    header: header, slide: slide)
+            }
+        }
+        return interposed
+    }
+
+    /// Use fishhook to apply interposes in an image returning an array of symbols that were patched
+    open class func apply(rebindings: UnsafeMutablePointer<rebinding>, count: Int,
+                          header: UnsafePointer<mach_header>, slide: intptr_t)
+        -> [UnsafePointer<Int8>] {
+        var interposed = [UnsafePointer<Int8>]()
+        for i in 0..<count {
+            rebindings[i].replaced =
+                UnsafeMutablePointer(cast: &rebindings[i].replaced)
+        }
+        rebind_symbols_image(UnsafeMutableRawPointer(mutating: header),
+                             slide, rebindings, count)
+        for i in 0..<count {
+            if rebindings[i].replaced !=
+                UnsafeMutablePointer(cast: &rebindings[i].replaced) {
+                interposed.append(rebindings[i].name)
             }
         }
         return interposed
