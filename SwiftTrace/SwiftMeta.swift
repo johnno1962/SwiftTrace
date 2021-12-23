@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#97 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#98 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -133,7 +133,7 @@ public class SwiftMeta {
     }
 
     /**
-     Definitions related to auto-tracability of types
+     Definitions related to auto-traceability of types
      */
     public static let RTLD_NEXT = UnsafeMutableRawPointer(bitPattern: -1)
     public static let RTLD_DEFAULT = UnsafeMutableRawPointer(bitPattern: -2)
@@ -169,7 +169,7 @@ public class SwiftMeta {
     static var getEnumTypeFptr = bindGeneric(name: "getEnumType")
     static var getMetaTypeFptr = bindGeneric(name: "getMetaType")
 
-    /// Handled compund types
+    /// Handled container types
     public static var wrapperHandlers = [
         "Swift.Optional<": getOptionalTypeFptr,
         "Swift.Array<": bindGeneric(name: "getArrayType"),
@@ -253,7 +253,7 @@ public class SwiftMeta {
         return lockedType(named: named, protocols: protocols, exclude: exclude)
     }
 
-    static func lockedType(named: String, protocols: Bool = false,
+    static func lockedType(named: String, protocols: Bool,
                            exclude: NSRegularExpression? = nil) -> Any.Type? {
         if exclude?.matches(named) == true {
             return nil
@@ -265,8 +265,8 @@ public class SwiftMeta {
         var out: Any.Type?
         for (prefix, handler) in wrapperHandlers where named.hasPrefix(prefix) {
             if let wrapped = named[safe: .start+prefix.count ..< .end-1],
-                let wrappedType = SwiftMeta.lockedType(named: wrapped,
-                                       protocols: true, exclude: exclude) {
+                let wrappedType = lockedType(named: wrapped,
+                                             protocols: true, exclude: exclude) {
                 if let enc = conformanceManglings[prefix] {
                     if let witnessTable =
                         getWitnessTable(enc: enc, for: wrappedType) {
@@ -285,7 +285,7 @@ public class SwiftMeta {
             out = lockedType(named: "Swift.Array<\(element)>", protocols: true)
         } else if named.hasSuffix(".Type"),
             let element = named[safe: ..<(.end-5)],
-            let elementType = lockedType(named: element) {
+            let elementType = lockedType(named: element, protocols: false) {
             out = convert(type: elementType, handler: getMetaTypeFptr)
         } else if out == nil {
             var mangled = ""
