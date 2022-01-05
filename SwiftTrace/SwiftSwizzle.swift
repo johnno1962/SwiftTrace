@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#54 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#55 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -261,6 +261,7 @@ extension SwiftTrace {
                let elapsed = Invocation.usecTime() - invocation.timeEntered
                let shouldPrint = invocation.shouldDecorate && notFilteredOut()
                if shouldPrint || isLifetime,
+                  !invocation.swizzle.signature.contains(" async "),
                    let returnValue = exitDecorate(stack: &stack), shouldPrint {
                    logOutput("""
                         \(invocation.subLogged ? """

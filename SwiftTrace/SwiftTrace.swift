@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#294 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#298 $
 //
 
 import Foundation
@@ -122,7 +122,8 @@ open class SwiftTrace: NSObject {
      */
     open class var defaultMethodExclusions: String {
         return """
-            \\.getter : (?!some)| (?:retain(?:Count)?|_tryRetain|release|autorelease|_isDeallocating|_?dealloc|class|self|description|\
+            \\.getter : (?!some)|\\.hash[(]into: | async |interposedPointer|\
+             (?:retain(?:Count)?|_tryRetain|release|autorelease|_isDeallocating|_?dealloc|class|self|description|\
             debugDescription|contextID|undoManager|_animatorClassForTargetClass|cursorUpdate|_isTrackingAreaObject)]|\
             ^\\+\\[(?:Reader_Base64|UI(?:NibStringIDTable|NibDecoder|CollectionViewData|WebTouchEventsGestureRecognizer)) |\
             ^.\\[(?:__NSAtom|NS(?:View|Appearance|AnimationContext|Segment|KVONotifying_\\S+)|_NSViewAnimator|UIView|RemoteCapture|BCEvent|SimpleSocket) |\
@@ -424,18 +425,8 @@ open class SwiftTrace: NSObject {
                 }
                 let voidPtr: UnsafeMutableRawPointer = autoBitCast(impl)
                 if fast_dladdr(voidPtr, &info) != 0, let symname = info.dli_sname,
-                    let symlast = info.dli_sname?.advanced(by: strlen(symname)-1),
                     // patch constructors, destructors, methods, getters, setters.
-                    symlast.pointee == UInt8(ascii: "C") ||
-                    symlast.pointee == UInt8(ascii: "D") ||
-                    symlast.pointee == UInt8(ascii: "F") ||
-                    symlast.pointee == UInt8(ascii: "g") ||
-                    symlast.pointee == UInt8(ascii: "s") ||
-                    // and class methods, getters, setters
-                    symlast.pointee == UInt8(ascii: "Z") &&
-                        (symlast[-1] == UInt8(ascii: "F") ||
-                         symlast[-1] == UInt8(ascii: "g") ||
-                         symlast[-1] == UInt8(ascii: "s")) {
+                    injectableSymbol(symname) {
                     callback(symname, slotIndex,
                              &vtableStart[slotIndex]!, &stop)
                     if stop {
@@ -446,6 +437,30 @@ open class SwiftTrace: NSObject {
         }
 
         return stop
+    }
+
+    /// Determine if symbol name is injectable
+    /// - Parameter symlast: Pointer to symbol name
+    /// - Returns: Whether symbol should be patched
+    public static var injectableSymbol: @convention(c)
+        (UnsafePointer<Int8>) -> Bool = { symname in
+//        print("Injectable?", String(cString: symname))
+        guard strncmp(symname + (symname.pointee == UInt8(ascii: "_") ?
+                                 1 : 0), "$s", 2) == 0 else { return false }
+        var symlast = symname+strlen(symname)-1
+        return
+            symlast.match(ascii: "C") ||
+            symlast.match(ascii: "D") ||
+            // static/class methods, getters, setters
+            (symlast.match(ascii: "Z") || true) &&
+            (symlast.match(ascii: "F") ||
+             symlast.match(ascii: "g") ||
+             symlast.match(ascii: "s")) ||
+            // async [class] functions
+            symlast.match(ascii: "u") &&
+            symlast.match(ascii: "T") &&
+            (symlast.match(ascii: "Z") || true) &&
+            symlast.match(ascii: "F")
     }
 
     #if swift(>=5.0)
@@ -629,5 +644,16 @@ open class SwiftTrace: NSObject {
             name[Int(strlen(name))-1] = 0
             return class_getProperty(aClass, &name[3]) != nil
         }
+    }
+}
+
+extension UnsafePointer where Pointee == Int8 {
+    @inline(__always)
+    mutating func match(ascii: UnicodeScalar, inc: Int = -1) -> Bool {
+        if pointee == UInt8(ascii: ascii) {
+            self = self.advanced(by: inc)
+            return true
+        }
+        return false
     }
 }

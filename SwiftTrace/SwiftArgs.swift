@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#192 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#193 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -191,6 +191,7 @@ extension SwiftTrace {
                           vtableSlot: UnsafeMutablePointer<SIMP>? = nil,
                           objcMethod: Method? = nil, objcClass: AnyClass? = nil,
                           original: UnsafeRawPointer) -> SIMP? {
+        guard let _ = methodFilter(signature) else { return nil }
         return Decorated(name: signature, vtableSlot: vtableSlot,
                          objcMethod: objcMethod, objcClass: objcClass,
                          original: autoBitCast(original))?.forwardingImplementation

@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#48 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#51 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -191,6 +191,14 @@ in the Swift class provided.
 #define ST_GLOBAL_VISIBILITY 0xf
 #define ST_HIDDEN_VISIBILITY 0x1e
 #define ST_LOCAL_VISIBILITY 0xe
+typedef NS_ENUM(uint8_t, STVisibility) {
+    STVisibilityAny = 0,
+    STVisibilityGlobal = ST_GLOBAL_VISIBILITY,
+    STVisibilityHidden = ST_HIDDEN_VISIBILITY,
+    STVisibilityLocal = ST_LOCAL_VISIBILITY,
+};
+
+typedef bool (^ _Nonnull STSymbolFilter)(const char * _Nonnull symname);
 
 #ifdef __cplusplus
 extern "C" {
@@ -205,6 +213,9 @@ extern "C" {
         void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
                                    void * _Nonnull typeref, void * _Nonnull typeend));
     void findHiddenSwiftSymbols(const char * _Nullable path, const char * _Nonnull suffix, int visibility,
+        void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
+                                   void * _Nonnull typeref, void * _Nonnull typeend));
+    void filterImageSymbols(uint32_t imageNumber, STVisibility visibility, STSymbolFilter filter,
         void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
                                    void * _Nonnull typeref, void * _Nonnull typeend));
     void appBundleImages(void (^ _Nonnull callback)(const char * _Nonnull imageName, const struct mach_header * _Nonnull header, intptr_t slide));

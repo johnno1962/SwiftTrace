@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#74 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#80 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -872,6 +872,13 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
 
 void findHiddenSwiftSymbols(const char *bundlePath, const char *suffix, int visibility,
         void (^callback)(const void *symval, const char *symname, void *typeref, void *typeend)) {
+    size_t sufflen = strlen(suffix);
+    STSymbolFilter swiftSymbolsWithSuffixOrObjcClass = ^(const char *symname) {
+        return (strncmp(symname, "_$s", 3) == 0 &&
+                strcmp(symname+strlen(symname)-sufflen, suffix) == 0) ||
+            (suffix == includeObjcClasses && strncmp(symname,
+             objcClassPrefix, sizeof objcClassPrefix-1) == 0);
+    };
     for (int32_t i = _dyld_image_count()-1; i >= 0 ; i--) {
         const char *imageName = _dyld_get_image_name(i);
         if (!(imageName && (!bundlePath || imageName == bundlePath ||
@@ -880,8 +887,18 @@ void findHiddenSwiftSymbols(const char *bundlePath, const char *suffix, int visi
                             strcmp(imageName+8, bundlePath) == 0)))
             continue;
 
+        filterImageSymbols(i, (STVisibility)visibility,
+                           swiftSymbolsWithSuffixOrObjcClass, callback);
+        if (bundlePath)
+            return;
+    }
+}
+
+void filterImageSymbols(uint32_t imageNumber, STVisibility visibility, STSymbolFilter filter,
+    void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
+                               void * _Nonnull typeref, void * _Nonnull typeend)) {
         const mach_header_t *header =
-            (const mach_header_t *)_dyld_get_image_header(i);
+            (const mach_header_t *)_dyld_get_image_header(imageNumber);
         segment_command_t *seg_linkedit = nullptr;
         segment_command_t *seg_text = nullptr;
         struct symtab_command *symtab = nullptr;
@@ -910,7 +927,6 @@ void findHiddenSwiftSymbols(const char *bundlePath, const char *suffix, int visi
                                                (symtab->stroff + file_slide);
                     nlist_t *sym = (nlist_t *)((intptr_t)header +
                                                (symtab->symoff + file_slide));
-                    size_t sufflen = strlen(suffix);
 
                     for (uint32_t i = 0; i < symtab->nsyms; i++, sym++) {
                         const char *symname = strings + sym->n_un.n_strx;
@@ -918,25 +934,17 @@ void findHiddenSwiftSymbols(const char *bundlePath, const char *suffix, int visi
 
 //                        printf("%d %s %d\n", visibility, symname, sym->n_type);
 
-                        if (sym->n_type == visibility &&
-                            sym->n_sect != NO_SECT &&
-                            ((strncmp(symname, "_$s", 3) == 0 &&
-                              strcmp(symname+strlen(symname)-sufflen, suffix) == 0) ||
-                             (suffix == includeObjcClasses && strncmp(symname,
-                              objcClassPrefix, sizeof objcClassPrefix-1) == 0)) &&
+                        if ((!visibility || sym->n_type == visibility) &&
+                            sym->n_sect != NO_SECT && filter(symname) &&
                             (address = (void *)(sym->n_value +
                              (intptr_t)header - (intptr_t)seg_text->vmaddr))) {
                             callback(address, symname+1, typeref_start,
                                      typeref_start + typeref_size);
                         }
                     }
-
-                    if (bundlePath)
-                        return;
                 }
             }
         }
-    }
 }
 
 void appBundleImages(void (^callback)(const char *imageName, const struct mach_header *, intptr_t slide)) {
