@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#80 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#81 $
 //
 //  Trampoline code thanks to:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
@@ -592,6 +592,9 @@ SWIFT_CLASS_PROPERTY(@property (nonatomic, class, copy) NSString * _Nullable tra
 SWIFT_CLASS_PROPERTY(@property (nonatomic, class, copy) NSString * _Nullable traceFilterExclude;)
 + (NSString * _Nullable)traceFilterExclude SWIFT_WARN_UNUSED_RESULT;
 + (void)setTraceFilterExclude:(NSString * _Nullable)pattern;
+SWIFT_CLASS_PROPERTY(@property (nonatomic, class, copy) STSymbolFilter _Nonnull injectableSymbol;)
++ (STSymbolFilter _Nonnull)injectableSymbol SWIFT_WARN_UNUSED_RESULT;
++ (void)setInjectableSymbol:(STSymbolFilter _Nonnull)filter;
 @end
 
 
@@ -760,6 +763,12 @@ SWIFT_CLASS_PROPERTY(@property (nonatomic, class, copy) NSString * _Nullable loo
 }
 + (void)setSwiftTraceFilterExclude:(NSString * _Nullable)exclude {
     [SwiftTrace setTraceFilterExclude:exclude];
+}
++ (STSymbolFilter _Nonnull)swiftTraceSymbolFilter {
+    return [SwiftTrace injectableSymbol];
+}
++ (void)setSwiftTraceSymbolFilter:(STSymbolFilter _Nonnull)filter {
+    [SwiftTrace setInjectableSymbol:filter];
 }
 + (NSDictionary<NSString *, NSNumber *> * _Nonnull)swiftTraceElapsedTimes {
     return [SwiftTrace elapsedTimes];

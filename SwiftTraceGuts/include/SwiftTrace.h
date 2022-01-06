@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#51 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#52 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -41,6 +41,12 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
  UITouch to be printed and any calls to UIKit made by those
  methods up to three levels deep.
  */
+
+/**
+ Signature of function used to select symbols to  inject.
+ */
+typedef bool (^ _Nonnull STSymbolFilter)(const char * _Nonnull symname);
+
 @interface NSObject(SwiftTrace)
 /**
  The default regexp used to exclude certain methods from tracing.
@@ -59,6 +65,10 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
  */
 @property (nonatomic, class, copy) NSString *_Nullable swiftTraceFilterInclude;
 @property (nonatomic, class, copy) NSString *_Nullable swiftTraceFilterExclude;
+/**
+ Filter of symbols that will be patched/interposed.
+ */
+@property (nonatomic, class, copy) STSymbolFilter _Nonnull swiftTraceSymbolFilter;
 /**
  Function type suffixes at end of mangled symbol name.
  */
@@ -197,8 +207,6 @@ typedef NS_ENUM(uint8_t, STVisibility) {
     STVisibilityHidden = ST_HIDDEN_VISIBILITY,
     STVisibilityLocal = ST_LOCAL_VISIBILITY,
 };
-
-typedef bool (^ _Nonnull STSymbolFilter)(const char * _Nonnull symname);
 
 #ifdef __cplusplus
 extern "C" {
