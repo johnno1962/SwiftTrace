@@ -300,7 +300,7 @@ SWIFT_CLASS_PROPERTY(@property (nonatomic, class, copy) SWIFT_METATYPE(Swizzle) 
 ///
 + (void)traceWithAnInstance:(id _Nonnull)anInstance subLevels:(NSInteger)subLevels;
 /// Determine if symbol name is injectable
-/// \param symlast Pointer to symbol name
+/// \param symname Pointer to symbol name
 ///
 ///
 /// returns:
@@ -427,7 +427,7 @@ SWIFT_CLASS_PROPERTY(@property (nonatomic, class, copy) NSString * _Nullable tra
 + (NSString * _Nullable)traceFilterExclude SWIFT_WARN_UNUSED_RESULT;
 + (void)setTraceFilterExclude:(NSString * _Nullable)pattern;
 /// Map trampolines back to the original implementation swizzled
-/// \param trampoline a function entry point
+/// \param forTrampoline a function entry point
 ///
 ///
 /// returns:

@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#55 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#56 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -57,7 +57,7 @@ extension SwiftTrace {
    }
 
     /// Map trampolines back to the original implementation swizzled
-    /// - Parameter trampoline: a function entry point
+    /// - Parameter forTrampoline: a function entry point
     /// - Returns: original implementation swizzled
     open class func swizzled(forTrampoline: UnsafeMutableRawPointer)
         -> UnsafeMutableRawPointer? {
