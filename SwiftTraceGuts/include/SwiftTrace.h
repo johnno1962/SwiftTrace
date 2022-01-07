@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#54 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#57 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -45,7 +45,7 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
 /**
  Signature of function used to select symbols to  inject.
  */
-typedef bool (^ _Nonnull STSymbolFilter)(const char * _Nonnull symname);
+typedef BOOL (^ _Nonnull STSymbolFilter)(const char * _Nonnull symname);
 
 @interface NSObject(SwiftTrace)
 /**
@@ -105,7 +105,7 @@ typedef bool (^ _Nonnull STSymbolFilter)(const char * _Nonnull symname);
  Add a trace to all methods of all classes defined in the
  all frameworks in the app bundle.
  */
-+ (void)swiftTraceFrameworkMethods;
++ (NSInteger)swiftTraceFrameworkMethods;
 /**
  Output a trace of methods defined in the bundle containing
  the reciever and up to subLevels of calls made by them.
@@ -167,10 +167,10 @@ in the Swift class provided.
  Use interposing to trace all methods in main bundle
  Use swiftTraceInclusionPattern, swiftTraceExclusionPattern to filter
  */
-+ (void)swiftTraceMethodsInFrameworkContaining:(Class _Nonnull)aClass;
-+ (void)swiftTraceMainBundleMethods;
-+ (void)swiftTraceMethodsInBundle:(const char * _Nonnull)bundlePath
-                      packageName:(NSString * _Nullable)packageName;
++ (NSInteger)swiftTraceMethodsInFrameworkContaining:(Class _Nonnull)aClass;
++ (NSInteger)swiftTraceMainBundleMethods;
++ (NSInteger)swiftTraceMethodsInBundle:(const char * _Nonnull)bundlePath
+                           packageName:(NSString * _Nullable)packageName;
 + (void)swiftTraceBundlePath:(const char * _Nonnull)bundlePath;
 /**
  Remove most recent trace

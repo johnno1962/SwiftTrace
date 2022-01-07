@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#300 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#301 $
 //
 
 import Foundation
@@ -443,7 +443,7 @@ open class SwiftTrace: NSObject {
     /// - Parameter symlast: Pointer to symbol name
     /// - Returns: Whether symbol should be patched
     @objc public static var injectableSymbol:
-        (UnsafePointer<Int8>) -> Bool = { symname in
+        (UnsafePointer<CChar>) -> Bool = { symname in
 //        print("Injectable?", String(cString: symname))
         guard strncmp(symname + (symname.pointee == UInt8(ascii: "_") ?
                                  1 : 0), "$s", 2) == 0 else { return false }
