@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#98 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#100 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -450,14 +450,16 @@ public class SwiftMeta {
 
         // Need to process symbols in emitted order if we are
         // to have any hope of recovering type memory layout.
+        let debugPassedByReference = getenv("DEBUG_BYREFERENCE") != nil
         for (_, symbol) in symbols.sorted(by: { $0.symval < $1.symval }) {
             guard let demangled = SwiftMeta.demangle(symbol: symbol) else {
                 print("Could not demangle: \(String(cString: symbol))")
                 continue
             }
             func debug(_ str: @autoclosure () -> String) {
-//                print(demangled)
-//                print(str())
+                if !debugPassedByReference { return }
+                print(demangled)
+                print(str())
             }
             guard let fieldStart = demangled.index(of: .first(of: " : ")+3),
                let nameEnd = demangled.index(of: fieldStart + .last(of: ".")),
@@ -542,7 +544,10 @@ public class SwiftMeta {
             }
 
             func passedByReference(_ type: Any.Type) {
-                problemTypes.pointee.insert(autoBitCast(type))
+                if !_typeName(type).hasPrefix("Swift.") &&
+                    problemTypes.pointee.insert(autoBitCast(type)).inserted {
+                    debug("\(_typeName(type)) passed by reference")
+                }
             }
 
             if problemTypes.pointee.contains(autoBitCast(fieldType)) ||
