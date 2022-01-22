@@ -271,17 +271,21 @@ symbol name associated the function address of the implementing method. The regi
 then restored and control is passed to the original function implementing the method. 
  
 Please file an issue if you encounter a project that doesn't work while tracing. It should
-be 100% reliable as it uses assembly language trampolines rather than Swizzling like Xtrace.
-Otherwise, the author can be contacted on Twitter [@Injection4Xcode](https://twitter.com/@Injection4Xcode). 
+be far more reliable as it uses assembly language trampolines rather than Swizzling like
+Xtrace did. Otherwise, the author can be contacted on Twitter [@Injection4Xcode](https://twitter.com/@Injection4Xcode). 
 
 Thanks to Oliver Letterer for the [imp_implementationForwardingToSelector](https://github.com/OliverLetterer/imp_implementationForwardingToSelector) project adapted to set up the
-trampolines. 
+trampolines, included under an MIT license.
 
-Now uses the very handy https://github.com/facebook/fishhook.
-See the source and header files for licensing details.
+The repo includes a very slightly modified version of the very handy
+[https://github.com/facebook/fishhook](https://github.com/facebook/fishhook).
+See the source and header files for their licensing details.
 
 Thanks also  to [@twostraws](https://twitter.com/twostraws)'
 [Unwrap](https://github.com/twostraws/Unwrap) and [@artsy](https://twitter.com/ArtsyOpenSource)'s
 [eidolon](https://github.com/artsy/eidolon) used extensively during testing.
 
 Enjoy!
+
+$Date: 2022/01/22 $
+

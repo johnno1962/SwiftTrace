@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#57 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#58 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -192,17 +192,32 @@ in the Swift class provided.
  Invocation counts by traced method.
  */
 + (NSDictionary<NSString *, NSNumber *> * _Nonnull)swiftTraceInvocationCounts;
+/**
+ Demangle Swift symbol.
+ */
++ (NSString * _Nullable)swiftTraceDemangle:(char const * _Nonnull)symbol;
+@end
+
+#import <dlfcn.h>
+@interface DYLookup: NSObject {
+    void *dyLookup;
+}
+- (instancetype _Nonnull)init;
+- (int)dladdr:(void * _Nonnull)pointer info:(Dl_info * _Nonnull)info;// SWIFT_NAME(dladdr(_:_));
 @end
 
 #import <mach-o/loader.h>
 #import <objc/runtime.h>
 #import <dlfcn.h>
 
+#define ST_LAST_IMAGE -1
+#define ST_ANY_VISIBILITY 0
 #define ST_GLOBAL_VISIBILITY 0xf
 #define ST_HIDDEN_VISIBILITY 0x1e
 #define ST_LOCAL_VISIBILITY 0xe
+
 typedef NS_ENUM(uint8_t, STVisibility) {
-    STVisibilityAny = 0,
+    STVisibilityAny = ST_ANY_VISIBILITY,
     STVisibilityGlobal = ST_GLOBAL_VISIBILITY,
     STVisibilityHidden = ST_HIDDEN_VISIBILITY,
     STVisibilityLocal = ST_LOCAL_VISIBILITY,
@@ -216,23 +231,55 @@ extern "C" {
     NSMethodSignature * _Nullable method_getSignature(Method _Nonnull Method);
     const char * _Nonnull sig_argumentType(id _Nonnull signature, NSUInteger index);
     const char * _Nonnull sig_returnType(id _Nonnull signature);
-    const char * _Nonnull classesIncludingObjc();
+    const char * _Nonnull searchMainImage(void);
+    const char * _Nonnull searchLastLoaded(void);
+    const char * _Nullable searchAllImages(void);
+    const char * _Nonnull searchBundleImages(void);
+    const char * _Nonnull classesIncludingObjc(void);
     void findSwiftSymbols(const char * _Nullable path, const char * _Nonnull suffix,
         void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
                                    void * _Nonnull typeref, void * _Nonnull typeend));
     void findHiddenSwiftSymbols(const char * _Nullable path, const char * _Nonnull suffix, int visibility,
         void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
                                    void * _Nonnull typeref, void * _Nonnull typeend));
-    void filterImageSymbols(uint32_t imageNumber, STVisibility visibility, STSymbolFilter filter,
+    void * _Nullable findSwiftSymbol(const char * _Nullable path, const char * _Nonnull suffix, STVisibility visibility);
+    void filterImageSymbols(int32_t imageNumber, STVisibility visibility, STSymbolFilter filter,
         void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
                                    void * _Nonnull typeref, void * _Nonnull typeend));
+    void filterHeaderSymbols(const struct mach_header * _Nonnull header, STVisibility visibility, STSymbolFilter filter,
+        void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
+                                   void * _Nonnull typeref, void * _Nonnull typeend));
+    void pushPseudoImage(const char * _Nonnull path,
+                         const void * _Nonnull header);
+    const struct mach_header * _Nullable lastPseudoImage(void);
+    NSString * _Nonnull describeImageSymbol(const char * _Nonnull symname);
+    NSString * _Nonnull describeImageInfo(const Dl_info * _Nonnull info);
+    NSString * _Nonnull describeImagePointer(const void * _Nonnull pointer);
+    void injection_stack(void);
     void appBundleImages(void (^ _Nonnull callback)(const char * _Nonnull imageName, const struct mach_header * _Nonnull header, intptr_t slide));
-    const char * _Nullable swiftUIBundlePath();
+    const char * _Nullable swiftUIBundlePath(void);
     const char * _Nullable callerBundle(void);
     id _Nullable findSwizzleOf(void * _Nonnull trampoline);
     int fast_dladdr(const void * _Nonnull, Dl_info * _Nonnull);
 #ifdef __cplusplus
 }
+#import <vector>
+typedef std::pair<char *, const struct mach_header *> PseudoImage;
+extern const std::vector<PseudoImage> &getLoadedPseudoImages(void);
+#endif
+
+#ifdef __LP64__
+#define mach_header_t struct mach_header_64
+#define segment_command_t struct segment_command_64
+#define nlist_t nlist_64
+#define sectsize_t uint64_t
+#define getsectdatafromheader_f getsectdatafromheader_64
+#else
+#define mach_header_t struct mach_header
+#define segment_command_t struct segment_command
+#define nlist_t nlist
+#define sectsize_t uint32_t
+#define getsectdatafromheader_f getsectdatafromheader
 #endif
 
 struct dyld_interpose_tuple {
@@ -334,4 +381,3 @@ int rebind_symbols_image(void * _Nonnull header,
 #endif //__cplusplus
 
 #endif //fishhook_h
-

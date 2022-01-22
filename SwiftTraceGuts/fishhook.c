@@ -35,6 +35,9 @@
 #include <mach-o/dyld.h>
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
+#include <stdio.h>
+
+// Modified to rebind to the value provided by dlsym for rebindings_nel == -1.
 
 #ifdef __LP64__
 typedef struct mach_header_64 mach_header_t;
@@ -126,6 +129,15 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
     char *symbol_name = strtab + strtab_offset;
     bool symbol_name_longer_than_1 = symbol_name[0] && symbol_name[1];
     struct rebindings_entry *cur = rebindings;
+    if (!cur) {
+      void *value = dlsym(RTLD_DEFAULT, symbol_name+1) ?: dlsym(RTLD_DEFAULT, symbol_name);
+      #if DEBUG && 01
+      if (!indirect_symbol_bindings[i] && !value)
+        printf("SYM %p %s %p\n", indirect_symbol_bindings[i], symbol_name, value);
+      #endif
+      indirect_symbol_bindings[i] = value;
+      continue;
+    }
     while (cur) {
       for (uint j = 0; j < cur->rebindings_nel; j++) {
         if (symbol_name_longer_than_1 &&

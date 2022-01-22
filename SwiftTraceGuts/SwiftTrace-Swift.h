@@ -207,6 +207,15 @@ typedef unsigned int swift_uint4  __attribute__((__ext_vector_type__(4)));
 
 
 
+
+SWIFT_CLASS_NAMED("SwiftMeta")
+@interface SwiftMeta : NSObject
+/// Convert a executable symbol name “mangled” according to Swift’s
+/// conventions into a human readable Swift language form
++ (NSString * _Nullable)demangleWithSymbol:(int8_t const * _Nonnull)symbol SWIFT_WARN_UNUSED_RESULT;
+- (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
+@end
+
 @class Swizzle;
 
 /// Base class for SwiftTrace api through it’s public class methods
