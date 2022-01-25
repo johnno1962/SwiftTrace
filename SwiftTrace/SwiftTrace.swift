@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#306 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#307 $
 //
 
 import Foundation
@@ -213,7 +213,7 @@ open class SwiftTrace: NSObject {
         if bundlePath != nil {
             let resilientSuperclass = 1 // dummy value for superclass
             let resilientPrefix = "OBJC_CLASS_$__TtC"
-            findHiddenSwiftSymbols(bundlePath, classesIncludingObjc(), ST_ANY_VISIBILITY) {
+            findHiddenSwiftSymbols(bundlePath, classesIncludingObjc(), .any) {
                 aClass, symbol, _,_ in
                 var aClass = aClass
                 let symname = String(cString: symbol)
@@ -500,7 +500,7 @@ open class SwiftTrace: NSObject {
         let regex = matchingPattern.flatMap { NSRegularExpression(regexp: $0) }
         for witness in ["WP", "Wl"] {
             findHiddenSwiftSymbols(inBundle, witness, witness == "Wl" ?
-                                    ST_HIDDEN_VISIBILITY : ST_GLOBAL_VISIBILITY) {
+                                    .hidden : .global) {
                 (address: UnsafeRawPointer, _, typeref, typeend) in
                 let witnessTable = UnsafeMutablePointer<SIMP>(mutating: address)
                 var info = Dl_info()

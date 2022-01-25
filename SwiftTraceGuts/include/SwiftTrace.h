@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#58 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#59 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -43,9 +43,14 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
  */
 
 /**
- Signature of function used to select symbols to  inject.
+ Signature of function used to select symbols to inject.
  */
 typedef BOOL (^ _Nonnull STSymbolFilter)(const char * _Nonnull symname);
+/**
+ Callback on selecting symbol.
+ */
+typedef void (^ _Nonnull STSymbolCallback)(const void * _Nonnull address, const char * _Nonnull symname,
+                                     void * _Nonnull typeref, void * _Nonnull typeend);
 
 @interface NSObject(SwiftTrace)
 /**
@@ -237,21 +242,16 @@ extern "C" {
     const char * _Nonnull searchBundleImages(void);
     const char * _Nonnull classesIncludingObjc(void);
     void findSwiftSymbols(const char * _Nullable path, const char * _Nonnull suffix,
-        void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
-                                   void * _Nonnull typeref, void * _Nonnull typeend));
-    void findHiddenSwiftSymbols(const char * _Nullable path, const char * _Nonnull suffix, int visibility,
-        void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
-                                   void * _Nonnull typeref, void * _Nonnull typeend));
+        STSymbolCallback callback);
+    void findHiddenSwiftSymbols(const char * _Nullable path, const char * _Nonnull suffix, STVisibility visibility,
+        STSymbolCallback callback);
     void * _Nullable findSwiftSymbol(const char * _Nullable path, const char * _Nonnull suffix, STVisibility visibility);
-    void filterImageSymbols(int32_t imageNumber, STVisibility visibility, STSymbolFilter filter,
-        void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
-                                   void * _Nonnull typeref, void * _Nonnull typeend));
-    void filterHeaderSymbols(const struct mach_header * _Nonnull header, STVisibility visibility, STSymbolFilter filter,
-        void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
-                                   void * _Nonnull typeref, void * _Nonnull typeend));
+    void filterImageSymbols(int32_t imageNumber, STVisibility visibility,
+                            STSymbolFilter filter, STSymbolCallback callback);
+    void filterHeaderSymbols(const struct mach_header * _Nonnull header, STVisibility visibility,
+                             STSymbolFilter filter, STSymbolCallback callback);
     void pushPseudoImage(const char * _Nonnull path,
                          const void * _Nonnull header);
-    const struct mach_header * _Nullable lastPseudoImage(void);
     NSString * _Nonnull describeImageSymbol(const char * _Nonnull symname);
     NSString * _Nonnull describeImageInfo(const Dl_info * _Nonnull info);
     NSString * _Nonnull describeImagePointer(const void * _Nonnull pointer);
@@ -261,6 +261,9 @@ extern "C" {
     const char * _Nullable callerBundle(void);
     id _Nullable findSwizzleOf(void * _Nonnull trampoline);
     int fast_dladdr(const void * _Nonnull, Dl_info * _Nonnull);
+    void * _Nullable fast_dlsym(const void * _Nonnull ptr, const char * _Nonnull symname);
+    void fast_dlscan(const void * _Nonnull ptr, STVisibility visibility, STSymbolFilter filter, STSymbolCallback callback);
+    const struct mach_header * _Nullable lastPseudoImage(void);
 #ifdef __cplusplus
 }
 #import <vector>

@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#91 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#94 $
 //
 
 #import "include/SwiftTrace.h"
@@ -92,10 +92,11 @@ const char *classesIncludingObjc() {
 
 void findSwiftSymbols(const char *bundlePath, const char *suffix,
         void (^callback)(const void *symval, const char *symname, void *typeref, void *typeend)) {
-    findHiddenSwiftSymbols(bundlePath, suffix, ST_GLOBAL_VISIBILITY, callback);
+    findHiddenSwiftSymbols(bundlePath, suffix,
+                           STVisibilityGlobal, callback);
 }
 
-void findHiddenSwiftSymbols(const char *bundlePath, const char *suffix, int visibility,
+void findHiddenSwiftSymbols(const char *bundlePath, const char *suffix, STVisibility visibility,
         void (^callback)(const void *symval, const char *symname, void *typeref, void *typeend)) {
     size_t sufflen = strlen(suffix);
     STSymbolFilter swiftSymbolsWithSuffixOrObjcClass = ^BOOL(const char *symname) {
@@ -144,6 +145,9 @@ void filterImageSymbols(int32_t imageNumber, STVisibility visibility, STSymbolFi
 void filterHeaderSymbols(const struct mach_header *_header, STVisibility visibility, STSymbolFilter filter,
     void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
                                void * _Nonnull typeref, void * _Nonnull typeend)) {
+#if 01
+    fast_dlscan(_header, visibility, filter, callback);
+#else
         auto header = (const mach_header_t *)_header;
         segment_command_t *seg_linkedit = nullptr;
         segment_command_t *seg_text = nullptr;
@@ -195,9 +199,13 @@ void filterHeaderSymbols(const struct mach_header *_header, STVisibility visibil
                                        describeImageInfo(&info).UTF8String);
                             fast_dladdr(address, &info);
                             if (!strstr(info.dli_sname, symname+1))
-                                printf("SwiftTrace: Lookup %p does not verify: %s %s\n",
+                                printf("SwiftTrace: fast_dladdr %p does not verify: %s %s\n",
                                        address, symname,
                                        describeImageInfo(&info).UTF8String);
+                            const void *ptr = fast_dlsym(header, symname+1);
+                            if (ptr != address)
+                                printf("SwiftTrace: fast_dlsym %s does not verify: %p %p\n",
+                                       symname, ptr, address);
                             #endif
                             callback(address, symname+1, typeref_start,
                                      typeref_start + typeref_size);
@@ -206,16 +214,19 @@ void filterHeaderSymbols(const struct mach_header *_header, STVisibility visibil
                 }
             }
         }
+#endif
 }
 
 void *findSwiftSymbol(const char * _Nullable path, const char * _Nonnull suffix, STVisibility visibility) {
     __block void *found = nullptr;
-    findHiddenSwiftSymbols(path, suffix, (int)visibility,
+    findHiddenSwiftSymbols(path, suffix, visibility,
         ^(const void * _Nonnull address, const char * _Nonnull symname,
           void * _Nonnull typeref, void * _Nonnull typeend) {
         if (found && found != address)
-            NSLog(@"SwiftTrace: Contradicting values for %s: %p, %p",
-                  suffix, found, address);
+            NSLog(@"SwiftTrace: Contradicting values for %s: %@ %p != %@ %p", suffix,
+                  describeImagePointer(found), found,
+                  describeImagePointer(address), address);
+//        else
         found = (void *)address;
     });
     return found;

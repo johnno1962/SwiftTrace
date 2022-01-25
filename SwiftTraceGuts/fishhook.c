@@ -133,9 +133,11 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
       void *value = dlsym(RTLD_DEFAULT, symbol_name+1) ?: dlsym(RTLD_DEFAULT, symbol_name);
       #if DEBUG && 01
       if (!indirect_symbol_bindings[i] && !value)
-        printf("SYM %p %s %p\n", indirect_symbol_bindings[i], symbol_name, value);
+        printf("SYM %p %p %s %p\n",
+               section, indirect_symbol_bindings[i], symbol_name, value);
       #endif
-      indirect_symbol_bindings[i] = value;
+      if (value)
+        indirect_symbol_bindings[i] = value;
       continue;
     }
     while (cur) {

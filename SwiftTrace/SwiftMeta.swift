@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#101 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#102 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -352,8 +352,7 @@ open class SwiftMeta: NSObject {
                 let witnessSuffix = "ACS\(enc)AAWl"
                 (mangledName + witnessSuffix).withCString { getWitnessSymbol in
                     typealias GetWitness = @convention(c) () -> UnsafeRawPointer
-                    findHiddenSwiftSymbols(searchAllImages(),
-                        witnessSuffix, ST_HIDDEN_VISIBILITY) {
+                    findHiddenSwiftSymbols(searchAllImages(), witnessSuffix, .hidden) {
                         (address, symbol, _, _) in
                         if strcmp(symbol, getWitnessSymbol) == 0,
                             let witnessFptr: GetWitness = autoBitCast(address) {
@@ -410,7 +409,7 @@ open class SwiftMeta: NSObject {
         #if true // Attempts to determine which getters have storage
         // properties that have key path getters are not stored??
         findHiddenSwiftSymbols(searchAllImages(), "pACTK",
-                   ST_HIDDEN_VISIBILITY) { (_, symbol, _, _) in
+                               .hidden) { (_, symbol, _, _) in
             doesntHaveStorage.insert(String(cString: symbol)
                 .replacingOccurrences(of: "pACTK", with: "g"))
         }
