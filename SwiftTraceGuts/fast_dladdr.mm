@@ -3,7 +3,7 @@
 //  
 //  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#3 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#6 $
 //
 
 #import "include/SwiftTrace.h"
@@ -13,6 +13,8 @@
 #import <mach-o/nlist.h>
 #import <mach-o/getsect.h>
 #import <dlfcn.h>
+#import <string>
+#import <map>
 
 // A "pseudo image" is read into InjectionScratch rather than by using dlopen().
 static std::vector<PseudoImage> loadedPseudoImages;
@@ -213,76 +215,88 @@ public:
     DylibPtr(const char *start) {
         this->start = start;
     }
+    DylibPtr() { dylib = nullptr; }
 };
 
-bool operator < (DylibPtr s1, DylibPtr s2) {
+bool operator < (const DylibPtr &s1, const DylibPtr &s2) {
     return s1.start < s2.start;
 }
 
 class DyLookup {
-    vector<DylibPtr> dylibs;
+    vector<DylibPtr> dylibsByStart;
+    std::map<std::string,DylibPtr> registered;
     int nimages = 0, pseudos = 0, nscratch = 0;
+    void add(const char *path, const struct mach_header *header) {
+        DyHandle *handle = new DyHandle(path, header);
+//        NSLog(@"fast_dladdr: Adding #%lu %s %p %p\n",
+//              dylibs.size(), path, header, handle);
+        dylibsByStart.push_back(DylibPtr(handle));
+        registered[path] = DylibPtr(handle);
+    }
 public:
     void populate() {
         int nextnimages = _dyld_image_count();
         for (int i = nimages; i < nextnimages; i++)
             if (!strstr(_dyld_get_image_name(i), "InjectionScratch"))
-                dylibs.push_back(DylibPtr(new DyHandle(
-                    _dyld_get_image_name(i),
-                    _dyld_get_image_header(i))));
+                add(_dyld_get_image_name(i),
+                    _dyld_get_image_header(i));
             else
                 nscratch++;
 
         int nextpseudos = (int)loadedPseudoImages.size();
         for (int p = pseudos; p < nextpseudos; p++)
-            dylibs.push_back(DylibPtr(new
-                DyHandle(loadedPseudoImages[p].first,
-                         loadedPseudoImages[p].second)));
+            add(loadedPseudoImages[p].first,
+                loadedPseudoImages[p].second);
 
 //            dylibs[dylibs.size()-1].dylib->dump("?");
-        if (nimages + pseudos != dylibs.size() + nscratch) {
+        if (nimages + pseudos != dylibsByStart.size() + nscratch) {
 //            printf("Adding %d -> %d %d -> %d\n", nimages, nextnimages, pseudos, nextpseudos);
-            sort(dylibs.begin(), dylibs.end());
+            sort(dylibsByStart.begin(), dylibsByStart.end());
             nimages = nextnimages;
             pseudos = nextpseudos;
         }
     }
 
+    DyHandle *dlopen(const char *path) {
+        return registered[path].dylib;
+    }
+
     DyHandle *dlhandle(const void *ptr, Dl_info *info) {
         populate();
 //        info->dli_fname = "/fast_dladdr: symbol not found";
-        if (ptr < dylibs[0].dylib->start) {
+        if (ptr < dylibsByStart[0].dylib->start) {
             if (info)
                 info->dli_sname = "fast_dladdr: address too low";
             return nullptr;
         }
 
-        DylibPtr dylibPtr((const char *)ptr);
-        auto it = upper_bound(dylibs.begin(), dylibs.end(), dylibPtr);
+        auto it = upper_bound(dylibsByStart.begin(), dylibsByStart.end(),
+                              DylibPtr((const char *)ptr));
 //        printf("%llx %d?????\n", ptr, dist);
-        if (it == dylibs.end()) {
+//        if (it == dylibs.end()) {
+//            if (info)
+//                info->dli_sname = "fast_dladdr: address too high";
+//            return nullptr;
+//        }
+
+        size_t bound = distance(dylibsByStart.begin(), it);
+        DyHandle *handle = bound ? dylibsByStart[bound-1].dylib : nullptr;
+        if (info) {
+            info->dli_fname = handle->imageName;
+            info->dli_fbase = (void *)handle->start;
+        }
+        if (!handle || !handle->contains(ptr)) {
             if (info)
-                info->dli_sname = "fast_dladdr: address too high";
+                info->dli_sname = "fast_dladdr: address not in image";
             return nullptr;
         }
-
-        size_t bound = distance(dylibs.begin(), it);
-        return bound ? dylibs[bound-1].dylib : nullptr;
+        return handle;
     }
 
     int dladdr(const void *ptr, Dl_info *info) {
         Dylib *dylib = dlhandle(ptr, info);
-        if (!dylib)
-            return 0;
-        info->dli_fname = dylib->imageName;
-        info->dli_fbase = (void *)dylib->start;
-        if (!dylib || !dylib->contains(ptr)) {
-//            dylib->dump("????");
-            info->dli_sname = "fast_dladdr: address not in image";
-            return 0;
-        }
 //            printf("%llx %llx %llx %d %s\n", ptr, dylib->start, dylib->stop, dylib->contains(ptr), info->dli_sname);
-        return dylib->dladdr(ptr, info);
+        return dylib ? dylib->dladdr(ptr, info) : 0;
     }
 };
 #endif
@@ -304,7 +318,13 @@ void *fast_dlsym(const void *ptr, const char *symname) {
 }
 
 void fast_dlscan(const void *header, STVisibility visibility, STSymbolFilter filter, STSymbolCallback callback) {
-    Dylib *dylib = lookup.dlhandle(header, NULL);
+    if (!header)
+        NSLog(@"SwiftTrace::fast_dlscan: No header for %p", header);
+    Dl_info info;
+    Dylib *dylib = lookup.dlhandle(header, &info);
+    if (!dylib)
+        NSLog(@"SwiftTrace::fast_dlscan: No handle for %p - %s",
+              header, info.dli_fname);
     const char *symname; void *address;
     for (auto &sym : dylib->populate()) {
         if ((visibility == STVisibilityAny || sym.sym->n_type == visibility) &&

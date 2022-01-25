@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#94 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#97 $
 //
 
 #import "include/SwiftTrace.h"
@@ -107,7 +107,7 @@ void findHiddenSwiftSymbols(const char *bundlePath, const char *suffix, STVisibi
     };
 
     if (bundlePath == searchLastLoaded()) {
-        filterImageSymbols(ST_LAST_IMAGE, (STVisibility)visibility,
+        filterImageSymbols(ST_LAST_IMAGE, visibility,
                            swiftSymbolsWithSuffixOrObjcClass, callback);
         return;
     }
@@ -116,11 +116,12 @@ void findHiddenSwiftSymbols(const char *bundlePath, const char *suffix, STVisibi
         const char *imageName = _dyld_get_image_name(i);
         if (!(imageName && (bundlePath == searchAllImages() ||
                             imageName == bundlePath ||
-                            strstr(imageName, bundlePath))))
+                            strstr(imageName, bundlePath)) &&
+              !strstr(imageName, "InjectionScratch.framework")))
             continue;
 
-        filterImageSymbols(i, (STVisibility)visibility,
-            swiftSymbolsWithSuffixOrObjcClass, callback);
+        filterImageSymbols(i, visibility,
+                           swiftSymbolsWithSuffixOrObjcClass, callback);
         if (bundlePath != searchAllImages() &&
             bundlePath != mainBundlePath)
             break;
@@ -222,11 +223,13 @@ void *findSwiftSymbol(const char * _Nullable path, const char * _Nonnull suffix,
     findHiddenSwiftSymbols(path, suffix, visibility,
         ^(const void * _Nonnull address, const char * _Nonnull symname,
           void * _Nonnull typeref, void * _Nonnull typeend) {
+        #if DEBUG
         if (found && found != address)
             NSLog(@"SwiftTrace: Contradicting values for %s: %@ %p != %@ %p", suffix,
                   describeImagePointer(found), found,
                   describeImagePointer(address), address);
 //        else
+        #endif
         found = (void *)address;
     });
     return found;
