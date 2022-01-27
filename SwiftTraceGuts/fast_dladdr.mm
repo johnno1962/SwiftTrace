@@ -3,7 +3,7 @@
 //  
 //  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#8 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#9 $
 //
 
 #import "include/SwiftTrace.h"
@@ -169,7 +169,7 @@ public:
 class DySymName: public DySymbol {
 public:
     const char *name;
-    DySymName(const nlist_t *_Nonnull sym, const char *_Nonnull name) : DySymbol(sym) {
+    DySymName(const nlist_t *_Nullable sym, const char *_Nonnull name) : DySymbol(sym) {
         this->name = name;
     }
 };
@@ -201,7 +201,7 @@ class DyHandle: public Dylib {
     }
 public:
     DyHandle(const char *_Nonnull imageName,
-             const struct mach_header *_Nonnull header) :
+             const struct mach_header *_Nullable header) :
         Dylib(imageName, header) {}
 
     void *dlsym(const char *symname) {
