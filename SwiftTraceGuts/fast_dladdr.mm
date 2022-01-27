@@ -3,7 +3,7 @@
 //  
 //  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#6 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#8 $
 //
 
 #import "include/SwiftTrace.h"
@@ -15,6 +15,20 @@
 #import <dlfcn.h>
 #import <string>
 #import <map>
+
+#ifdef __LP64__
+#define mach_header_t struct mach_header_64
+#define segment_command_t struct segment_command_64
+#define nlist_t nlist_64
+#define sectsize_t uint64_t
+#define getsectdatafromheader_f getsectdatafromheader_64
+#else
+#define mach_header_t struct mach_header
+#define segment_command_t struct segment_command
+#define nlist_t nlist
+#define sectsize_t uint32_t
+#define getsectdatafromheader_f getsectdatafromheader
+#endif
 
 // A "pseudo image" is read into InjectionScratch rather than by using dlopen().
 static std::vector<PseudoImage> loadedPseudoImages;
@@ -34,17 +48,20 @@ const std::vector<PseudoImage> &getLoadedPseudoImages(void) {
     return loadedPseudoImages;
 }
 
-// We need a version of dladdr() and co. that supports pseudo images.
+// We need a version of dladdr() and co. that supports non-dlopen'd images.
 #define TRY_TO_OPTIMISE_DLADDR 1
 #if TRY_TO_OPTIMISE_DLADDR
+namespace fastdladdr {
+
 #import <algorithm>
 
 using namespace std;
 
+// Used to sort by address (n_value)
 class DySymbol {
 public:
     const nlist_t *sym;
-    DySymbol(const nlist_t *sym) : sym(sym) {}
+    DySymbol(const nlist_t *_Nonnull sym) : sym(sym) {}
 };
 
 static bool operator < (const DySymbol &s1, const DySymbol &s2) {
@@ -53,6 +70,7 @@ static bool operator < (const DySymbol &s1, const DySymbol &s2) {
 
 // See: https://stackoverflow.com/questions/20481058/find-pathname-from-dlopen-handle-on-osx
 
+/// Base class which can find the symbol name for  pointer.
 class Dylib {
     segment_command_t *seg_linkedit = nullptr;
 protected:
@@ -67,11 +85,10 @@ public:
     sectsize_t typeref_size = 0;
     char *typeref_start;
 
-    Dylib(const char *imageName, const struct mach_header *header) {
+    Dylib(const char *_Nonnull imageName, const struct mach_header *_Nonnull header) {
         this->imageName = imageName; // = _dyld_get_image_name(imageIndex);
-        this->header = (const mach_header_t *)header; //_dyld_get_image_header(imageIndex);
+        if (!(this->header = (const mach_header_t *)header)) return; //_dyld_get_image_header(imageIndex);
         struct load_command *cmd = (struct load_command *)((intptr_t)header + sizeof(mach_header_t));
-        assert(header);
 
         for (uint32_t i = 0; i < header->ncmds; i++, cmd = (struct load_command *)((intptr_t)cmd + cmd->cmdsize))
         {
@@ -110,9 +127,8 @@ public:
     }
 
     const vector<DySymbol> &populate() {
-        if (symsByValue.empty()) {
+        if (symsByValue.empty() && header) {
             const nlist_t *sym = symbols;
-
             for (uint32_t i = 0; i < symtab->nsyms; i++, sym++)
                 if (sym->n_sect != NO_SECT)
     //                    if (!(sym->n_type & N_STAB))
@@ -122,20 +138,18 @@ public:
         return symsByValue;
     }
 
-    int dladdr(const void *ptr, Dl_info *info) {
+    int dladdr(const void *_Nonnull ptr, Dl_info *_Nonnull info) {
         populate();
 
         nlist_t nlist;
         nlist.n_value = (intptr_t)ptr - ((intptr_t)header - (intptr_t)seg_text->vmaddr);
 
         auto it = upper_bound(symsByValue.begin(), symsByValue.end(), DySymbol(&nlist));
-        if (it == symsByValue.end()) {
-            info->dli_sname = "fast_dladdr: symbol not found";
+        size_t bound = distance(symsByValue.begin(), it);
+        if (!bound) {
+            info->dli_sname = "fast_dladdr: address should be too low";
             return 0;
         }
-
-        size_t bound = distance(symsByValue.begin(), it);
-        if (!bound) return 0;
 //        for (int i=-15; i<15; i++)
 //            printf("%ld %d %x %s\n", distance(symbols.begin(), it),
 //                   i, symbols[found+i].sym->n_type,
@@ -143,7 +157,7 @@ public:
         info->dli_sname = strings + symsByValue[bound-1].sym->n_un.n_strx;
         info->dli_saddr = (void *)(symsByValue[bound-1].sym->n_value +
                                    ((intptr_t)header - (intptr_t)seg_text->vmaddr));
-        if (!*info->dli_sname) // Some symbols not located at found-1??
+        if (!*info->dli_sname && bound > 1) // Some symbols not located at found-1??
             info->dli_sname = strings + symsByValue[bound-2].sym->n_un.n_strx;
         if (*info->dli_sname == '_')
             info->dli_sname++;
@@ -151,23 +165,24 @@ public:
     }
 };
 
+// Used to sort my name
 class DySymName: public DySymbol {
 public:
     const char *name;
-    DySymName(const nlist_t *sym, const char *name) : DySymbol(sym) {
+    DySymName(const nlist_t *_Nonnull sym, const char *_Nonnull name) : DySymbol(sym) {
         this->name = name;
     }
 };
 
 static bool operator < (const DySymName &s1, const DySymName &s2) {
-//    printf("%s %s\n", s1.name, s2.name);
     return strcmp(s1.name, s2.name) < 0;
 }
 
+/// Something like the handle returned by dlopen which can convert a symbol name info a pointer.
 class DyHandle: public Dylib {
     vector<DySymName> symsByName;
     void populate() {
-        if (symsByName.empty()) {
+        if (symsByName.empty() && header) {
             const nlist_t *sym = symbols;
             for (uint32_t i = 0; i < symtab->nsyms; i++, sym++)
                 if (sym->n_sect != NO_SECT)
@@ -185,17 +200,14 @@ class DyHandle: public Dylib {
         }
     }
 public:
-    DyHandle(const char *imageName, const struct mach_header *header) :
+    DyHandle(const char *_Nonnull imageName,
+             const struct mach_header *_Nonnull header) :
         Dylib(imageName, header) {}
 
     void *dlsym(const char *symname) {
         populate();
         auto it = upper_bound(symsByName.begin(), symsByName.end(),
                               DySymName(nullptr, symname));
-        if (it == symsByName.end()) {
-            return nullptr;
-        }
-
         size_t bound = distance(symsByName.begin(), it);
         if (!bound || strcmp(symsByName[bound-1].name, symname) != 0)
             return nullptr;
@@ -204,6 +216,16 @@ public:
     }
 };
 
+class DyRange : DyHandle {
+public:
+    DyRange(const char *name, uintptr_t start, uintptr_t end)
+        : DyHandle(name, nullptr) {
+        this->start = (char *)start;
+        this->end = (char *)end;
+    }
+};
+
+// Used to sort by load address.
 class DylibPtr {
 public:
     DyHandle *dylib;
@@ -212,100 +234,89 @@ public:
         if ((this->dylib = dylib))
             this->start = dylib->start;
     }
-    DylibPtr(const char *start) {
+    DylibPtr(const char *_Nonnull start) {
         this->start = start;
     }
-    DylibPtr() { dylib = nullptr; }
 };
 
 bool operator < (const DylibPtr &s1, const DylibPtr &s2) {
     return s1.start < s2.start;
 }
 
+/// Model for images loaded.
 class DyLookup {
     vector<DylibPtr> dylibsByStart;
-    std::map<std::string,DylibPtr> registered;
+    map<string,DyHandle *> registered;
     int nimages = 0, pseudos = 0, nscratch = 0;
-    void add(const char *path, const struct mach_header *header) {
+    void addImage(const char *path, const struct mach_header *header) {
         DyHandle *handle = new DyHandle(path, header);
 //        NSLog(@"fast_dladdr: Adding #%lu %s %p %p\n",
 //              dylibs.size(), path, header, handle);
         dylibsByStart.push_back(DylibPtr(handle));
-        registered[path] = DylibPtr(handle);
+        registered[path] = handle;
     }
-public:
     void populate() {
         int nextnimages = _dyld_image_count();
         for (int i = nimages; i < nextnimages; i++)
             if (!strstr(_dyld_get_image_name(i), "InjectionScratch"))
-                add(_dyld_get_image_name(i),
-                    _dyld_get_image_header(i));
+                addImage(_dyld_get_image_name(i),
+                         _dyld_get_image_header(i));
             else
                 nscratch++;
 
         int nextpseudos = (int)loadedPseudoImages.size();
         for (int p = pseudos; p < nextpseudos; p++)
-            add(loadedPseudoImages[p].first,
-                loadedPseudoImages[p].second);
+            addImage(loadedPseudoImages[p].first,
+                     loadedPseudoImages[p].second);
 
-//            dylibs[dylibs.size()-1].dylib->dump("?");
         if (nimages + pseudos != dylibsByStart.size() + nscratch) {
-//            printf("Adding %d -> %d %d -> %d\n", nimages, nextnimages, pseudos, nextpseudos);
             sort(dylibsByStart.begin(), dylibsByStart.end());
             nimages = nextnimages;
             pseudos = nextpseudos;
         }
     }
-
-    DyHandle *dlopen(const char *path) {
-        return registered[path].dylib;
+public:
+    DyHandle *dlopen(const char *_Nonnull path) {
+        return registered[path];
     }
 
-    DyHandle *dlhandle(const void *ptr, Dl_info *info) {
+    DyHandle *dlhandle(const void *_Nonnull ptr, Dl_info *_Nonnull info) {
         populate();
-//        info->dli_fname = "/fast_dladdr: symbol not found";
-        if (ptr < dylibsByStart[0].dylib->start) {
-            if (info)
-                info->dli_sname = "fast_dladdr: address too low";
-            return nullptr;
-        }
-
         auto it = upper_bound(dylibsByStart.begin(), dylibsByStart.end(),
                               DylibPtr((const char *)ptr));
-//        printf("%llx %d?????\n", ptr, dist);
-//        if (it == dylibs.end()) {
-//            if (info)
-//                info->dli_sname = "fast_dladdr: address too high";
-//            return nullptr;
-//        }
-
         size_t bound = distance(dylibsByStart.begin(), it);
-        DyHandle *handle = bound ? dylibsByStart[bound-1].dylib : nullptr;
-        if (info) {
-            info->dli_fname = handle->imageName;
-            info->dli_fbase = (void *)handle->start;
+        if (!bound) {
+            info->dli_fbase = nullptr;
+            info->dli_sname = info->dli_fname = "fast_dladdr: address too low?";
+            return nullptr;
         }
-        if (!handle || !handle->contains(ptr)) {
-            if (info)
-                info->dli_sname = "fast_dladdr: address not in image";
+        DyHandle *handle = dylibsByStart[bound-1].dylib;
+        info->dli_fbase = (void *)handle->start;
+        info->dli_fname = handle->imageName;
+        if (!handle->contains(ptr)) {
+            info->dli_saddr = (void *)handle->end;
+            info->dli_sname = "fast_dladdr: address not in image";
             return nullptr;
         }
         return handle;
     }
 
-    int dladdr(const void *ptr, Dl_info *info) {
+    int dladdr(const void *_Nonnull ptr, Dl_info *_Nonnull info) {
         Dylib *dylib = dlhandle(ptr, info);
 //            printf("%llx %llx %llx %d %s\n", ptr, dylib->start, dylib->stop, dylib->contains(ptr), info->dli_sname);
         return dylib ? dylib->dladdr(ptr, info) : 0;
     }
 };
+
+static DyLookup loadedImages;
+}
 #endif
 
-static DyLookup lookup;
+using namespace fastdladdr;
 
 int fast_dladdr(const void *ptr, Dl_info *info) {
 #if TRY_TO_OPTIMISE_DLADDR
-    return lookup.dladdr(ptr, info);
+    return loadedImages.dladdr(ptr, info);
 #else
     return dladdr(ptr, info);
 #endif
@@ -313,18 +324,19 @@ int fast_dladdr(const void *ptr, Dl_info *info) {
 
 void *fast_dlsym(const void *ptr, const char *symname) {
     Dl_info info;
-    DyHandle *dylib = lookup.dlhandle(ptr, &info);
+    DyHandle *dylib = loadedImages.dlhandle(ptr, &info);
     return dylib ? dylib->dlsym(symname) : nullptr;
 }
 
-void fast_dlscan(const void *header, STVisibility visibility, STSymbolFilter filter, STSymbolCallback callback) {
+void fast_dlscan(const void *header, STVisibility visibility,
+                 STSymbolFilter filter, STSymbolCallback callback) {
     if (!header)
         NSLog(@"SwiftTrace::fast_dlscan: No header for %p", header);
     Dl_info info;
-    Dylib *dylib = lookup.dlhandle(header, &info);
+    Dylib *dylib = loadedImages.dlhandle(header, &info);
     if (!dylib)
         NSLog(@"SwiftTrace::fast_dlscan: No handle for %p - %s",
-              header, info.dli_fname);
+              header, info.dli_sname);
     const char *symname; void *address;
     for (auto &sym : dylib->populate()) {
         if ((visibility == STVisibilityAny || sym.sym->n_type == visibility) &&
@@ -393,19 +405,19 @@ void injection_stack(void) {
     Dl_info info, info2;
     int level = 0;
     for (NSValue *value in [NSThread.callStackReturnAddresses reverseObjectEnumerator]) {
-        void *pointer = value.pointerValue;
-        printf("#%d %p", level++, pointer);
+        void *caller = value.pointerValue;
+        printf("#%d %p", level++, caller);
         info.dli_fname = "/bad image";
-        if (!dladdr(pointer, &info))  {
-            printf(" %p", pointer);
+        if (!dladdr(caller, &info))  {
+            printf(" %p", caller);
             info.dli_sname = "?";
         }
-        if (!fast_dladdr(pointer, &info2))
-            printf(" %p?", pointer);
+        if (!fast_dladdr(caller, &info2))
+            printf(" %p?", caller);
         else
             info = info2;
-        if (strcmp(info.dli_sname, "injection_scratch") == 0)
-            printf(" injection_scratch:");
+        if (strcmp(info.dli_sname, "injected_code") == 0)
+            printf(" injected_code:");
         else if (strcmp(info2.dli_sname, info.dli_sname) != 0 &&
                  strcmp(info2.dli_sname, "redacted>") != 0 && info.dli_sname[0] != '?')
             printf("%s: %s WTF? %s ", info2.dli_fname, info2.dli_sname, info.dli_sname);

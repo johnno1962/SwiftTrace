@@ -2,8 +2,9 @@
 //  ObjCBridge.mm
 //  SwiftTrace
 //
+//  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/ObjCBridge.mm#1 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/ObjCBridge.mm#2 $
 //
 
 #import "include/SwiftTrace.h"

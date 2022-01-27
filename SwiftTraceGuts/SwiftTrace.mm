@@ -3,12 +3,10 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#97 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#98 $
 //
 
 #import "include/SwiftTrace.h"
-#import <mach-o/getsect.h>
-#import <mach-o/nlist.h>
 #import <mach-o/dyld.h>
 
 NSArray<Class> *objc_classArray() {
@@ -59,7 +57,7 @@ const char *swiftUIBundlePath() {
 }
 
 static char lastLoadedPath[PATH_MAX];
-const char * _Nonnull searchMainImage() {
+const char *searchMainImage() {
     const char *mainImage = [NSBundle mainBundle]
         .executablePath.UTF8String;
     strcpy(lastLoadedPath, mainImage);
@@ -71,12 +69,12 @@ const char *searchLastLoaded() {
            getLoadedPseudoImages().back().first);
     return lastLoadedPath;
 }
-const char * _Nullable searchAllImages() {
+const char *searchAllImages() {
     return nullptr;
 }
 
 static char mainBundlePath[PATH_MAX];
-const char * _Nonnull searchBundleImages() {
+const char *searchBundleImages() {
     const char *bundlePath = [NSBundle mainBundle]
         .bundlePath.UTF8String;
     strcpy(mainBundlePath, bundlePath);
@@ -141,14 +139,15 @@ void filterImageSymbols(int32_t imageNumber, STVisibility visibility, STSymbolFi
     filterHeaderSymbols(header, visibility, filter, callback);
 }
 
-// See: https://stackoverflow.com/questions/20481058/find-pathname-from-dlopen-handle-on-osx
-
 void filterHeaderSymbols(const struct mach_header *_header, STVisibility visibility, STSymbolFilter filter,
     void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
                                void * _Nonnull typeref, void * _Nonnull typeend)) {
 #if 01
     fast_dlscan(_header, visibility, filter, callback);
 #else
+
+// See: https://stackoverflow.com/questions/20481058/find-pathname-from-dlopen-handle-on-osx
+
         auto header = (const mach_header_t *)_header;
         segment_command_t *seg_linkedit = nullptr;
         segment_command_t *seg_text = nullptr;
@@ -193,7 +192,7 @@ void filterHeaderSymbols(const struct mach_header *_header, STVisibility visibil
                             #if DEBUG
                             Dl_info info;
                             if (dladdr(address, &info) &&
-                                strcmp(info.dli_sname, "injection_scratch") != 0 &&
+                                strcmp(info.dli_sname, "injected_code") != 0 &&
                                 !strstr(info.dli_sname, symname+1))
                                 printf("SwiftTrace: dladdr %p does not verify! %s %s\n",
                                        address, symname,
@@ -218,7 +217,7 @@ void filterHeaderSymbols(const struct mach_header *_header, STVisibility visibil
 #endif
 }
 
-void *findSwiftSymbol(const char * _Nullable path, const char * _Nonnull suffix, STVisibility visibility) {
+void *findSwiftSymbol(const char *path, const char *suffix, STVisibility visibility) {
     __block void *found = nullptr;
     findHiddenSwiftSymbols(path, suffix, visibility,
         ^(const void * _Nonnull address, const char * _Nonnull symname,

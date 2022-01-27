@@ -2,8 +2,9 @@
 //  Trampolines.mm
 //  SwiftTrace
 //
+//  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/Trampolines.mm#2 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/Trampolines.mm#3 $
 //
 
 #import "include/SwiftTrace.h"
