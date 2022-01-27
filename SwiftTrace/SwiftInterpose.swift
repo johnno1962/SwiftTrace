@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#65 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#66 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -23,7 +23,7 @@ extension SwiftTrace {
     /// to interpose i.e. constructors, functions (methods),
     /// getters of Opaque type (for SwiftUI body properties)
     /// and setters and destructors.
-    public static var swiftFunctionSuffixes = ["fC", "F", "Qrvg", "s", "fD"]
+    public static var traceableFunctionSuffixes = ["fC", "F", "Qrvg", "s", "fD"]
 
     /// Regexp pattern for functions to exclude from interposing
     public static var interposeEclusions: NSRegularExpression? = nil
@@ -67,7 +67,7 @@ extension SwiftTrace {
                               replaceWith: nullImplementationType? = nil) -> Int {
         var interposes = [dyld_interpose_tuple]()
 
-        for suffix in swiftFunctionSuffixes {
+        for suffix in traceableFunctionSuffixes {
             findSwiftSymbols(aBundle, suffix) { symval, symname, _, _ in
                 if SwiftMeta.demangle(symbol: symname) == methodName,
                     let current = interposed(replacee: symval),
@@ -109,7 +109,7 @@ extension SwiftTrace {
         var interposes = [dyld_interpose_tuple]()
         var symbols = [UnsafePointer<Int8>]()
 
-        for suffix in swiftFunctionSuffixes {
+        for suffix in traceableFunctionSuffixes {
             findSwiftSymbols(inBundlePath, suffix) {
                 symval, symname,  _, _ in
                 if let methodName = SwiftMeta.demangle(symbol: symname),

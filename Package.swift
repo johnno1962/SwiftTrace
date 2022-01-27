@@ -2,7 +2,7 @@
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/Package.swift#10 $
+//  $Id: //depot/SwiftTrace/Package.swift#11 $
 //
 
 import PackageDescription
@@ -19,6 +19,9 @@ let package = Package(
     dependencies: [],
     targets: [
         .target(name: "SwiftTrace", dependencies: ["SwiftTraceGuts"], path: "SwiftTrace/"),
-        .target(name: "SwiftTraceGuts", dependencies: [], path: "SwiftTraceGuts/"),
+        // Unfortunately not possible to use C++11 and have the target exportable
+        .target(name: "SwiftTraceGuts", dependencies: [], path: "SwiftTraceGuts/"/*,
+                cSettings: [.unsafeFlags(["-std=gnu++11"])]*/),
     ]
 )
+//-std\=gnu++11

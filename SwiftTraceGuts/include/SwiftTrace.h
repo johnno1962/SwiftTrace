@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#57 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#60 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -43,15 +43,20 @@ FOUNDATION_EXPORT const unsigned char SwiftTraceVersionString[];
  */
 
 /**
- Signature of function used to select symbols to  inject.
+ Signature of function used to select symbols to inject.
  */
-typedef BOOL (^ _Nonnull STSymbolFilter)(const char * _Nonnull symname);
+typedef BOOL (^ _Nonnull STSymbolFilter)(const char *_Nonnull symname);
+/**
+ Callback on selecting symbol.
+ */
+typedef void (^ _Nonnull STSymbolCallback)(const void *_Nonnull address, const char *_Nonnull symname,
+                                     void *_Nonnull typeref, void *_Nonnull typeend);
 
 @interface NSObject(SwiftTrace)
 /**
  The default regexp used to exclude certain methods from tracing.
  */
-+ (NSString * _Nonnull)swiftTraceDefaultMethodExclusions;
++ (NSString *_Nonnull)swiftTraceDefaultMethodExclusions;
 /**
  Optional filter of methods to be included in subsequent traces.
  */
@@ -72,11 +77,11 @@ typedef BOOL (^ _Nonnull STSymbolFilter)(const char * _Nonnull symname);
 /**
  Function type suffixes at end of mangled symbol name.
  */
-@property (nonatomic, class, copy) NSArray<NSString *> * _Nonnull swiftTraceFunctionSuffixes;
+@property (nonatomic, class, copy) NSArray<NSString *> *_Nonnull swiftTraceFunctionSuffixes;
 /** Are we tracing? */
 @property (readonly, class) BOOL swiftTracing;
 /** Pointer to common interposed state dictionary */
-@property (readonly, class) void * _Nonnull swiftTraceInterposed;
+@property (readonly, class) void *_Nonnull swiftTraceInterposed;
 /** lookup unknown types */
 @property (class) BOOL swiftTraceTypeLookup;
 /**
@@ -115,23 +120,23 @@ typedef BOOL (^ _Nonnull STSymbolFilter)(const char * _Nonnull symname);
  Trace classes in the application that have names matching
  the regular expression.
  */
-+ (void)swiftTraceClassesMatchingPattern:(NSString * _Nonnull)pattern;
++ (void)swiftTraceClassesMatchingPattern:(NSString *_Nonnull)pattern;
 /**
  Trace classes in the application that have names matching
  the regular expression and subLevels of cals they make to
  classes that have already been traced.
  */
-+ (void)swiftTraceClassesMatchingPattern:(NSString * _Nonnull)pattern subLevels:(intptr_t)subLevels;
++ (void)swiftTraceClassesMatchingPattern:(NSString *_Nonnull)pattern subLevels:(intptr_t)subLevels;
 /**
  Return an array of the demangled names of methods declared
  in the reciving Swift class that can be traced.
  */
-+ (NSArray<NSString *> * _Nonnull)swiftTraceMethodNames;
++ (NSArray<NSString *> *_Nonnull)swiftTraceMethodNames;
 /**
 Return an array of the demangled names of methods declared
 in the Swift class provided.
 */
-+ (NSArray<NSString *> * _Nonnull)switTraceMethodsNamesOfClass:(Class _Nonnull)aClass;
++ (NSArray<NSString *> *_Nonnull)switTraceMethodsNamesOfClass:(Class _Nonnull)aClass;
 /**
  Trace instances of the specific receiving class (including
  the methods of its superclasses.)
@@ -160,18 +165,18 @@ in the Swift class provided.
 /**
  Trace protocols in bundle with qualifications
  */
-+ (void)swiftTraceProtocolsInBundleWithMatchingPattern:(NSString * _Nullable)pattern;
++ (void)swiftTraceProtocolsInBundleWithMatchingPattern:(NSString *_Nullable)pattern;
 + (void)swiftTraceProtocolsInBundleWithSubLevels:(int)subLevels;
-+ (void)swiftTraceProtocolsInBundleWithMatchingPattern:(NSString * _Nullable)pattern subLevels:(int)subLevels;
++ (void)swiftTraceProtocolsInBundleWithMatchingPattern:(NSString *_Nullable)pattern subLevels:(int)subLevels;
 /**
  Use interposing to trace all methods in main bundle
  Use swiftTraceInclusionPattern, swiftTraceExclusionPattern to filter
  */
 + (NSInteger)swiftTraceMethodsInFrameworkContaining:(Class _Nonnull)aClass;
 + (NSInteger)swiftTraceMainBundleMethods;
-+ (NSInteger)swiftTraceMethodsInBundle:(const char * _Nonnull)bundlePath
-                           packageName:(NSString * _Nullable)packageName;
-+ (void)swiftTraceBundlePath:(const char * _Nonnull)bundlePath;
++ (NSInteger)swiftTraceMethodsInBundle:(const char *_Nonnull)bundlePath
+                           packageName:(NSString *_Nullable)packageName;
++ (void)swiftTraceBundlePath:(const char *_Nonnull)bundlePath;
 /**
  Remove most recent trace
  */
@@ -187,22 +192,37 @@ in the Swift class provided.
 /**
  Total elapsed time by traced method.
  */
-+ (NSDictionary<NSString *, NSNumber *> * _Nonnull)swiftTraceElapsedTimes;
++ (NSDictionary<NSString *, NSNumber *> *_Nonnull)swiftTraceElapsedTimes;
 /**
  Invocation counts by traced method.
  */
-+ (NSDictionary<NSString *, NSNumber *> * _Nonnull)swiftTraceInvocationCounts;
++ (NSDictionary<NSString *, NSNumber *> *_Nonnull)swiftTraceInvocationCounts;
+/**
+ Demangle Swift symbol.
+ */
++ (NSString *_Nullable)swiftTraceDemangle:(char const *_Nonnull)symbol;
+@end
+
+#import <dlfcn.h>
+@interface DYLookup: NSObject {
+    void *dyLookup;
+}
+- (instancetype _Nonnull)init;
+- (int)dladdr:(void *_Nonnull)pointer info:(Dl_info *_Nonnull)info;// SWIFT_NAME(dladdr(_:_));
 @end
 
 #import <mach-o/loader.h>
 #import <objc/runtime.h>
 #import <dlfcn.h>
 
+#define ST_LAST_IMAGE -1
+#define ST_ANY_VISIBILITY 0
 #define ST_GLOBAL_VISIBILITY 0xf
 #define ST_HIDDEN_VISIBILITY 0x1e
 #define ST_LOCAL_VISIBILITY 0xe
+
 typedef NS_ENUM(uint8_t, STVisibility) {
-    STVisibilityAny = 0,
+    STVisibilityAny = ST_ANY_VISIBILITY,
     STVisibilityGlobal = ST_GLOBAL_VISIBILITY,
     STVisibilityHidden = ST_HIDDEN_VISIBILITY,
     STVisibilityLocal = ST_LOCAL_VISIBILITY,
@@ -211,33 +231,49 @@ typedef NS_ENUM(uint8_t, STVisibility) {
 #ifdef __cplusplus
 extern "C" {
 #endif
-    IMP _Nonnull imp_implementationForwardingToTracer(void * _Nonnull patch, IMP _Nonnull onEntry, IMP _Nonnull onExit);
-    NSArray<Class> * _Nonnull objc_classArray(void);
-    NSMethodSignature * _Nullable method_getSignature(Method _Nonnull Method);
-    const char * _Nonnull sig_argumentType(id _Nonnull signature, NSUInteger index);
-    const char * _Nonnull sig_returnType(id _Nonnull signature);
-    const char * _Nonnull classesIncludingObjc();
-    void findSwiftSymbols(const char * _Nullable path, const char * _Nonnull suffix,
-        void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
-                                   void * _Nonnull typeref, void * _Nonnull typeend));
-    void findHiddenSwiftSymbols(const char * _Nullable path, const char * _Nonnull suffix, int visibility,
-        void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
-                                   void * _Nonnull typeref, void * _Nonnull typeend));
-    void filterImageSymbols(uint32_t imageNumber, STVisibility visibility, STSymbolFilter filter,
-        void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
-                                   void * _Nonnull typeref, void * _Nonnull typeend));
-    void appBundleImages(void (^ _Nonnull callback)(const char * _Nonnull imageName, const struct mach_header * _Nonnull header, intptr_t slide));
-    const char * _Nullable swiftUIBundlePath();
-    const char * _Nullable callerBundle(void);
-    id _Nullable findSwizzleOf(void * _Nonnull trampoline);
-    int fast_dladdr(const void * _Nonnull, Dl_info * _Nonnull);
+    IMP _Nonnull imp_implementationForwardingToTracer(void *_Nonnull patch, IMP _Nonnull onEntry, IMP _Nonnull onExit);
+    NSArray<Class> *_Nonnull objc_classArray(void);
+    NSMethodSignature *_Nullable method_getSignature(Method _Nonnull Method);
+    const char *_Nonnull sig_argumentType(id _Nonnull signature, NSUInteger index);
+    const char *_Nonnull sig_returnType(id _Nonnull signature);
+    const char *_Nonnull searchMainImage(void);
+    const char *_Nonnull searchLastLoaded(void);
+    const char *_Nullable searchAllImages(void);
+    const char *_Nonnull searchBundleImages(void);
+    const char *_Nonnull classesIncludingObjc(void);
+    void findSwiftSymbols(const char *_Nullable path, const char *_Nonnull suffix,
+        STSymbolCallback callback);
+    void findHiddenSwiftSymbols(const char *_Nullable path, const char *_Nonnull suffix, STVisibility visibility,
+        STSymbolCallback callback);
+    void *_Nullable findSwiftSymbol(const char *_Nullable path, const char *_Nonnull suffix, STVisibility visibility);
+    void filterImageSymbols(int32_t imageNumber, STVisibility visibility,
+                            STSymbolFilter filter, STSymbolCallback callback);
+    void filterHeaderSymbols(const struct mach_header *_Nonnull header, STVisibility visibility,
+                             STSymbolFilter filter, STSymbolCallback callback);
+    void pushPseudoImage(const char *_Nonnull path,
+                         const void *_Nonnull header);
+    NSString *_Nonnull describeImageSymbol(const char *_Nonnull symname);
+    NSString *_Nonnull describeImageInfo(const Dl_info *_Nonnull info);
+    NSString *_Nonnull describeImagePointer(const void *_Nonnull pointer);
+    void injection_stack(void);
+    void appBundleImages(void (^ _Nonnull callback)(const char *_Nonnull imageName, const struct mach_header *_Nonnull header, intptr_t slide));
+    const char *_Nullable swiftUIBundlePath(void);
+    const char *_Nullable callerBundle(void);
+    id _Nullable findSwizzleOf(void *_Nonnull trampoline);
+    int fast_dladdr(const void *_Nonnull, Dl_info *_Nonnull);
+    void *_Nullable fast_dlsym(const void *_Nonnull ptr, const char *_Nonnull symname);
+    void fast_dlscan(const void *_Nonnull ptr, STVisibility visibility, STSymbolFilter filter, STSymbolCallback callback);
+    const struct mach_header *_Nullable lastPseudoImage(void);
 #ifdef __cplusplus
 }
+#import <vector>
+typedef std::pair<char *_Nonnull, const struct mach_header *_Nonnull> PseudoImage;
+extern const std::vector<PseudoImage> &getLoadedPseudoImages(void);
 #endif
 
 struct dyld_interpose_tuple {
-  const void * _Nonnull replacement;
-  const void * _Nonnull replacee;
+  const void *_Nonnull replacement;
+  const void *_Nonnull replacee;
 };
 
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
@@ -303,9 +339,9 @@ extern "C" {
  * name to its replacement
  */
 struct rebinding {
-  const char * _Nonnull name;
-  void * _Nonnull replacement;
-  void * _Nonnull * _Nullable replaced;
+  const char *_Nonnull name;
+  void *_Nonnull replacement;
+  void *_Nonnull *_Nullable replaced;
 };
 
 /*
@@ -324,7 +360,7 @@ int rebind_symbols(struct rebinding rebindings[_Nonnull], size_t rebindings_nel)
  * to the mach-o header, the slide should be the slide offset. Others as above.
  */
 FISHHOOK_VISIBILITY
-int rebind_symbols_image(void * _Nonnull header,
+int rebind_symbols_image(void *_Nonnull header,
                          intptr_t slide,
                          struct rebinding rebindings[_Nonnull],
                          size_t rebindings_nel);
@@ -334,4 +370,3 @@ int rebind_symbols_image(void * _Nonnull header,
 #endif //__cplusplus
 
 #endif //fishhook_h
-

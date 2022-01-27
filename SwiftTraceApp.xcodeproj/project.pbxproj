@@ -49,6 +49,16 @@
 		BB76EA19229544BD00E454F0 /* xt_forwarding_trampoline_x64.s in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F11D0A43E800520F38 /* xt_forwarding_trampoline_x64.s */; };
 		BBB3A09E258618D000112C65 /* EasyPointer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1C3241254B47CF001EDFCC /* EasyPointer.swift */; };
 		BBB3A0A2258618E500112C65 /* xt_forwarding_trampoline_arm64.s in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1F01D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s */; };
+		BBB9E979279BEA910085E3B9 /* Trampolines.mm in Sources */ = {isa = PBXBuildFile; fileRef = BBB9E975279BEA8E0085E3B9 /* Trampolines.mm */; };
+		BBB9E97A279BEA910085E3B9 /* fast_dladdr.mm in Sources */ = {isa = PBXBuildFile; fileRef = BBB9E976279BEA900085E3B9 /* fast_dladdr.mm */; };
+		BBB9E97B279BEA910085E3B9 /* SwiftTrace-Swift.h in Headers */ = {isa = PBXBuildFile; fileRef = BBB9E977279BEA910085E3B9 /* SwiftTrace-Swift.h */; };
+		BBB9E97C279BEA910085E3B9 /* ObjCBridge.mm in Sources */ = {isa = PBXBuildFile; fileRef = BBB9E978279BEA910085E3B9 /* ObjCBridge.mm */; };
+		BBB9E97D279BEAD80085E3B9 /* ObjCBridge.mm in Sources */ = {isa = PBXBuildFile; fileRef = BBB9E978279BEA910085E3B9 /* ObjCBridge.mm */; };
+		BBB9E97E279BEAD90085E3B9 /* ObjCBridge.mm in Sources */ = {isa = PBXBuildFile; fileRef = BBB9E978279BEA910085E3B9 /* ObjCBridge.mm */; };
+		BBB9E97F279BEADD0085E3B9 /* Trampolines.mm in Sources */ = {isa = PBXBuildFile; fileRef = BBB9E975279BEA8E0085E3B9 /* Trampolines.mm */; };
+		BBB9E980279BEADE0085E3B9 /* Trampolines.mm in Sources */ = {isa = PBXBuildFile; fileRef = BBB9E975279BEA8E0085E3B9 /* Trampolines.mm */; };
+		BBB9E981279BEAE20085E3B9 /* fast_dladdr.mm in Sources */ = {isa = PBXBuildFile; fileRef = BBB9E976279BEA900085E3B9 /* fast_dladdr.mm */; };
+		BBB9E982279BEAE30085E3B9 /* fast_dladdr.mm in Sources */ = {isa = PBXBuildFile; fileRef = BBB9E976279BEA900085E3B9 /* fast_dladdr.mm */; };
 		BBC3D1CB1D0A438800520F38 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1CA1D0A438800520F38 /* AppDelegate.swift */; };
 		BBC3D1CD1D0A438800520F38 /* MasterViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1CC1D0A438800520F38 /* MasterViewController.swift */; };
 		BBC3D1CF1D0A438800520F38 /* DetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC3D1CE1D0A438800520F38 /* DetailViewController.swift */; };
@@ -138,6 +148,10 @@
 		BB1EBC4A258DE0E8001F2AA4 /* fishhook.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fishhook.h; path = SwiftTraceGuts/include/fishhook.h; sourceTree = SOURCE_ROOT; };
 		BB64461A2545816300A83098 /* StringIndex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StringIndex.swift; sourceTree = "<group>"; };
 		BB76EA1122953F9B00E454F0 /* SwiftTwaceOSX-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SwiftTwaceOSX-Bridging-Header.h"; sourceTree = "<group>"; };
+		BBB9E975279BEA8E0085E3B9 /* Trampolines.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = Trampolines.mm; path = SwiftTraceGuts/Trampolines.mm; sourceTree = SOURCE_ROOT; };
+		BBB9E976279BEA900085E3B9 /* fast_dladdr.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = fast_dladdr.mm; path = SwiftTraceGuts/fast_dladdr.mm; sourceTree = SOURCE_ROOT; };
+		BBB9E977279BEA910085E3B9 /* SwiftTrace-Swift.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "SwiftTrace-Swift.h"; path = "SwiftTraceGuts/SwiftTrace-Swift.h"; sourceTree = SOURCE_ROOT; };
+		BBB9E978279BEA910085E3B9 /* ObjCBridge.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ObjCBridge.mm; path = SwiftTraceGuts/ObjCBridge.mm; sourceTree = SOURCE_ROOT; };
 		BBC3D1C71D0A438800520F38 /* SwiftTwaceApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftTwaceApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBC3D1CA1D0A438800520F38 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BBC3D1CC1D0A438800520F38 /* MasterViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterViewController.swift; sourceTree = "<group>"; };
@@ -261,6 +275,10 @@
 			children = (
 				BBC3D1E51D0A43B200520F38 /* SwiftTrace.h */,
 				BBC3D1F61D0A442F00520F38 /* SwiftTrace.mm */,
+				BBB9E977279BEA910085E3B9 /* SwiftTrace-Swift.h */,
+				BBB9E978279BEA910085E3B9 /* ObjCBridge.mm */,
+				BBB9E975279BEA8E0085E3B9 /* Trampolines.mm */,
+				BBB9E976279BEA900085E3B9 /* fast_dladdr.mm */,
 				BBC3D1F81D0A445D00520F38 /* SwiftTrace.swift */,
 				BB1C5CD2244D94B300297908 /* SwiftSwizzle.swift */,
 				BB1C5CB5244D8A1200297908 /* SwiftAspects.swift */,
@@ -329,6 +347,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BBC3D1E61D0A43B200520F38 /* SwiftTrace.h in Headers */,
+				BBB9E97B279BEA910085E3B9 /* SwiftTrace-Swift.h in Headers */,
 				BB1EBC4B258DE0E8001F2AA4 /* fishhook.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -543,6 +562,8 @@
 			files = (
 				BB1C5CB8244D8A2F00297908 /* SwiftInvoke.swift in Sources */,
 				BB1EBC49258DE0DA001F2AA4 /* fishhook.c in Sources */,
+				BBB9E97A279BEA910085E3B9 /* fast_dladdr.mm in Sources */,
+				BBB9E97C279BEA910085E3B9 /* ObjCBridge.mm in Sources */,
 				BB1B8179251B631900F76DC7 /* SwiftStats.swift in Sources */,
 				BB1C5CD3244D94B300297908 /* SwiftSwizzle.swift in Sources */,
 				BB1C5CBA244D8A6B00297908 /* SwiftStack.swift in Sources */,
@@ -552,6 +573,7 @@
 				BB64461C2545816500A83098 /* StringIndex.swift in Sources */,
 				BB1C3243254B47CF001EDFCC /* EasyPointer.swift in Sources */,
 				BBD0AB4E26329651003ED7B1 /* SwiftLifetime.swift in Sources */,
+				BBB9E979279BEA910085E3B9 /* Trampolines.mm in Sources */,
 				BBC3D1F31D0A43E800520F38 /* xt_forwarding_trampoline_arm64.s in Sources */,
 				BB1C5CB6244D8A1200297908 /* SwiftAspects.swift in Sources */,
 				BB1B817B251B632D00F76DC7 /* SwiftInterpose.swift in Sources */,
@@ -579,11 +601,14 @@
 				BB1C5CBD244D8AD800297908 /* SwiftMeta.swift in Sources */,
 				BB76EA19229544BD00E454F0 /* xt_forwarding_trampoline_x64.s in Sources */,
 				BB1C5CD4244D94C900297908 /* SwiftSwizzle.swift in Sources */,
+				BBB9E982279BEAE30085E3B9 /* fast_dladdr.mm in Sources */,
 				BB76EA18229544B900E454F0 /* SwiftTrace.mm in Sources */,
 				BBB3A09E258618D000112C65 /* EasyPointer.swift in Sources */,
+				BBB9E980279BEADE0085E3B9 /* Trampolines.mm in Sources */,
 				BB64461D254581BA00A83098 /* StringIndex.swift in Sources */,
 				BBCDA3861D0E64AC007222D3 /* SwiftTraceXTests.swift in Sources */,
 				BBD0AB502632966C003ED7B1 /* SwiftLifetime.swift in Sources */,
+				BBB9E97E279BEAD90085E3B9 /* ObjCBridge.mm in Sources */,
 				BB1C5CC1244D8AE300297908 /* SwiftAspects.swift in Sources */,
 				BB1B8183251B69B600F76DC7 /* SwiftInterpose.swift in Sources */,
 				BB76EA17229544B400E454F0 /* SwiftTrace.swift in Sources */,
@@ -596,6 +621,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BBB9E97D279BEAD80085E3B9 /* ObjCBridge.mm in Sources */,
 				BB1C5CBE244D8ADD00297908 /* SwiftStack.swift in Sources */,
 				BB1B8180251B69B100F76DC7 /* SwiftStats.swift in Sources */,
 				BB1C5CC2244D8AE600297908 /* SwiftInvoke.swift in Sources */,
@@ -606,8 +632,10 @@
 				BB1C5CAF244CB41B00297908 /* SwiftArgs.swift in Sources */,
 				BB64461B2545816500A83098 /* StringIndex.swift in Sources */,
 				BBD0AB4F2632966A003ED7B1 /* SwiftLifetime.swift in Sources */,
+				BBB9E97F279BEADD0085E3B9 /* Trampolines.mm in Sources */,
 				BB1C3242254B47CF001EDFCC /* EasyPointer.swift in Sources */,
 				BB76EA15229540BD00E454F0 /* SwiftTrace.mm in Sources */,
+				BBB9E981279BEAE20085E3B9 /* fast_dladdr.mm in Sources */,
 				BB1C5CC0244D8AE200297908 /* SwiftAspects.swift in Sources */,
 				BB1B8182251B69B500F76DC7 /* SwiftInterpose.swift in Sources */,
 				BBF6EC6E1D0E54F100C5A202 /* AppDelegate.swift in Sources */,

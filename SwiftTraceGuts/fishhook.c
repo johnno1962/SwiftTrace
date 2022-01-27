@@ -35,6 +35,9 @@
 #include <mach-o/dyld.h>
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
+#include <stdio.h>
+
+// Modified to rebind to the value provided by dlsym for rebindings_nel == -1.
 
 #ifdef __LP64__
 typedef struct mach_header_64 mach_header_t;
@@ -126,6 +129,18 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
     char *symbol_name = strtab + strtab_offset;
     bool symbol_name_longer_than_1 = symbol_name[0] && symbol_name[1];
     struct rebindings_entry *cur = rebindings;
+    if (!cur) { // SwiftTrace additions here
+      void *value = dlsym(RTLD_DEFAULT, symbol_name+1) ?: dlsym(RTLD_DEFAULT, symbol_name);
+      #if DEBUG && 01
+      if (!indirect_symbol_bindings[i] && !value &&
+          strcmp(symbol_name, "dyld_stub_binder") != 0)
+        printf("SwiftTrace: Cannot bind symbol %p %p %s %p\n",
+               section, indirect_symbol_bindings[i], symbol_name, value);
+      #endif
+      if (value)
+        indirect_symbol_bindings[i] = value;
+      continue;
+    } // SwiftTrace additions end
     while (cur) {
       for (uint j = 0; j < cur->rebindings_nel; j++) {
         if (symbol_name_longer_than_1 &&
