@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#98 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#99 $
 //
 
 #import "include/SwiftTrace.h"
@@ -222,7 +222,7 @@ void *findSwiftSymbol(const char *path, const char *suffix, STVisibility visibil
     findHiddenSwiftSymbols(path, suffix, visibility,
         ^(const void * _Nonnull address, const char * _Nonnull symname,
           void * _Nonnull typeref, void * _Nonnull typeend) {
-        #if DEBUG
+        #if DEBUG && 0
         if (found && found != address)
             NSLog(@"SwiftTrace: Contradicting values for %s: %@ %p != %@ %p", suffix,
                   describeImagePointer(found), found,
