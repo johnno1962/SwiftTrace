@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#102 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#103 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -97,28 +97,30 @@ open class SwiftMeta: NSObject {
     }
 
     /**
+     Pointer to value witness is just before nominal type information.
+     */
+    typealias ValueWitnessPointer =
+        UnsafeMutablePointer<UnsafePointer<ValueWitnessTable>?>
+
+    /**
      Get the size in bytes of a type
      */
     open class func sizeof(anyType: Any.Type) -> size_t {
-        let metaData = unsafeBitCast(anyType,
-            to: UnsafePointer<UnsafePointer<ValueWitnessTable>>.self)
-        return metaData[-1].pointee.size
+        let metaData = unsafeBitCast(anyType, to: ValueWitnessPointer.self)
+        return metaData[-1]?.pointee.size ?? 0
     }
 
     /**
      Get the stride in bytes of a type
      */
     open class func strideof(anyType: Any.Type) -> size_t {
-        let metaData = unsafeBitCast(anyType,
-            to: UnsafePointer<UnsafePointer<ValueWitnessTable>>.self)
-        return metaData[-1].pointee.stride
+        let metaData = unsafeBitCast(anyType, to: ValueWitnessPointer.self)
+        return metaData[-1]?.pointee.stride ?? 0
     }
 
     open class func cloneValueWitness(from: Any.Type, onto: Any.Type) {
-        let original = unsafeBitCast(from,
-            to: UnsafePointer<UnsafePointer<ValueWitnessTable>>.self)
-        let injected = unsafeBitCast(onto,
-            to: UnsafeMutablePointer<UnsafePointer<ValueWitnessTable>>.self)
+        let original = unsafeBitCast(from, to: ValueWitnessPointer.self)
+        let injected = unsafeBitCast(onto, to: ValueWitnessPointer.self)
         injected[-1] = original[-1]
     }
 
