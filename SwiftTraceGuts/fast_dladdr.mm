@@ -3,7 +3,7 @@
 //  
 //  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#9 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#10 $
 //
 
 #import "include/SwiftTrace.h"
@@ -191,9 +191,10 @@ class DyHandle: public Dylib {
                             symname++;
                         symsByName.push_back(DySymName(sym, symname));
                     }
-#if 0 // C++11 not possible inside an imported Swift package :(
+#if 00 // Using C++11 lambdas requires special Swift Package option.
             auto cmp = [&] (const DySymbol &l, const DySymbol &r) {
-                return strcmp(strs+r.sym->n_un.n_strx, strs+r.sym->n_un.n_strx) < 0;
+                return strcmp(strings+l.sym->n_un.n_strx+1,
+                              strings+r.sym->n_un.n_strx+1) < 0;
             };
 #endif
             sort(symsByName.begin(), symsByName.end());
