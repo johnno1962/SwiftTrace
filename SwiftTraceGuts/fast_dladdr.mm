@@ -3,7 +3,7 @@
 //  
 //  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#10 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#11 $
 //
 
 #import "include/SwiftTrace.h"
@@ -150,10 +150,10 @@ public:
             info->dli_sname = "fast_dladdr: address should be too low";
             return 0;
         }
-//        for (int i=-15; i<15; i++)
-//            printf("%ld %d %x %s\n", distance(symbols.begin(), it),
-//                   i, symbols[found+i].sym->n_type,
-//                   strings + symbols[found+i].sym->n_un.n_strx);
+        for (int i=MAX(bound-15,0); 0 && i<MIN(bound+15,symsByValue.size()); i++)
+            printf("%ld %d %x %s\n", bound,
+                   i, symsByValue[i].sym->n_type,
+                   strings + symsByValue[i].sym->n_un.n_strx);
         info->dli_sname = strings + symsByValue[bound-1].sym->n_un.n_strx;
         info->dli_saddr = (void *)(symsByValue[bound-1].sym->n_value +
                                    ((intptr_t)header - (intptr_t)seg_text->vmaddr));
@@ -316,7 +316,7 @@ static DyLookup loadedImages;
 using namespace fastdladdr;
 
 int fast_dladdr(const void *ptr, Dl_info *info) {
-#if TRY_TO_OPTIMISE_DLADDR
+#if TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR
     return loadedImages.dladdr(ptr, info);
 #else
     return dladdr(ptr, info);
