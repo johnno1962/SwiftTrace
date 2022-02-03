@@ -3,7 +3,7 @@
 //  
 //  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#12 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#14 $
 //
 
 #import "include/SwiftTrace.h"
@@ -317,6 +317,8 @@ static DyLookup loadedImages;
 using namespace fastdladdr;
 
 int fast_dladdr(const void *ptr, Dl_info *info) {
+    info->dli_fname = "/no image";
+    info->dli_sname = "no symbol";
 #if TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR
     return loadedImages.dladdr(ptr, info);
 #else
