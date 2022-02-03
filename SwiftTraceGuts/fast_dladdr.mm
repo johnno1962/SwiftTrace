@@ -3,7 +3,7 @@
 //  
 //  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#11 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#12 $
 //
 
 #import "include/SwiftTrace.h"
@@ -131,7 +131,7 @@ public:
             const nlist_t *sym = symbols;
             for (uint32_t i = 0; i < symtab->nsyms; i++, sym++)
                 if (sym->n_sect != NO_SECT)
-    //                    if (!(sym->n_type & N_STAB))
+                    if (!(sym->n_type & N_STAB))
                         symsByValue.push_back(DySymbol(sym));
             sort(symsByValue.begin(), symsByValue.end());
         }
@@ -150,10 +150,11 @@ public:
             info->dli_sname = "fast_dladdr: address should be too low";
             return 0;
         }
-        for (int i=MAX(bound-15,0); 0 && i<MIN(bound+15,symsByValue.size()); i++)
-            printf("%ld %d %x %s\n", bound,
-                   i, symsByValue[i].sym->n_type,
-                   strings + symsByValue[i].sym->n_un.n_strx);
+//        for (size_t i=MAX(bound-15,0);
+//             i<MIN(bound+15,symsByValue.size()); i++)
+//            printf("%ld %d %x %s\n", bound,
+//                   (int)i, symsByValue[i].sym->n_type,
+//                   strings + symsByValue[i].sym->n_un.n_strx);
         info->dli_sname = strings + symsByValue[bound-1].sym->n_un.n_strx;
         info->dli_saddr = (void *)(symsByValue[bound-1].sym->n_value +
                                    ((intptr_t)header - (intptr_t)seg_text->vmaddr));
