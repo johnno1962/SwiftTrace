@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#307 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#308 $
 //
 
 import Foundation
@@ -439,6 +439,9 @@ open class SwiftTrace: NSObject {
         return stop
     }
 
+    public static var preserveStatics =
+        getenv("INJECTION_PRESERVE_STATICS") != nil
+
     /// Determine if symbol name is injectable
     /// - Parameter symname: Pointer to symbol name
     /// - Returns: Whether symbol should be patched
@@ -452,19 +455,22 @@ open class SwiftTrace: NSObject {
         let isSwift = strncmp(symstart, "$s", 2) == 0
         if !isSwift { return false }
         var symlast = symname+strlen(symname)-1
-        return (
+        return
 //            symlast.match(ascii: "C") ||
             symlast.match(ascii: "D") ||
             // static/class methods, getters, setters
             (symlast.match(ascii: "Z") || true) &&
-            (symlast.match(ascii: "F") ||
-             symlast.match(ascii: "g") ||
-             symlast.match(ascii: "s")) ||
+                (symlast.match(ascii: "F") ||
+                 symlast.match(ascii: "g") ||
+                 symlast.match(ascii: "s")) ||
             // async [class] functions
-            symlast.match(ascii: "u") &&
-            symlast.match(ascii: "T") &&
-            (symlast.match(ascii: "Z") || true) &&
-            symlast.match(ascii: "F")) ||
+            symlast.match(ascii: "u") && (
+                symlast.match(ascii: "T") &&
+                (symlast.match(ascii: "Z") || true) &&
+                symlast.match(ascii: "F") ||
+                !preserveStatics &&
+                symlast.match(ascii: "a") &&
+                symlast.match(ascii: "v")) ||
             symlast.match(ascii: "M") &&
             symlast.match(ascii: "v")
     }

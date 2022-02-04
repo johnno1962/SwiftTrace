@@ -130,7 +130,10 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
     bool symbol_name_longer_than_1 = symbol_name[0] && symbol_name[1];
     struct rebindings_entry *cur = rebindings;
     if (!cur) { // SwiftTrace additions here
-      void *value = dlsym(RTLD_DEFAULT, symbol_name+1) ?: dlsym(RTLD_DEFAULT, symbol_name);
+      void *fast_dlsym(const void *ptr, const char *symname);
+      void *value = dlsym(RTLD_DEFAULT, symbol_name+1) ?:
+        dlsym(RTLD_DEFAULT, symbol_name) ?:
+        fast_dlsym(section, symbol_name+1); // Symbol can be unhidden fileprivate
       #if DEBUG && 01
       if (!indirect_symbol_bindings[i] && !value &&
           strcmp(symbol_name, "dyld_stub_binder") != 0)
