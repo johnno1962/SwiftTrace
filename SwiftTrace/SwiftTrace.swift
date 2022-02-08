@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#308 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#309 $
 //
 
 import Foundation
@@ -550,13 +550,13 @@ open class SwiftTrace: NSObject {
 
     /** follow chain of Sizzles through to find original implementataion */
     open class func originalSwizzle(for implementation: IMP) -> Swizzle? {
+        var trace: SwiftTrace? = SwiftTrace.lastSwiftTrace
         var implementation = implementation
         var swizzle: Swizzle?
-        var trace: SwiftTrace? = SwiftTrace.lastSwiftTrace
         while trace != nil {
-            while trace!.activeSwizzles[implementation] != nil {
-                swizzle = trace!.activeSwizzles[implementation]
-                implementation = swizzle!.implementation
+            while let previous = trace?.activeSwizzles[implementation] {
+                swizzle = previous
+                implementation = previous.implementation
             }
             trace = trace?.previousSwiftTrace
         }
