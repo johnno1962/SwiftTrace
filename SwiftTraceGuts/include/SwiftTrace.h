@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#60 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#61 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -250,20 +250,24 @@ extern "C" {
                             STSymbolFilter filter, STSymbolCallback callback);
     void filterHeaderSymbols(const struct mach_header *_Nonnull header, STVisibility visibility,
                              STSymbolFilter filter, STSymbolCallback callback);
+    void appBundleImages(void (^ _Nonnull callback)(const char *_Nonnull imageName,
+                        const struct mach_header *_Nonnull header, intptr_t slide));
+    id _Nullable findSwizzleOf(void *_Nonnull trampoline);
+    const char *_Nullable swiftUIBundlePath(void);
+    const char *_Nullable callerBundle(void);
+
     void pushPseudoImage(const char *_Nonnull path,
                          const void *_Nonnull header);
+    const struct mach_header *_Nullable lastPseudoImage(void);
+    const struct mach_header *_Nonnull lastLoadedImage(void);
     NSString *_Nonnull describeImageSymbol(const char *_Nonnull symname);
     NSString *_Nonnull describeImageInfo(const Dl_info *_Nonnull info);
     NSString *_Nonnull describeImagePointer(const void *_Nonnull pointer);
     void injection_stack(void);
-    void appBundleImages(void (^ _Nonnull callback)(const char *_Nonnull imageName, const struct mach_header *_Nonnull header, intptr_t slide));
-    const char *_Nullable swiftUIBundlePath(void);
-    const char *_Nullable callerBundle(void);
-    id _Nullable findSwizzleOf(void *_Nonnull trampoline);
+
     int fast_dladdr(const void *_Nonnull, Dl_info *_Nonnull);
     void *_Nullable fast_dlsym(const void *_Nonnull ptr, const char *_Nonnull symname);
     void fast_dlscan(const void *_Nonnull ptr, STVisibility visibility, STSymbolFilter filter, STSymbolCallback callback);
-    const struct mach_header *_Nullable lastPseudoImage(void);
 #ifdef __cplusplus
 }
 #import <vector>

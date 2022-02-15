@@ -3,7 +3,7 @@
 //  
 //  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#14 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#15 $
 //
 
 #import "include/SwiftTrace.h"
@@ -38,10 +38,14 @@ void pushPseudoImage(const char *path, const void *header) {
                    (const struct mach_header *)header));
 }
 
-const struct mach_header * _Nullable lastPseudoImage() {
+const struct mach_header *lastPseudoImage() {
     if (loadedPseudoImages.empty())
         return nullptr;
     return loadedPseudoImages.back().second;
+}
+
+const struct mach_header *lastLoadedImage() {
+    return lastPseudoImage() ?: _dyld_get_image_header(_dyld_image_count()-1);
 }
 
 const std::vector<PseudoImage> &getLoadedPseudoImages(void) {

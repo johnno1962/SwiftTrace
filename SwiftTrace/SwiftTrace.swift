@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#309 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#310 $
 //
 
 import Foundation
@@ -439,8 +439,7 @@ open class SwiftTrace: NSObject {
         return stop
     }
 
-    public static var preserveStatics =
-        getenv("INJECTION_PRESERVE_STATICS") != nil
+    public static var preserveStatics = false
 
     /// Determine if symbol name is injectable
     /// - Parameter symname: Pointer to symbol name
@@ -468,6 +467,7 @@ open class SwiftTrace: NSObject {
                 symlast.match(ascii: "T") &&
                 (symlast.match(ascii: "Z") || true) &&
                 symlast.match(ascii: "F") ||
+                // "Mutable Addressors"
                 !preserveStatics &&
                 symlast.match(ascii: "a") &&
                 symlast.match(ascii: "v")) ||
