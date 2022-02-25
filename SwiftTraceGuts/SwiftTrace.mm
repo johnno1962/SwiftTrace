@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#99 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#101 $
 //
 
 #import "include/SwiftTrace.h"
@@ -97,8 +97,10 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
 void findHiddenSwiftSymbols(const char *bundlePath, const char *suffix, STVisibility visibility,
         void (^callback)(const void *symval, const char *symname, void *typeref, void *typeend)) {
     size_t sufflen = strlen(suffix);
+    BOOL swiftPrefixed = strncmp(suffix, "_$s", 3) == 0;
     STSymbolFilter swiftSymbolsWithSuffixOrObjcClass = ^BOOL(const char *symname) {
-        return ((strncmp(symname, "_$s", 3) == 0 || *symname == '-' || *symname == '+') &&
+        return swiftPrefixed ? strncmp(symname, suffix, sufflen) == 0 :
+            ((strncmp(symname, "_$s", 3) == 0 || *symname == '-' || *symname == '+') &&
                 strcmp(symname+strlen(symname)-sufflen, suffix) == 0) ||
             (suffix == includeObjcClasses && strncmp(symname,
              objcClassPrefix, sizeof objcClassPrefix-1) == 0);
@@ -139,82 +141,10 @@ void filterImageSymbols(int32_t imageNumber, STVisibility visibility, STSymbolFi
     filterHeaderSymbols(header, visibility, filter, callback);
 }
 
-void filterHeaderSymbols(const struct mach_header *_header, STVisibility visibility, STSymbolFilter filter,
+void filterHeaderSymbols(const struct mach_header *header, STVisibility visibility, STSymbolFilter filter,
     void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
                                void * _Nonnull typeref, void * _Nonnull typeend)) {
-#if 01
-    fast_dlscan(_header, visibility, filter, callback);
-#else
-
-// See: https://stackoverflow.com/questions/20481058/find-pathname-from-dlopen-handle-on-osx
-
-        auto header = (const mach_header_t *)_header;
-        segment_command_t *seg_linkedit = nullptr;
-        segment_command_t *seg_text = nullptr;
-        struct symtab_command *symtab = nullptr;
-        // to filter associated type witness entries
-        sectsize_t typeref_size = 0;
-        char *typeref_start = getsectdatafromheader_f(header, SEG_TEXT,
-                                            "__swift5_typeref", &typeref_size);
-
-        struct load_command *cmd =
-            (struct load_command *)((intptr_t)header + sizeof(mach_header_t));
-        for (uint32_t i = 0; i < header->ncmds; i++,
-             cmd = (struct load_command *)((intptr_t)cmd + cmd->cmdsize)) {
-            switch(cmd->cmd) {
-                case LC_SEGMENT:
-                case LC_SEGMENT_64:
-                    if (!strcmp(((segment_command_t *)cmd)->segname, SEG_TEXT))
-                        seg_text = (segment_command_t *)cmd;
-                    else if (!strcmp(((segment_command_t *)cmd)->segname, SEG_LINKEDIT))
-                        seg_linkedit = (segment_command_t *)cmd;
-                    break;
-
-                case LC_SYMTAB: {
-                    symtab = (struct symtab_command *)cmd;
-                    intptr_t file_slide = ((intptr_t)seg_linkedit->vmaddr - (intptr_t)seg_text->vmaddr) - seg_linkedit->fileoff;
-                    const char *strings = (const char *)header +
-                                               (symtab->stroff + file_slide);
-                    nlist_t *sym = (nlist_t *)((intptr_t)header +
-                                               (symtab->symoff + file_slide));
-
-                    for (uint32_t i = 0; i < symtab->nsyms; i++, sym++) {
-                        const char *symname = strings + sym->n_un.n_strx;
-                        void *address;
-
-//                        printf("%d %s %d %d %d\n", visibility, symname,
-//                               sym->n_type, sym->n_sect, filter(symname));
-
-                        if ((!visibility || sym->n_type == visibility) &&
-                            sym->n_sect != NO_SECT && filter(symname) &&
-                            (address = (void *)(sym->n_value +
-                             (intptr_t)header - (intptr_t)seg_text->vmaddr))) {
-                            #if DEBUG
-                            Dl_info info;
-                            if (dladdr(address, &info) &&
-                                strcmp(info.dli_sname, "injected_code") != 0 &&
-                                !strstr(info.dli_sname, symname+1))
-                                printf("SwiftTrace: dladdr %p does not verify! %s %s\n",
-                                       address, symname,
-                                       describeImageInfo(&info).UTF8String);
-                            fast_dladdr(address, &info);
-                            if (!strstr(info.dli_sname, symname+1))
-                                printf("SwiftTrace: fast_dladdr %p does not verify: %s %s\n",
-                                       address, symname,
-                                       describeImageInfo(&info).UTF8String);
-                            const void *ptr = fast_dlsym(header, symname+1);
-                            if (ptr != address)
-                                printf("SwiftTrace: fast_dlsym %s does not verify: %p %p\n",
-                                       symname, ptr, address);
-                            #endif
-                            callback(address, symname+1, typeref_start,
-                                     typeref_start + typeref_size);
-                        }
-                    }
-                }
-            }
-        }
-#endif
+    fast_dlscan(header, visibility, filter, callback);
 }
 
 void *findSwiftSymbol(const char *path, const char *suffix, STVisibility visibility) {
@@ -238,7 +168,7 @@ void appBundleImages(void (^callback)(const char *imageName, const struct mach_h
     for (ssize_t i = getLoadedPseudoImages().size()-1; i>=0 ; i--)
         callback(getLoadedPseudoImages()[i].first, (struct mach_header *)
                  getLoadedPseudoImages()[i].second, 0);
-    
+
     NSBundle *mainBundle = [NSBundle mainBundle];
     const char *mainExecutable = mainBundle.executablePath.UTF8String;
     const char *bundleFrameworks = mainBundle.privateFrameworksPath.UTF8String;
