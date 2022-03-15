@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#101 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#104 $
 //
 
 #import "include/SwiftTrace.h"
@@ -83,6 +83,7 @@ const char *searchBundleImages() {
 
 static char includeObjcClasses[] = {"CN"};
 static char objcClassPrefix[] = {"_OBJC_CLASS_$_"};
+static char swiftPrefix[] = {"_$s"};
 
 const char *classesIncludingObjc() {
     return includeObjcClasses;
@@ -97,10 +98,11 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
 void findHiddenSwiftSymbols(const char *bundlePath, const char *suffix, STVisibility visibility,
         void (^callback)(const void *symval, const char *symname, void *typeref, void *typeend)) {
     size_t sufflen = strlen(suffix);
-    BOOL swiftPrefixed = strncmp(suffix, "_$s", 3) == 0;
+    BOOL swiftPrefixed = strncmp(suffix, swiftPrefix, sizeof swiftPrefix - 1) == 0;
     STSymbolFilter swiftSymbolsWithSuffixOrObjcClass = ^BOOL(const char *symname) {
         return swiftPrefixed ? strncmp(symname, suffix, sufflen) == 0 :
-            ((strncmp(symname, "_$s", 3) == 0 || *symname == '-' || *symname == '+') &&
+            ((strncmp(symname, swiftPrefix, sizeof swiftPrefix - 1) == 0 ||
+              *symname == '-' || *symname == '+') &&
                 strcmp(symname+strlen(symname)-sufflen, suffix) == 0) ||
             (suffix == includeObjcClasses && strncmp(symname,
              objcClassPrefix, sizeof objcClassPrefix-1) == 0);
@@ -141,14 +143,27 @@ void filterImageSymbols(int32_t imageNumber, STVisibility visibility, STSymbolFi
     filterHeaderSymbols(header, visibility, filter, callback);
 }
 
+#import <mach-o/getsect.h>
+static char findingSwiftSymbol[PATH_MAX];
+
 void filterHeaderSymbols(const struct mach_header *header, STVisibility visibility, STSymbolFilter filter,
     void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
                                void * _Nonnull typeref, void * _Nonnull typeend)) {
-    fast_dlscan(header, visibility, filter, callback);
+    if (!findingSwiftSymbol[0])
+        fast_dlscan(header, visibility, filter, callback);
+    else { // For performance looking for a single symbol.
+        uint64_t typeref_size = 0;
+        char *typeref = getsectdatafromheader_64((const mach_header_64 *)header,
+                                   SEG_TEXT, "__swift5_typeref", &typeref_size);
+        if (void *value = fast_dlsym(header, findingSwiftSymbol))
+            callback(value, findingSwiftSymbol, typeref, typeref+typeref_size);
+    }
 }
 
 void *findSwiftSymbol(const char *path, const char *suffix, STVisibility visibility) {
     __block void *found = nullptr;
+    if (strncmp(suffix, swiftPrefix, sizeof swiftPrefix - 1) != 0)
+        strcpy(findingSwiftSymbol, suffix);
     findHiddenSwiftSymbols(path, suffix, visibility,
         ^(const void * _Nonnull address, const char * _Nonnull symname,
           void * _Nonnull typeref, void * _Nonnull typeend) {
@@ -161,6 +176,7 @@ void *findSwiftSymbol(const char *path, const char *suffix, STVisibility visibil
         #endif
         found = (void *)address;
     });
+    findingSwiftSymbol[0] = '\000';
     return found;
 }
 
