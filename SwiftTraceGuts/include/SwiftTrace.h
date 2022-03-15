@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#61 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#62 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -268,6 +268,7 @@ extern "C" {
     int fast_dladdr(const void *_Nonnull, Dl_info *_Nonnull);
     void *_Nullable fast_dlsym(const void *_Nonnull ptr, const char *_Nonnull symname);
     void fast_dlscan(const void *_Nonnull ptr, STVisibility visibility, STSymbolFilter filter, STSymbolCallback callback);
+    const char *_Nonnull swiftTrace_path();
 #ifdef __cplusplus
 }
 #import <vector>

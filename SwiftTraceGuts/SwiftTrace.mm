@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#104 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#105 $
 //
 
 #import "include/SwiftTrace.h"
@@ -209,4 +209,8 @@ const char *callerBundle() {
     if (dladdr(returnAddress, &info))
         return info.dli_fname;
     return nullptr;
+}
+
+const char *_Nonnull swiftTrace_path() {
+    return __FILE__;
 }
