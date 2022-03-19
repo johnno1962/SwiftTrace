@@ -3,7 +3,7 @@
 //  
 //  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#15 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#16 $
 //
 
 #import "include/SwiftTrace.h"
@@ -19,13 +19,13 @@
 #ifdef __LP64__
 #define mach_header_t struct mach_header_64
 #define segment_command_t struct segment_command_64
-#define nlist_t nlist_64
+#define nlist_t struct nlist_64
 #define sectsize_t uint64_t
 #define getsectdatafromheader_f getsectdatafromheader_64
 #else
 #define mach_header_t struct mach_header
 #define segment_command_t struct segment_command
-#define nlist_t nlist
+#define nlist_t struct nlist
 #define sectsize_t uint32_t
 #define getsectdatafromheader_f getsectdatafromheader
 #endif
