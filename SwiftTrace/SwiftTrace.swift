@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#310 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#311 $
 //
 
 import Foundation
@@ -131,7 +131,7 @@ open class SwiftTrace: NSObject {
             UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|\
             _UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|\
             UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose| ns(?:li|is)_|\
-            SwiftTrace|HotReloading|Xprobe|eraseToAnyView|_toUTF16Offsets
+            SwiftTrace|SwiftRegex|HotReloading|Xprobe|eraseToAnyView|_toUTF16Offsets
             """
     }
 
