@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#105 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#106 $
 //
 
 #import "include/SwiftTrace.h"
@@ -59,14 +59,15 @@ const char *swiftUIBundlePath() {
 static char lastLoadedPath[PATH_MAX];
 const char *searchMainImage() {
     const char *mainImage = [NSBundle mainBundle]
-        .executablePath.UTF8String;
-    strcpy(lastLoadedPath, mainImage);
+        .executablePath.UTF8String ?: "";
+    strncpy(lastLoadedPath, mainImage, sizeof lastLoadedPath);
     return mainImage;
 }
 const char *searchLastLoaded() {
-    strcpy(lastLoadedPath, getLoadedPseudoImages().empty() ?
-           _dyld_get_image_name(_dyld_image_count()-1) :
-           getLoadedPseudoImages().back().first);
+    strncpy(lastLoadedPath, (getLoadedPseudoImages().empty() ?
+            _dyld_get_image_name(_dyld_image_count()-1) :
+            getLoadedPseudoImages().back().first) ?: "",
+            sizeof lastLoadedPath);
     return lastLoadedPath;
 }
 const char *searchAllImages() {
@@ -76,8 +77,8 @@ const char *searchAllImages() {
 static char mainBundlePath[PATH_MAX];
 const char *searchBundleImages() {
     const char *bundlePath = [NSBundle mainBundle]
-        .bundlePath.UTF8String;
-    strcpy(mainBundlePath, bundlePath);
+        .bundlePath.UTF8String ?: "";
+    strncpy(mainBundlePath, bundlePath, sizeof mainBundlePath);
     return mainBundlePath;
 }
 
@@ -144,12 +145,12 @@ void filterImageSymbols(int32_t imageNumber, STVisibility visibility, STSymbolFi
 }
 
 #import <mach-o/getsect.h>
-static char findingSwiftSymbol[PATH_MAX];
+static char *findingSwiftSymbol;
 
 void filterHeaderSymbols(const struct mach_header *header, STVisibility visibility, STSymbolFilter filter,
     void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
                                void * _Nonnull typeref, void * _Nonnull typeend)) {
-    if (!findingSwiftSymbol[0])
+    if (!findingSwiftSymbol)
         fast_dlscan(header, visibility, filter, callback);
     else { // For performance looking for a single symbol.
         uint64_t typeref_size = 0;
@@ -163,7 +164,7 @@ void filterHeaderSymbols(const struct mach_header *header, STVisibility visibili
 void *findSwiftSymbol(const char *path, const char *suffix, STVisibility visibility) {
     __block void *found = nullptr;
     if (strncmp(suffix, swiftPrefix, sizeof swiftPrefix - 1) != 0)
-        strcpy(findingSwiftSymbol, suffix);
+        findingSwiftSymbol = strdup(suffix);
     findHiddenSwiftSymbols(path, suffix, visibility,
         ^(const void * _Nonnull address, const char * _Nonnull symname,
           void * _Nonnull typeref, void * _Nonnull typeend) {
@@ -176,7 +177,10 @@ void *findSwiftSymbol(const char *path, const char *suffix, STVisibility visibil
         #endif
         found = (void *)address;
     });
-    findingSwiftSymbol[0] = '\000';
+    if (findingSwiftSymbol) {
+        free(findingSwiftSymbol);
+        findingSwiftSymbol = nullptr;
+    }
     return found;
 }
 
