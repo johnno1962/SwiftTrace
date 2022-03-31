@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#311 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#312 $
 //
 
 import Foundation
@@ -455,7 +455,7 @@ open class SwiftTrace: NSObject {
         if !isSwift { return false }
         var symlast = symname+strlen(symname)-1
         return
-//            symlast.match(ascii: "C") ||
+            symlast.match(ascii: "C") ||
             symlast.match(ascii: "D") ||
             // static/class methods, getters, setters
             (symlast.match(ascii: "Z") || true) &&
