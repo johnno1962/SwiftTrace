@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#106 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#111 $
 //
 
 #import "include/SwiftTrace.h"
@@ -84,10 +84,14 @@ const char *searchBundleImages() {
 
 static char includeObjcClasses[] = {"CN"};
 static char objcClassPrefix[] = {"_OBJC_CLASS_$_"};
-static char swiftPrefix[] = {"_$s"};
 
 const char *classesIncludingObjc() {
     return includeObjcClasses;
+}
+
+static BOOL fullSwiftPrefix(const char *suffix) {
+    static char swiftPrefix[] = {"_$s"};
+    return strncmp(suffix, swiftPrefix, sizeof swiftPrefix - 1) == 0;
 }
 
 void findSwiftSymbols(const char *bundlePath, const char *suffix,
@@ -99,11 +103,10 @@ void findSwiftSymbols(const char *bundlePath, const char *suffix,
 void findHiddenSwiftSymbols(const char *bundlePath, const char *suffix, STVisibility visibility,
         void (^callback)(const void *symval, const char *symname, void *typeref, void *typeend)) {
     size_t sufflen = strlen(suffix);
-    BOOL swiftPrefixed = strncmp(suffix, swiftPrefix, sizeof swiftPrefix - 1) == 0;
+    BOOL swiftPrefixed = fullSwiftPrefix(suffix);
     STSymbolFilter swiftSymbolsWithSuffixOrObjcClass = ^BOOL(const char *symname) {
         return swiftPrefixed ? strncmp(symname, suffix, sufflen) == 0 :
-            ((strncmp(symname, swiftPrefix, sizeof swiftPrefix - 1) == 0 ||
-              *symname == '-' || *symname == '+') &&
+            ((fullSwiftPrefix(symname) || *symname == '-' || *symname == '+') &&
                 strcmp(symname+strlen(symname)-sufflen, suffix) == 0) ||
             (suffix == includeObjcClasses && strncmp(symname,
              objcClassPrefix, sizeof objcClassPrefix-1) == 0);
@@ -145,7 +148,7 @@ void filterImageSymbols(int32_t imageNumber, STVisibility visibility, STSymbolFi
 }
 
 #import <mach-o/getsect.h>
-static char *findingSwiftSymbol;
+static const char *findingSwiftSymbol;
 
 void filterHeaderSymbols(const struct mach_header *header, STVisibility visibility, STSymbolFilter filter,
     void (^ _Nonnull callback)(const void * _Nonnull address, const char * _Nonnull symname,
@@ -163,8 +166,8 @@ void filterHeaderSymbols(const struct mach_header *header, STVisibility visibili
 
 void *findSwiftSymbol(const char *path, const char *suffix, STVisibility visibility) {
     __block void *found = nullptr;
-    if (strncmp(suffix, swiftPrefix, sizeof swiftPrefix - 1) != 0)
-        findingSwiftSymbol = strdup(suffix);
+    if (!fullSwiftPrefix(suffix))
+        findingSwiftSymbol = suffix;
     findHiddenSwiftSymbols(path, suffix, visibility,
         ^(const void * _Nonnull address, const char * _Nonnull symname,
           void * _Nonnull typeref, void * _Nonnull typeend) {
@@ -177,10 +180,7 @@ void *findSwiftSymbol(const char *path, const char *suffix, STVisibility visibil
         #endif
         found = (void *)address;
     });
-    if (findingSwiftSymbol) {
-        free(findingSwiftSymbol);
-        findingSwiftSymbol = nullptr;
-    }
+    findingSwiftSymbol = nullptr;
     return found;
 }
 
