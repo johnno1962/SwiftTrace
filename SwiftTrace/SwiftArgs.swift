@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#193 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#195 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -94,6 +94,12 @@ public func returner<Type>(value: Type, out: inout Any?) {
 }
 
 extension SwiftTrace {
+    
+    /**
+     'false' skips any decoration steps when visiting Swift code
+     'true' decorates normally
+     */
+    static public var swiftDecorateArgs = (onEntry: true, onExit: true)
 
     /**
      Enable auto decoration of unknown types
@@ -297,6 +303,8 @@ extension SwiftTrace {
          substitute argument values into signature on method entry
          */
         open override func entryDecorate(stack: inout EntryStack) -> String? {
+            guard SwiftTrace.swiftDecorateArgs.onEntry else { return signature }
+            
             let invocation = self.invocation()!
             return objcMethod != nil ?
                 objcDecorate(signature: nil, invocation: invocation) :
@@ -308,6 +316,8 @@ extension SwiftTrace {
          Determine return value on method exit
          */
         open override func exitDecorate(stack: inout ExitStack) -> String? {
+            guard SwiftTrace.swiftDecorateArgs.onExit else { return "" }
+            
             let invocation = self.invocation()!
             return objcMethod != nil ?
                 objcDecorate(signature: invocation.decorated ?? signature,

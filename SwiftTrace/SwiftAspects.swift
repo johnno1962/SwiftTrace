@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#13 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#14 $
 //
 //  Add aspects to Swift methods
 //  ============================
@@ -111,11 +111,19 @@ extension SwiftTrace {
         }
 
         open override func onEntry(stack: inout EntryStack) {
-            entryAspect?(self, &stack)
+            if entryAspect != nil || exitAspect != nil {
+                entryAspect?(self, &stack)
+            } else {
+                super.onEntry(stack: &stack)
+            }
         }
 
         open override func onExit(stack: inout ExitStack) {
-            exitAspect?(self, &stack)
+            if entryAspect != nil || exitAspect != nil {
+                exitAspect?(self, &stack)
+            } else {
+                super.onExit(stack: &stack)
+            }
         }
     }
 }
