@@ -96,8 +96,8 @@ public func returner<Type>(value: Type, out: inout Any?) {
 extension SwiftTrace {
     
     /**
-     'true' skips any decoration steps when visiting Swift code
-     'false' decorates normally
+     'false' skips any decoration steps when visiting Swift code
+     'true' decorates normally
      */
     static public var swiftDecorateArgs = (onEntry: true, onExit: true)
 
