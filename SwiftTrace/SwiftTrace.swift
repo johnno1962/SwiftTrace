@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#312 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#313 $
 //
 
 import Foundation
@@ -338,7 +338,7 @@ open class SwiftTrace: NSObject {
 //                    print("Patching #\(slotIndex) \(name)")
                     vtableSlot.pointee = swizzle.forwardingImplementation
                 }
-            } else {
+            } else if !name.contains(".getter :") {
                 print("Excluding SwiftTrace of \(name)")
             }
         }

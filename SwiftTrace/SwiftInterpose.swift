@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#66 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#67 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -38,14 +38,15 @@ extension SwiftTrace {
     ///   - onEntry: closure called on entry
     ///   - onExit: closure called on exit
     ///   - replaceWith: optional replacement for function
-    open class func interpose(aType: Any.Type, methodName: String,
+    open class func interpose(aType: Any.Type, methodName: String? = nil,
                               patchClass: Aspect.Type = Aspect.self,
                               onEntry: EntryAspect? = nil,
                               onExit: ExitAspect? = nil,
                               replaceWith: nullImplementationType? = nil) -> Int {
-        var info = Dl_info()
-        dladdr(autoBitCast(aType), &info)
-        return interpose(aBundle: info.dli_fname, methodName: methodName,
+        return interpose(aBundle: class_getImageName(aType as? AnyClass) ??
+                         Bundle.main.executablePath? // aType not class
+                            .withCString {autoBitCast(strdup($0)!)},
+                         methodName: methodName ?? _typeName(aType)+".",
                          patchClass: patchClass, onEntry: onEntry, onExit: onExit,
                          replaceWith: replaceWith)
     }
@@ -66,25 +67,31 @@ extension SwiftTrace {
                               onExit: ExitAspect? = nil,
                               replaceWith: nullImplementationType? = nil) -> Int {
         var interposes = [dyld_interpose_tuple]()
+        var symbols = [UnsafePointer<Int8>]()
 
         for suffix in traceableFunctionSuffixes {
             findSwiftSymbols(aBundle, suffix) { symval, symname, _, _ in
-                if SwiftMeta.demangle(symbol: symname) == methodName,
+                if let theMethod = SwiftMeta.demangle(symbol: symname),
+                   theMethod.hasPrefix(methodName),
                     let current = interposed(replacee: symval),
-                    let method = patchClass.init(name: methodName,
+                    let interpose = patchClass.init(name: theMethod,
                          original: OpaquePointer(current),
                          onEntry: onEntry, onExit: onExit,
                          replaceWith: replaceWith) {
                     interposes.append(dyld_interpose_tuple(
-                        replacement: autoBitCast(method.forwardingImplementation),
+                        replacement: autoBitCast(interpose.forwardingImplementation),
                         replacee: current))
+                    symbols.append(symname)
                 }
             }
         }
 
-        return apply(interposes: interposes, symbols: [methodName])
+        return apply(interposes: interposes, symbols: symbols)
     }
 
+    /// Has symbol already been interposed?
+    /// - Parameter replacee: original function
+    /// - Returns: pointer to end of chain of any interposes that have been aplied
     open class func interposed(replacee: UnsafeRawPointer) -> UnsafeRawPointer? {
         let interposed = NSObject.swiftTraceInterposed.bindMemory(to:
             [UnsafeRawPointer : UnsafeRawPointer].self, capacity: 1)
