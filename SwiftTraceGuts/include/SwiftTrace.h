@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#62 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#64 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -231,7 +231,8 @@ typedef NS_ENUM(uint8_t, STVisibility) {
 #ifdef __cplusplus
 extern "C" {
 #endif
-    IMP _Nonnull imp_implementationForwardingToTracer(void *_Nonnull patch, IMP _Nonnull onEntry, IMP _Nonnull onExit);
+    IMP _Nonnull imp_implementationForwardingToTracer(void *_Nonnull patch,
+                                  IMP _Nonnull onEntry, IMP _Nonnull onExit);
     NSArray<Class> *_Nonnull objc_classArray(void);
     NSMethodSignature *_Nullable method_getSignature(Method _Nonnull Method);
     const char *_Nonnull sig_argumentType(id _Nonnull signature, NSUInteger index);
@@ -248,8 +249,8 @@ extern "C" {
     void *_Nullable findSwiftSymbol(const char *_Nullable path, const char *_Nonnull suffix, STVisibility visibility);
     void filterImageSymbols(int32_t imageNumber, STVisibility visibility,
                             STSymbolFilter filter, STSymbolCallback callback);
-    void filterHeaderSymbols(const struct mach_header *_Nonnull header, STVisibility visibility,
-                             STSymbolFilter filter, STSymbolCallback callback);
+    void filterHeaderSymbols(const struct mach_header *_Nonnull header,
+         STVisibility visibility, STSymbolFilter filter, STSymbolCallback callback);
     void appBundleImages(void (^ _Nonnull callback)(const char *_Nonnull imageName,
                         const struct mach_header *_Nonnull header, intptr_t slide));
     id _Nullable findSwizzleOf(void *_Nonnull trampoline);
@@ -267,7 +268,8 @@ extern "C" {
 
     int fast_dladdr(const void *_Nonnull, Dl_info *_Nonnull);
     void *_Nullable fast_dlsym(const void *_Nonnull ptr, const char *_Nonnull symname);
-    void fast_dlscan(const void *_Nonnull ptr, STVisibility visibility, STSymbolFilter filter, STSymbolCallback callback);
+    void fast_dlscan(const void *_Nonnull ptr,
+         STVisibility visibility, STSymbolFilter filter, STSymbolCallback callback);
     const char *_Nonnull swiftTrace_path();
 #ifdef __cplusplus
 }
@@ -280,6 +282,13 @@ struct dyld_interpose_tuple {
   const void *_Nonnull replacement;
   const void *_Nonnull replacee;
 };
+
+/// Very handy albeit private API on dynamic loader.
+/// Replaced by fishhook to remain in the App Store.
+//void dyld_dynamic_interpose(
+//    const struct mach_header * _Nonnull mh,
+//    const struct dyld_interpose_tuple array[_Nonnull],
+//    size_t count) __attribute__((weak_import));
 
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 #import <CoreGraphics/CGGeometry.h>

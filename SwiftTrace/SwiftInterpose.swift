@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#69 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#72 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -43,15 +43,12 @@ extension SwiftTrace {
                               onEntry: EntryAspect? = nil,
                               onExit: ExitAspect? = nil,
                               replaceWith: nullImplementationType? = nil) -> Int {
-        let bundlePath: UnsafePointer<CChar>?
-        if let aClass = aType as? AnyClass {
-            bundlePath = class_getImageName(aClass)
+        var bundlePath = searchBundleImages()
+        if let isClass = aType as? AnyClass {
+            bundlePath = class_getImageName(isClass) ?? searchBundleImages()
             if methodName == nil && onEntry == nil && onExit == nil {
-                trace(aClass: aClass) // update vtable
+                trace(aClass: isClass) // also update vtable
             }
-        } else {
-            bundlePath = Bundle.main.executablePath?
-                .withCString {autoBitCast(strdup($0)!)}
         }
 
         return interpose(aBundle: bundlePath,
@@ -81,7 +78,8 @@ extension SwiftTrace {
         for suffix in traceableFunctionSuffixes {
             findSwiftSymbols(aBundle, suffix) { symval, symname, _, _ in
                 if let theMethod = SwiftMeta.demangle(symbol: symname),
-                   theMethod.hasPrefix(methodName),
+                    theMethod.hasPrefix(methodName),
+                    interposeEclusions?.matches(theMethod) != true,
                     let current = interposed(replacee: symval),
                     let interpose = patchClass.init(name: theMethod,
                          original: OpaquePointer(current),
@@ -252,13 +250,14 @@ extension SwiftTrace {
     open class func apply(rebindings: UnsafeMutablePointer<rebinding>, count: Int,
                           header: UnsafePointer<mach_header>, slide: intptr_t)
         -> [UnsafePointer<Int8>] {
-        var interposed = [UnsafePointer<Int8>]()
         for i in 0..<count {
             rebindings[i].replaced =
                 UnsafeMutablePointer(cast: &rebindings[i].replaced)
         }
         rebind_symbols_image(UnsafeMutableRawPointer(mutating: header),
                              slide, rebindings, count)
+
+        var interposed = [UnsafePointer<Int8>]()
         for i in 0..<count {
             if rebindings[i].replaced !=
                 UnsafeMutablePointer(cast: &rebindings[i].replaced) {

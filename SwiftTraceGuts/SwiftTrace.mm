@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#111 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#112 $
 //
 
 #import "include/SwiftTrace.h"
@@ -58,9 +58,8 @@ const char *swiftUIBundlePath() {
 
 static char lastLoadedPath[PATH_MAX];
 const char *searchMainImage() {
-    const char *mainImage = [NSBundle mainBundle]
-        .executablePath.UTF8String ?: "";
-    strncpy(lastLoadedPath, mainImage, sizeof lastLoadedPath);
+    const char *mainImage = [NSBundle mainBundle].executablePath.UTF8String;
+    strncpy(lastLoadedPath, mainImage ?: "", sizeof lastLoadedPath);
     return mainImage;
 }
 const char *searchLastLoaded() {
@@ -76,9 +75,8 @@ const char *searchAllImages() {
 
 static char mainBundlePath[PATH_MAX];
 const char *searchBundleImages() {
-    const char *bundlePath = [NSBundle mainBundle]
-        .bundlePath.UTF8String ?: "";
-    strncpy(mainBundlePath, bundlePath, sizeof mainBundlePath);
+    const char *bundlePath = [NSBundle mainBundle].bundlePath.UTF8String;
+    strncpy(mainBundlePath, bundlePath ?: "", sizeof mainBundlePath);
     return mainBundlePath;
 }
 
