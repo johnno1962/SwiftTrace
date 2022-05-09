@@ -3,7 +3,7 @@
 //  
 //  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#16 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#17 $
 //
 
 #import "include/SwiftTrace.h"
@@ -56,8 +56,6 @@ const std::vector<PseudoImage> &getLoadedPseudoImages(void) {
 #define TRY_TO_OPTIMISE_DLADDR 1
 #if TRY_TO_OPTIMISE_DLADDR
 namespace fastdladdr {
-
-#import <algorithm>
 
 using namespace std;
 
