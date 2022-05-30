@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#14 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#15 $
 //
 //  Add aspects to Swift methods
 //  ============================
@@ -25,11 +25,11 @@ extension SwiftTrace {
         - parameter onEntry: - closure to be called before "Swizzle" is called
         - parameter onExit: - closure to be called after "Swizzle" returns
      */
-    open class func addAspect(methodName: String,
-                              patchClass: Aspect.Type = Aspect.self,
-                              onEntry: EntryAspect? = nil,
-                              onExit: ExitAspect? = nil,
-                              replaceWith: nullImplementationType? = nil) -> Bool {
+    public class func addAspect(methodName: String,
+                                patchClass: Aspect.Type = Aspect.self,
+                                onEntry: EntryAspect? = nil,
+                                onExit: ExitAspect? = nil,
+                                replaceWith: nullImplementationType? = nil) -> Bool {
         return forAllClasses {
             (aClass, stop) in
             stop = addAspect(aClass: aClass, methodName: methodName,
@@ -44,11 +44,11 @@ extension SwiftTrace {
         - parameter onEntry: - closure to be called before "Swizzle" is called
         - parameter onExit: - closure to be called after "Swizzle" returns
      */
-    open class func addAspect(aClass: AnyClass, methodName: String,
-                              patchClass: Aspect.Type = Aspect.self,
-                              onEntry: EntryAspect? = nil,
-                              onExit: ExitAspect? = nil,
-                              replaceWith: nullImplementationType? = nil) -> Bool {
+    public class func addAspect(aClass: AnyClass, methodName: String,
+                                patchClass: Aspect.Type = Aspect.self,
+                                onEntry: EntryAspect? = nil,
+                                onExit: ExitAspect? = nil,
+                                replaceWith: nullImplementationType? = nil) -> Bool {
         return iterateMethods(ofClass: aClass) {
             (name, slotIndex, vtableSlot, stop) in
             if name == methodName, let method = patchClass.init(name: name,
@@ -65,7 +65,7 @@ extension SwiftTrace {
         - parameter methodName: - unmangled name of Method for aspect
      */
     @discardableResult
-    open class func removeAspect(methodName: String) -> Bool {
+    public class func removeAspect(methodName: String) -> Bool {
         return forAllClasses {
             (aClass, stop) in
             stop = removeAspect(aClass: aClass, methodName: methodName)
@@ -78,7 +78,7 @@ extension SwiftTrace {
         - parameter methodName: - unmangled name of Method for aspect
      */
     @discardableResult
-    open class func removeAspect(aClass: AnyClass, methodName: String) -> Bool {
+    public class func removeAspect(aClass: AnyClass, methodName: String) -> Bool {
         return iterateMethods(ofClass: aClass) {
             (name, slotIndex, vtableSlot, stop) in
             if name == methodName,

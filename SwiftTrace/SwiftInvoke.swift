@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#27 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#28 $
 //
 //  Invocation interface for Swift
 //  ==============================
@@ -157,7 +157,7 @@ extension SwiftTrace {
          - parameter methodName: de-mangled method name to invoke
          - parameter args: list of values to use as arguments
      */
-    open class func invoke<T>(target: AnyObject, methodName: String, args: Any...) -> T {
+    public class func invoke<T>(target: AnyObject, methodName: String, args: Any...) -> T {
         guard let call = Call(target: target, methodName: methodName) else {
             fatalError("Unknown method \(methodName) on class \(target)")
         }
