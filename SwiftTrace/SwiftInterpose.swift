@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#73 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#77 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -52,7 +52,7 @@ extension SwiftTrace {
         }
 
         return interpose(aBundle: bundlePath,
-                         methodName: methodName ?? _typeName(aType)+".",
+                         methodName: methodName ?? "^"+_typeName(aType)+"\\.",
                          patchClass: patchClass, onEntry: onEntry, onExit: onExit,
                          replaceWith: replaceWith)
     }
@@ -62,7 +62,7 @@ extension SwiftTrace {
     /// requires the linker flags -Xlinker -interposable.
     /// - Parameters:
     ///   - aBundle: Patch to framework containing function
-    ///   - methodName: The full name of the function
+    ///   - methodName: Regex to match against function
     ///   - patchClass: normally not required
     ///   - onEntry: closure called on entry
     ///   - onExit: closure called on exit
@@ -72,13 +72,14 @@ extension SwiftTrace {
                                 onEntry: EntryAspect? = nil,
                                 onExit: ExitAspect? = nil,
                                 replaceWith: nullImplementationType? = nil) -> Int {
+        let methodRegex = NSRegularExpression(regexp: methodName)
         var interposes = [dyld_interpose_tuple]()
         var symbols = [UnsafePointer<Int8>]()
 
         for suffix in traceableFunctionSuffixes {
             findSwiftSymbols(aBundle, suffix) { symval, symname, _, _ in
                 if let theMethod = SwiftMeta.demangle(symbol: symname),
-                    theMethod.hasPrefix(methodName),
+                    methodRegex.matches(theMethod),
                     interposeEclusions?.matches(theMethod) != true,
                     let current = interposed(replacee: symval),
                     let interpose = patchClass.init(name: theMethod,

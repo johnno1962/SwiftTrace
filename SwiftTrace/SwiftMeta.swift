@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#103 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#105 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -703,7 +703,6 @@ extension NSRegularExpression {
 
     func matches(_ string: String) -> Bool {
         return rangeOfFirstMatch(in: string,
-            range: NSRange(string.startIndex ..< string.endIndex,
-                           in: string)).location != NSNotFound
+            range: NSMakeRange(0, string.utf16.count)).location != NSNotFound
     }
 }
