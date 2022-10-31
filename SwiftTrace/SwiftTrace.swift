@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#316 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#317 $
 //
 
 import Foundation
@@ -472,7 +472,9 @@ open class SwiftTrace: NSObject {
                 symlast.match(ascii: "a") &&
                 symlast.match(ascii: "v")) ||
             symlast.match(ascii: "M") &&
-            symlast.match(ascii: "v")
+            symlast.match(ascii: "v") ||
+            symlast.match(ascii: "i") &&
+            symlast.match(ascii: "f")
     }
 
     #if swift(>=5.0)
