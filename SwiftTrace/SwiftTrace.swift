@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#317 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#319 $
 //
 
 import Foundation
@@ -440,6 +440,7 @@ open class SwiftTrace: NSObject {
     }
 
     public static var preserveStatics = false
+    public static let deviceInjection = lastPseudoImage() != nil
 
     /// Determine if symbol name is injectable
     /// - Parameter symname: Pointer to symbol name
@@ -460,8 +461,9 @@ open class SwiftTrace: NSObject {
             // static/class methods, getters, setters
             (symlast.match(ascii: "Z") || true) &&
                 (symlast.match(ascii: "F") ||
+                 !deviceInjection && (
                  symlast.match(ascii: "g") ||
-                 symlast.match(ascii: "s")) ||
+                 symlast.match(ascii: "s"))) ||
             // async [class] functions
             symlast.match(ascii: "u") && (
                 symlast.match(ascii: "T") &&
@@ -471,10 +473,9 @@ open class SwiftTrace: NSObject {
                 !preserveStatics &&
                 symlast.match(ascii: "a") &&
                 symlast.match(ascii: "v")) ||
+            !deviceInjection &&
             symlast.match(ascii: "M") &&
-            symlast.match(ascii: "v") ||
-            symlast.match(ascii: "i") &&
-            symlast.match(ascii: "f")
+            symlast.match(ascii: "v")
     }
 
     #if swift(>=5.0)
