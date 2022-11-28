@@ -3,11 +3,12 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#112 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#114 $
 //
 
 #import "include/SwiftTrace.h"
 #import <mach-o/dyld.h>
+#import <dlfcn.h>
 
 NSArray<Class> *objc_classArray() {
     unsigned nc;
@@ -56,6 +57,16 @@ const char *swiftUIBundlePath() {
     return nullptr;
 }
 
+static uint32_t lastLoadedIndex;
+
+void *fast_dlopen(const char * __path, int __mode) {
+    uint32_t index = _dyld_image_count();
+    void *handle = dlopen(__path, __mode);
+    if (handle && index < _dyld_image_count())
+        lastLoadedIndex = index;
+    return handle;
+}
+
 static char lastLoadedPath[PATH_MAX];
 const char *searchMainImage() {
     const char *mainImage = [NSBundle mainBundle].executablePath.UTF8String;
@@ -64,7 +75,7 @@ const char *searchMainImage() {
 }
 const char *searchLastLoaded() {
     strncpy(lastLoadedPath, (getLoadedPseudoImages().empty() ?
-            _dyld_get_image_name(_dyld_image_count()-1) :
+            _dyld_get_image_name(lastLoadedIndex ?: _dyld_image_count()-1) :
             getLoadedPseudoImages().back().first) ?: "",
             sizeof lastLoadedPath);
     return lastLoadedPath;
@@ -137,7 +148,7 @@ void filterImageSymbols(int32_t imageNumber, STVisibility visibility, STSymbolFi
                                void * _Nonnull typeref, void * _Nonnull typeend)) {
     const struct mach_header *header = nullptr;
     if (imageNumber < 0) {
-        imageNumber = _dyld_image_count()+imageNumber;
+        imageNumber = lastLoadedIndex ?: _dyld_image_count()+imageNumber;
         header = lastPseudoImage();
     }
     if (!header)

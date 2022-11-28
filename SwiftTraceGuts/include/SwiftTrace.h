@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#64 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#66 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -266,10 +266,11 @@ extern "C" {
     NSString *_Nonnull describeImagePointer(const void *_Nonnull pointer);
     void injection_stack(void);
 
-    int fast_dladdr(const void *_Nonnull, Dl_info *_Nonnull);
+    void *_Nullable fast_dlopen(const char * _Nonnull __path, int __mode);
     void *_Nullable fast_dlsym(const void *_Nonnull ptr, const char *_Nonnull symname);
-    void fast_dlscan(const void *_Nonnull ptr,
-         STVisibility visibility, STSymbolFilter filter, STSymbolCallback callback);
+    int  fast_dladdr(const void *_Nonnull, Dl_info *_Nonnull);
+    void fast_dlscan(const void *_Nonnull ptr, STVisibility visibility,
+         STSymbolFilter filter, STSymbolCallback callback);
     const char *_Nonnull swiftTrace_path();
 #ifdef __cplusplus
 }
