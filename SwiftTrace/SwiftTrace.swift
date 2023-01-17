@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#319 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#320 $
 //
 
 import Foundation
@@ -461,9 +461,8 @@ open class SwiftTrace: NSObject {
             // static/class methods, getters, setters
             (symlast.match(ascii: "Z") || true) &&
                 (symlast.match(ascii: "F") ||
-                 !deviceInjection && (
                  symlast.match(ascii: "g") ||
-                 symlast.match(ascii: "s"))) ||
+                 symlast.match(ascii: "s")) ||
             // async [class] functions
             symlast.match(ascii: "u") && (
                 symlast.match(ascii: "T") &&
@@ -473,7 +472,6 @@ open class SwiftTrace: NSObject {
                 !preserveStatics &&
                 symlast.match(ascii: "a") &&
                 symlast.match(ascii: "v")) ||
-            !deviceInjection &&
             symlast.match(ascii: "M") &&
             symlast.match(ascii: "v")
     }
