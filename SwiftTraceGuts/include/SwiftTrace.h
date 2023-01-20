@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#66 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#67 $
 //
 
 #ifndef SWIFTTRACE_H
@@ -213,7 +213,6 @@ in the Swift class provided.
 
 #import <mach-o/loader.h>
 #import <objc/runtime.h>
-#import <dlfcn.h>
 
 #define ST_LAST_IMAGE -1
 #define ST_ANY_VISIBILITY 0
@@ -271,6 +270,7 @@ extern "C" {
     int  fast_dladdr(const void *_Nonnull, Dl_info *_Nonnull);
     void fast_dlscan(const void *_Nonnull ptr, STVisibility visibility,
          STSymbolFilter filter, STSymbolCallback callback);
+    vm_prot_t get_protection(void *_Nonnull sectionStart);
     const char *_Nonnull swiftTrace_path();
 #ifdef __cplusplus
 }

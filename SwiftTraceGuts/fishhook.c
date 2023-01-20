@@ -84,7 +84,7 @@ static int prepend_rebindings(struct rebindings_entry **rebindings_head,
   return 0;
 }
 
-static vm_prot_t get_protection(void *sectionStart) {
+vm_prot_t get_protection(void *sectionStart) {
   mach_port_t task = mach_task_self();
   vm_size_t size = 0;
   vm_address_t address = (vm_address_t)sectionStart;
