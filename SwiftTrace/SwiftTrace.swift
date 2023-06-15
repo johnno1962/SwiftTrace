@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#320 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#321 $
 //
 
 import Foundation
@@ -235,7 +235,8 @@ open class SwiftTrace: NSObject {
         if let classes = UnsafePointer(objc_copyClassList(&nc)) {
             for i in 0 ..< Int(nc) {
                 let aClass: AnyClass = classes[i]
-                if let imageName = class_getImageName(aClass),
+                if class_getSuperclass(aClass) != nil,
+                   let imageName = class_getImageName(aClass),
                     bundlePath == nil || imageName == bundlePath ||
                     strcmp(imageName, bundlePath) == 0 {
                     callback(aClass, &stopped)
