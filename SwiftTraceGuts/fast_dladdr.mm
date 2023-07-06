@@ -375,6 +375,7 @@ void fast_dlscan(const void *header, STVisibility visibility,
     }
 }
 
+#if 0
 @implementation ObjcDYLookup
 - (instancetype)init {
     return [super init];
@@ -389,6 +390,7 @@ void fast_dlscan(const void *header, STVisibility visibility,
         delete (class DyLookup *)dyLookup;
 }
 @end
+#endif
 
 NSString *describeImageSymbol(const char *symname) {
     if (NSString *description = [NSObject swiftTraceDemangle:symname])
