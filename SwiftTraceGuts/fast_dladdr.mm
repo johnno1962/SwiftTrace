@@ -375,7 +375,7 @@ void fast_dlscan(const void *header, STVisibility visibility,
     }
 }
 
-@implementation DYLookup
+@implementation ObjcDYLookup
 - (instancetype)init {
     return [super init];
 }

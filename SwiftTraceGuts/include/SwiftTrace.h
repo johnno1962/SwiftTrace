@@ -204,7 +204,7 @@ in the Swift class provided.
 @end
 
 #import <dlfcn.h>
-@interface DYLookup: NSObject {
+@interface ObjcDYLookup: NSObject {
     void *dyLookup;
 }
 - (instancetype _Nonnull)init;
