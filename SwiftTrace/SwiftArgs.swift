@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#196 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#197 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -23,7 +23,7 @@ typealias OSRect = NSRect
 typealias OSPoint = NSPoint
 typealias OSSize = NSSize
 typealias OSEdgeInsets = NSEdgeInsets
-#elseif os(iOS) || os(tvOS)
+#else
 import UIKit
 typealias OSRect = CGRect
 typealias OSPoint = CGPoint
