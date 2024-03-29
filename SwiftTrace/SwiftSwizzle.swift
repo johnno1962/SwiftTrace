@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#57 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#58 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -37,6 +37,10 @@ extension SwiftTrace {
     /** Used to gather order in which methods are called */
     static var firstCalled: Swizzle?
     static var lastCalled: Swizzle?
+
+    /** highlight slow invocations */
+    public static var slowThreshold = 0.1
+    public static var slowEmphasis = "🔥"
 
     @objc open class var traceFilterInclude: String? {
         get { return includeFilter?.pattern }
@@ -90,7 +94,7 @@ extension SwiftTrace {
        let objcClass: AnyClass?
 
        /** Total time spent in this method */
-       var totalElapsed: TimeInterval = 0.0
+       open var totalElapsed: TimeInterval = 0.0
 
        /** Number of times this method has beeen called */
        var invocationCount = 0
@@ -174,7 +178,7 @@ extension SwiftTrace {
                          returnAddress: returnAddress, stackPointer: stackPointer)
                invocation.saveLevelsTracing = threadLocal.levelsTracing
                threadLocal.invocationStack.append(invocation)
-               swizzle.onEntry(stack: &invocation.entryStack.pointee)
+               swizzle.onEntry(stack: &invocation.entryStack.pointee, invocation: invocation)
                if invocation.shouldDecorate {
                     threadLocal.levelsTracing -= 1
                }
@@ -187,7 +191,7 @@ extension SwiftTrace {
            let threadLocal = ThreadLocal.current()
            let invocation = threadLocal.invocationStack.last!
            invocation.exitStack.pointee.frame.lr = invocation.returnAddress
-           invocation.swizzle.onExit(stack: &invocation.exitStack.pointee)
+           invocation.swizzle.onExit(stack: &invocation.exitStack.pointee, invocation: invocation)
            threadLocal.levelsTracing = invocation.saveLevelsTracing
            return threadLocal.invocationStack.removeLast().returnAddress
        }
@@ -213,10 +217,9 @@ extension SwiftTrace {
        }()
 
        /**
-        method called before trampoline enters the target "Swizzle"
+        new method called before trampoline enters the target "Swizzle"
         */
-       open func onEntry(stack: inout EntryStack) {
-           if let invocation = invocation() {
+       open func onEntry(stack: inout EntryStack, invocation: Invocation) {
                _ = objcAdjustStret(invocation: invocation, isReturn: false,
                                    intArgs: &invocation.entryStack.pointee.intArg1)
                if nextCalled == nil && lastCalled != self {
@@ -236,7 +239,6 @@ extension SwiftTrace {
                    logOutput("\(subLogging() ? "\n" : "")\(indent)\(decorated)",
                              autoBitCast(invocation.swiftSelf), invocation.stackDepth)
                }
-           }
        }
 
        /**
@@ -254,27 +256,26 @@ extension SwiftTrace {
        }
 
        /**
-        method called after trampoline exits the target "Swizzle"
+        new method called after trampoline exits the target "Swizzle"
         */
-       open func onExit(stack: inout ExitStack) {
-           if let invocation = invocation() {
-               let elapsed = Invocation.usecTime() - invocation.timeEntered
+       open func onExit(stack: inout ExitStack, invocation: Invocation) {
+               let elapsed = invocation.elapsed
                let shouldPrint = invocation.shouldDecorate && notFilteredOut()
                if shouldPrint || isLifetime,
                   !invocation.swizzle.signature.contains(" async "),
                    let returnValue = exitDecorate(stack: &stack), shouldPrint {
+                   let slow = elapsed > slowThreshold ? slowEmphasis : ""
                    logOutput("""
                         \(invocation.subLogged ? """
                             \n\(String(repeating: "  ",
                                        count: invocation.stackDepth))<-
                             """ : objcMethod != nil ? " ->" : "") \
                         \(returnValue)\(String(format: SwiftTrace.timeFormat,
-                                elapsed * 1000.0))\(subLogging() ? "" : "\n")
+                                elapsed * 1000.0)+slow)\(subLogging() ? "" : "\n")
                         """, autoBitCast(invocation.swiftSelf), invocation.stackDepth)
                }
                totalElapsed += elapsed
                invocationCount += 1
-           }
        }
 
        /**
@@ -392,6 +393,8 @@ extension SwiftTrace {
            /** Has a trace taken place during this invocation */
            public var subLogged = false
 
+           open lazy var elapsed = { Invocation.usecTime() - timeEntered }()
+
            /** This invocation qualifies for tracing */
            lazy public var shouldDecorate: Bool = {
                 let threadLocal = ThreadLocal.current()
@@ -447,7 +450,6 @@ extension SwiftTrace {
             */
            public required init(stackDepth: Int, swizzle: Swizzle, returnAddress: UnsafeRawPointer,
                                 stackPointer: UnsafeMutablePointer<UInt64>) {
-               timeEntered = Invocation.usecTime()
                self.stackDepth = stackDepth
                self.swizzle = swizzle
                self.returnAddress = returnAddress
@@ -455,6 +457,7 @@ extension SwiftTrace {
                self.swiftSelf = swizzle.objcMethod != nil ?
                    entryStack.pointee.intArg1 : entryStack.pointee.swiftSelf
                self.structReturn = UnsafeMutableRawPointer(bitPattern: entryStack.pointee.structReturn)
+               timeEntered = Invocation.usecTime()
            }
 
            /**

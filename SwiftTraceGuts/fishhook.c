@@ -105,6 +105,15 @@ vm_prot_t get_protection(void *sectionStart) {
     return VM_PROT_READ;
   }
 }
+
+// SwiftTrace additions here
+typedef void * _Nullable(* _Nullable STInterposer)(void * _Nonnull existing,
+                                                  const char * _Nonnull symname);
+static STInterposer STInterposeHook;
+void setSTInterposeHook(STInterposer interposer) {
+    STInterposeHook = interposer;
+} // SwiftTrace additions end
+
 static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
                                            section_t *section,
                                            intptr_t slide,
@@ -130,8 +139,14 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
     bool symbol_name_longer_than_1 = symbol_name[0] && symbol_name[1];
     struct rebindings_entry *cur = rebindings;
     if (!cur) { // SwiftTrace additions here
+      void *value = !STInterposeHook ? NULL :
+        STInterposeHook(indirect_symbol_bindings[i], symbol_name+1);
+      if (value) {
+        indirect_symbol_bindings[i] = value;
+        continue;
+      }
       void *fast_dlsym(const void *ptr, const char *symname);
-      void *value = dlsym(RTLD_DEFAULT, symbol_name+1) ?:
+      value = dlsym(RTLD_DEFAULT, symbol_name+1) ?:
         dlsym(RTLD_DEFAULT, symbol_name) ?:
         fast_dlsym(section, symbol_name+1); // Symbol can be unhidden fileprivate
       #if DEBUG && 01

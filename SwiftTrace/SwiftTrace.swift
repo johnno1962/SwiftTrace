@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#321 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#322 $
 //
 
 import Foundation
@@ -79,7 +79,7 @@ open class SwiftTrace: NSObject {
     }
 
     /** Linked list of previous traces */
-    let previousSwiftTrace: SwiftTrace?
+    open var previousSwiftTrace: SwiftTrace?
 
     /** Trace only instances of a particular class */
     var classFilter: AnyClass?
@@ -91,7 +91,7 @@ open class SwiftTrace: NSObject {
     let subLevels: Int
 
     /** Dictionary of swizzle objects created by trampoline */
-    var activeSwizzles = [IMP: Swizzle]()
+    open var activeSwizzles = [IMP: Swizzle]()
 
     public required init(previous: SwiftTrace?, subLevels: Int) {
         previousSwiftTrace = previous

@@ -28,6 +28,9 @@ extension SwiftTrace {
     /// Regexp pattern for functions to exclude from interposing
     public static var interposeEclusions: NSRegularExpression? = nil
 
+    /// Base rebindings applied to each injected file.
+    public static var initialRebindings = [rebinding]()
+
     /// "interpose" aspects onto Swift function name.
     /// If the symbol is not in a different framework
     /// requires the linker flags -Xlinker -interposable.

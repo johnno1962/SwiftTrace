@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#106 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#108 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -410,7 +410,8 @@ open class SwiftMeta: NSObject {
 
         #if true // Attempts to determine which getters have storage
         // properties that have key path getters are not stored??
-        findHiddenSwiftSymbols(searchAllImages(), "pACTK",
+        let appImages = searchBundleImages()
+        findHiddenSwiftSymbols(appImages, "pACTK",
                                .hidden) { (_, symbol, _, _) in
             doesntHaveStorage.insert(String(cString: symbol)
                 .replacingOccurrences(of: "pACTK", with: "g"))
@@ -418,7 +419,7 @@ open class SwiftMeta: NSObject {
         // ...unless they have a field offset
         // ...or property wrapper backing initializer ??
         for suffix in ["pWvd", "pfP"] {
-            findSwiftSymbols(searchAllImages(), suffix) {
+            findSwiftSymbols(appImages, suffix) {
                 (_, symbol, _, _) in
                 doesntHaveStorage.remove(String(cString: symbol)
                     .replacingOccurrences(of: suffix, with: "g"))
@@ -692,7 +693,7 @@ protocol UnsupportedTyping {}
  */
 extension NSRegularExpression {
 
-    convenience init(regexp: String) {
+    public convenience init(regexp: String) {
         do {
             try self.init(pattern: regexp)
         }
@@ -701,7 +702,7 @@ extension NSRegularExpression {
         }
     }
 
-    func matches(_ string: String) -> Bool {
+    public func matches(_ string: String) -> Bool {
         return rangeOfFirstMatch(in: string,
             range: NSMakeRange(0, string.utf16.count)).location != NSNotFound
     }

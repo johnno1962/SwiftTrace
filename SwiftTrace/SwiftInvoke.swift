@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#28 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#29 $
 //
 //  Invocation interface for Swift
 //  ==============================
@@ -113,13 +113,13 @@ extension SwiftTrace {
             resetArgs()
         }
 
-        public override func onEntry(stack: inout EntryStack) {
+        public override func onEntry(stack: inout EntryStack, invocation: Invocation) {
             input.frame = stack.frame
             backup = stack
             stack = input
         }
 
-        public override func onExit(stack: inout ExitStack) {
+        public override func onExit(stack: inout ExitStack, invocation: Invocation) {
             output = stack
             rebind(&stack.floatReturn1).pointee = backup
         }

@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#15 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#16 $
 //
 //  Add aspects to Swift methods
 //  ============================
@@ -110,19 +110,19 @@ extension SwiftTrace {
             fatalError("Aspect.init(name:vtableSlot:objcMethod:objcClass:replaceWith:) should not be used")
         }
 
-        open override func onEntry(stack: inout EntryStack) {
+        open override func onEntry(stack: inout EntryStack, invocation: Invocation) {
             if entryAspect != nil || exitAspect != nil {
                 entryAspect?(self, &stack)
             } else {
-                super.onEntry(stack: &stack)
+                super.onEntry(stack: &stack, invocation: invocation)
             }
         }
 
-        open override func onExit(stack: inout ExitStack) {
+        open override func onExit(stack: inout ExitStack, invocation: Invocation) {
             if entryAspect != nil || exitAspect != nil {
                 exitAspect?(self, &stack)
             } else {
-                super.onExit(stack: &stack)
+                super.onExit(stack: &stack, invocation: invocation)
             }
         }
     }

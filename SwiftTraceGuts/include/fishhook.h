@@ -65,8 +65,11 @@ int rebind_symbols(struct rebinding rebindings[_Nonnull], size_t rebindings_nel)
 FISHHOOK_VISIBILITY
 int rebind_symbols_image(void * _Nonnull header,
                          intptr_t slide,
-                         struct rebinding rebindings[_Nonnull],
+                         struct rebinding rebindings[_Nullable],
                          size_t rebindings_nel);
+
+void setSTInterposeHook(void * _Nullable (* _Nullable interposer)(void * _Nonnull existing,
+             const char * _Nonnull symname));
 
 #ifdef __cplusplus
 }
