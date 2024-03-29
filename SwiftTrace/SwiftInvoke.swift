@@ -6,15 +6,11 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#29 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInvoke.swift#30 $
 //
 //  Invocation interface for Swift
 //  ==============================
 //
-
-#if SWIFT_PACKAGE
-import SwiftTraceGuts
-#endif
 
 extension SwiftTraceArg {
     public func add(toCall call: SwiftTrace.Call) {

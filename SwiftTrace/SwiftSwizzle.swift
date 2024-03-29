@@ -6,16 +6,13 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#58 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#62 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
 //
 
 import Foundation
-#if SWIFT_PACKAGE
-import SwiftTraceGuts
-#endif
 
 extension SwiftTrace {
 
@@ -393,7 +390,7 @@ extension SwiftTrace {
            /** Has a trace taken place during this invocation */
            public var subLogged = false
 
-           open lazy var elapsed = { Invocation.usecTime() - timeEntered }()
+           open lazy var elapsed = Self.usecTime() - timeEntered
 
            /** This invocation qualifies for tracing */
            lazy public var shouldDecorate: Bool = {
@@ -457,7 +454,7 @@ extension SwiftTrace {
                self.swiftSelf = swizzle.objcMethod != nil ?
                    entryStack.pointee.intArg1 : entryStack.pointee.swiftSelf
                self.structReturn = UnsafeMutableRawPointer(bitPattern: entryStack.pointee.structReturn)
-               timeEntered = Invocation.usecTime()
+               timeEntered = Self.usecTime()
            }
 
            /**

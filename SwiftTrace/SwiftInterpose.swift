@@ -5,16 +5,13 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#78 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#79 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
 //
 
 import Foundation
-#if SWIFT_PACKAGE
-import SwiftTraceGuts
-#endif
 
 #if canImport(Darwin) // Apple platforms only..
 extension SwiftTrace {

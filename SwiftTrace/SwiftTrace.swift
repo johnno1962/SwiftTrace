@@ -6,12 +6,12 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#322 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#323 $
 //
 
 import Foundation
 #if SWIFT_PACKAGE
-import SwiftTraceGuts
+@_exported import SwiftTraceGuts
 #endif
 
 /**
