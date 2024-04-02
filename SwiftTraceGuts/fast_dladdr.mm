@@ -3,7 +3,7 @@
 //  
 //  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#19 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#20 $
 //
 
 #import "include/SwiftTrace.h"
@@ -282,6 +282,10 @@ class DyLookup {
         }
     }
 public:
+    vector<DylibPtr> &allDlibsByStart() {
+        populate();
+        return dylibsByStart;
+    }
     DyHandle *dlopen(const char *_Nonnull path) {
         return registered[path];
     }
@@ -323,7 +327,7 @@ using namespace fastdladdr;
 int fast_dladdr(const void *ptr, Dl_info *info) {
     info->dli_fname = "/no image";
     info->dli_sname = "no symbol";
-#if TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR
+#if !TARGET_IPHONE_SIMULATOR
     return loadedImages.dladdr(ptr, info);
 #else
     return dladdr(ptr, info);
@@ -331,8 +335,32 @@ int fast_dladdr(const void *ptr, Dl_info *info) {
 }
 
 void *fast_dlsym(const void *ptr, const char *symname) {
+    if (symname[0] == '_')
+        symname++;
     Dl_info info;
-    DyHandle *dylib = loadedImages.dlhandle(ptr, &info);
+    static DyHandle *dylib;
+    if (ptr == RTLD_SELF) {
+        dylib = loadedImages.dlhandle(__builtin_return_address(1), &info);
+    } else if (ptr == RTLD_MAIN_ONLY) {
+        static void *main;
+        if (!main) main = dlsym((void *)ptr, "main");
+        dylib = loadedImages.dlhandle(main, &info);
+    } else if (ptr == RTLD_DEFAULT) {
+        if (dylib)
+            if (void *found = dylib->dlsym(symname))
+                return found;
+        for (auto &&dylibPtr : loadedImages.allDlibsByStart())
+            if (auto *found = dylibPtr.dylib->dlsym(symname)) {
+                dylib = dylibPtr.dylib;
+                return found;
+            }
+        return nullptr;
+    } else if (ptr == RTLD_NEXT) {
+        NSLog(@"Error fast_dlsym: RTLD_NEXT not implemented.");
+        return nullptr;
+    } else {
+        dylib = loadedImages.dlhandle(ptr, &info);
+    }
     return dylib ? dylib->dlsym(symname) : nullptr;
 }
 
