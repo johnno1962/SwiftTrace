@@ -107,12 +107,18 @@ vm_prot_t get_protection(void *sectionStart) {
 }
 
 // SwiftTrace additions here
-typedef void * _Nullable(* _Nullable STInterposer)(void * _Nonnull existing,
-                                                  const char * _Nonnull symname);
-static STInterposer STInterposeHook;
-void setSTInterposeHook(STInterposer interposer) {
-    STInterposeHook = interposer;
-} // SwiftTrace additions end
+static STTracer stTracer;
+int rebind_symbols_trace(void * _Nonnull header,
+                         intptr_t slide,
+                         STTracer tracer) {
+    stTracer = tracer;
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wnonnull"
+    int rval = rebind_symbols_image(header, slide, NULL, -1);
+    #pragma clang diagnostic pop
+    stTracer = NULL;
+    return rval;
+}// SwiftTrace additions end
 
 static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
                                            section_t *section,
@@ -139,8 +145,8 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
     bool symbol_name_longer_than_1 = symbol_name[0] && symbol_name[1];
     struct rebindings_entry *cur = rebindings;
     if (!cur) { // SwiftTrace additions here
-      void *value = !STInterposeHook ? NULL :
-        STInterposeHook(indirect_symbol_bindings[i], symbol_name+1);
+      void *value = !stTracer ? NULL :
+        stTracer(indirect_symbol_bindings[i], symbol_name+1);
       if (value) {
         indirect_symbol_bindings[i] = value;
         continue;

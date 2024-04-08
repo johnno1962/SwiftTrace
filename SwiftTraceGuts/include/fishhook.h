@@ -65,12 +65,16 @@ int rebind_symbols(struct rebinding rebindings[_Nonnull], size_t rebindings_nel)
 FISHHOOK_VISIBILITY
 int rebind_symbols_image(void * _Nonnull header,
                          intptr_t slide,
-                         struct rebinding rebindings[_Nullable],
+                         struct rebinding rebindings[_Nonnull],
                          size_t rebindings_nel);
 
-void setSTInterposeHook(void * _Nullable (* _Nullable interposer)(void * _Nonnull existing,
-             const char * _Nonnull symname));
-
+// SwiftTrace additions here
+typedef void * _Nullable(* _Nullable STTracer)(void * _Nonnull existing,
+                                               const char * _Nonnull symname);
+int rebind_symbols_trace(void * _Nonnull header,
+                         intptr_t slide,
+                         STTracer interposer);
+// SwiftTrace additions end
 #ifdef __cplusplus
 }
 #endif //__cplusplus
