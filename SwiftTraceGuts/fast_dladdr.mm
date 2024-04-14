@@ -3,7 +3,7 @@
 //  
 //  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#20 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#21 $
 //
 
 #import "include/SwiftTrace.h"
@@ -282,7 +282,7 @@ class DyLookup {
         }
     }
 public:
-    vector<DylibPtr> &allDlibsByStart() {
+    const vector<DylibPtr> &allDlibsByStart() {
         populate();
         return dylibsByStart;
     }

@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#62 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#63 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -179,6 +179,7 @@ extension SwiftTrace {
                if invocation.shouldDecorate {
                     threadLocal.levelsTracing -= 1
                }
+               invocation.timeEntered = Invocation.usecTime()
                return swizzle.nullImplmentation != nil ?
                    autoBitCast(swizzle.nullImplmentation) : swizzle.implementation
        }
@@ -361,7 +362,7 @@ extension SwiftTrace {
        public class Invocation {
 
            /** Time call was started */
-           public let timeEntered: Double
+           public var timeEntered = 0.0
 
            /** Number of calls above this on the stack of the current thread */
            public let stackDepth: Int
@@ -454,7 +455,6 @@ extension SwiftTrace {
                self.swiftSelf = swizzle.objcMethod != nil ?
                    entryStack.pointee.intArg1 : entryStack.pointee.swiftSelf
                self.structReturn = UnsafeMutableRawPointer(bitPattern: entryStack.pointee.structReturn)
-               timeEntered = Self.usecTime()
            }
 
            /**
