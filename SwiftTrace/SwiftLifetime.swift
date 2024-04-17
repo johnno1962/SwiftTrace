@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftLifetime.swift#22 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftLifetime.swift#23 $
 //
 //  Trace instance life cycle for tracking down reference cycles.
 //  =============================================================
@@ -137,7 +137,8 @@ extension SwiftTrace {
         /**
          Increment live instances for initialisers
          */
-        open override func exitDecorate(stack: inout ExitStack) -> String? {
+        open override func exitDecorate(stack: inout ExitStack,
+                                        invocation: Invocation) -> String? {
             var info = "", live = "live"
             if isAllocator || isDeallocator {
                 if isAllocator {
@@ -150,19 +151,20 @@ extension SwiftTrace {
                         live = "allocated"
                     }
                 }
-                info = " [\(invocation().numberLive) \(live)]"
+                info = " [\(invocation.numberLive) \(live)]"
             }
-            return super.exitDecorate(stack: &stack)! + info
+            return super.exitDecorate(stack: &stack, invocation: invocation)! + info
         }
 
         /**
          Decrement live instances on deallocations
          */
-        open override func entryDecorate(stack: inout EntryStack) -> String? {
+        open override func entryDecorate(stack: inout EntryStack,
+                                         invocation: Invocation) -> String? {
             if isDeallocator {
                 _ = update(instance: getSelf())
             }
-            return super.entryDecorate(stack: &stack)
+            return super.entryDecorate(stack: &stack, invocation: invocation)
         }
     }
 }

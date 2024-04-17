@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#198 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#199 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -91,7 +91,7 @@ public func returner<Type>(value: Type, out: inout Any?) {
 }
 
 extension SwiftTrace {
-    
+
     /**
      'false' skips any decoration steps when visiting Swift code
      'true' decorates normally
@@ -299,10 +299,10 @@ extension SwiftTrace {
         /**
          substitute argument values into signature on method entry
          */
-        open override func entryDecorate(stack: inout EntryStack) -> String? {
+        open override func entryDecorate(stack: inout EntryStack,
+                                         invocation: Invocation) -> String? {
             guard SwiftTrace.swiftDecorateArgs.onEntry else { return signature }
-            
-            let invocation = self.invocation()!
+
             return objcMethod != nil ?
                 objcDecorate(signature: nil, invocation: invocation) :
                 swiftDecorate(signature: signature, invocation: invocation,
@@ -312,10 +312,9 @@ extension SwiftTrace {
         /**
          Determine return value on method exit
          */
-        open override func exitDecorate(stack: inout ExitStack) -> String? {
+        open override func exitDecorate(stack: inout ExitStack,
+                                        invocation: Invocation) -> String? {
             guard SwiftTrace.swiftDecorateArgs.onExit else { return "" }
-            
-            let invocation = self.invocation()!
             return objcMethod != nil ?
                 objcDecorate(signature: invocation.decorated ?? signature,
                              invocation: invocation) :
@@ -330,7 +329,8 @@ extension SwiftTrace {
         open var arguments: [Any] {
             let invocation = self.invocation()!
             if invocation.arguments.isEmpty {
-                _ = entryDecorate(stack: &invocation.entryStack.pointee)
+                _ = entryDecorate(stack: &invocation.entryStack.pointee,
+                                  invocation: invocation)
             }
             return invocation.arguments
         }
@@ -382,7 +382,7 @@ extension SwiftTrace {
                 position = range.upperBound
 
                 if value == nil {
-                    output += !isReturn ? type : "" 
+                    output += !isReturn ? type : ""
                     break
                 }
 

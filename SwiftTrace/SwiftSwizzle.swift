@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#63 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#64 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -230,7 +230,8 @@ extension SwiftTrace {
 
                let shouldPrint = invocation.shouldDecorate && notFilteredOut()
                if shouldPrint || isLifetime,
-                   let decorated = entryDecorate(stack: &stack), shouldPrint {
+                   let decorated = entryDecorate(stack: &stack,
+                                                 invocation: invocation), shouldPrint {
                    ThreadLocal.current().caller()?.subLogged = true
                    let indent = String(repeating: SwiftTrace.traceIndent,
                                        count: invocation.stackDepth)
@@ -242,7 +243,8 @@ extension SwiftTrace {
        /**
         decorate funcition signature with argument values
         */
-       open func entryDecorate(stack: inout EntryStack) -> String? {
+       open func entryDecorate(stack: inout EntryStack,
+                               invocation: Invocation) -> String? {
            return signature
        }
 
@@ -261,7 +263,8 @@ extension SwiftTrace {
                let shouldPrint = invocation.shouldDecorate && notFilteredOut()
                if shouldPrint || isLifetime,
                   !invocation.swizzle.signature.contains(" async "),
-                   let returnValue = exitDecorate(stack: &stack), shouldPrint {
+                   let returnValue = exitDecorate(stack: &stack,
+                                                  invocation: invocation), shouldPrint {
                    let slow = elapsed > slowThreshold ? slowEmphasis : ""
                    logOutput("""
                         \(invocation.subLogged ? """
@@ -279,7 +282,8 @@ extension SwiftTrace {
        /**
         Provide the return value
         */
-       open func exitDecorate(stack: inout ExitStack) -> String? {
+       open func exitDecorate(stack: inout ExitStack,
+                              invocation: Invocation) -> String? {
            return signature
        }
 
