@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#109 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#110 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -232,6 +232,8 @@ open class SwiftMeta: NSObject {
         "Fruta_iOS.ContentView" : nil,
         // Also uses resilient Foundation type inside enum
         "Kingfisher.ExpirationExtending": nil,
+        // Gets stuck in lookupType() on device.
+        "SwiftUICaseStudies.CounterTabView": nil,
     ]
     static var typeLookupCacheLock = OS_SPINLOCK_INIT
 

@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#199 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#201 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -242,22 +242,21 @@ extension SwiftTrace {
         /// The return value as an Any or nil
         open var returnAsAny: Any? {
             let returnType = returnTypeRange.first?.type ?? AnyObject.self
-            let exitStack = invocation().exitStack
 
             let slotsRequired = (SwiftMeta.sizeof(anyType: returnType) +
-                MemoryLayout<intptr_t>.size - 1) /
-                MemoryLayout<intptr_t>.size
+                MemoryLayout<intptr_t>.size - 1) / MemoryLayout<intptr_t>.size
             let valuePtr: UnsafeRawPointer
             if slotsRequired > ExitStack.returnRegs ||
                 SwiftMeta.structsPassedByReference
                     .contains(autoBitCast(returnType)) {
-                valuePtr = autoBitCast(invocation().structReturn)
+                valuePtr = autoBitCast(invocation()!.structReturn)
             } else {
+                let exitStack = invocation()!.exitStack
                 valuePtr = returnType is SwiftTraceFloatArg.Type ?
-                UnsafeRawPointer(withUnsafePointer(to:
-                &exitStack.pointee.floatReturn1) {$0}) :
-                UnsafeRawPointer(withUnsafePointer(to:
-                &exitStack.pointee.intReturn1) {$0})
+                    UnsafeRawPointer(withUnsafePointer(to:
+                        &exitStack.pointee.floatReturn1) {$0}) :
+                    UnsafeRawPointer(withUnsafePointer(to:
+                        &exitStack.pointee.intReturn1) {$0})
             }
             var out: Any?
             SwiftMeta.thunkToGeneric(funcPtr: SwiftTrace.returnerFptr,
@@ -340,6 +339,12 @@ extension SwiftTrace {
                 !signature.hasPrefix("protocol witness for ")
         }()
 
+        public static var decorateByDefault = { (typename: String) -> Bool in
+            return typeLookup || typename.hasPrefix("Swift.")
+                || typename.hasPrefix("SwiftUI.") && !typename.hasSuffix(">")
+                || typename.hasPrefix("CoreGraphics.")
+        }
+
         /**
          Argument decorator for Sift signatures
          */
@@ -370,13 +375,17 @@ extension SwiftTrace {
                 if let typeHandler = Decorated.swiftTypeHandlers[type],
                     let handled = typeHandler(invocation, isReturn) {
                     value = handled
-                } else if typeLookup || type.hasPrefix("Swift"),
-                    let anyType = lookedUpType {
-                    value = Decorated.handleArg(invocation: invocation,
-                                            isReturn: isReturn, type: anyType)
+                } else if let optionalType = lookedUpType as? OptionalTyping.Type {
+                    if Self.decorateByDefault(_typeName(optionalType.wrappedType)) {
+                        value = Self.handleArg(invocation: invocation,
+                                               isReturn: isReturn, type: lookedUpType!)
+                    }
+                } else if Self.decorateByDefault(type), let anyType = lookedUpType {
+                    value = Self.handleArg(invocation: invocation,
+                                           isReturn: isReturn, type: anyType)
                 } else if NSClassFromString(type) != nil {
-                    value = Decorated.handleArg(invocation: invocation,
-                                    isReturn: isReturn, type: AnyObject?.self)
+                    value = Self.handleArg(invocation: invocation,
+                                           isReturn: isReturn, type: AnyObject?.self)
                 }
 
                 position = range.upperBound
@@ -528,8 +537,8 @@ extension SwiftTrace {
         /**
          Generic argument handler given an invocation and the concrete type
          */
-        public static func handleArg(invocation: Invocation,
-                                     isReturn: Bool, type: Any.Type) -> String? {
+        open class func handleArg(invocation: Invocation,
+                                  isReturn: Bool, type: Any.Type) -> String? {
             let slot: Int
             let maxSlots: Int
             var argPointer: UnsafeRawPointer
@@ -598,8 +607,8 @@ extension SwiftTrace {
             return out
         }
 
-        static func describe(_ argPointer: UnsafeRawPointer,
-                             type: Any.Type, out: inout String) {
+        open class func describe(_ argPointer: UnsafeRawPointer,
+                                 type: Any.Type, out: inout String) {
             if type == AnyObject?.self {
                 if let id = argPointer.load(as: AnyObject?.self) {
                     if let cls = object_getClass(id), cls.isSubclass(of: NSProxy.class()) {

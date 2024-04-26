@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#64 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#65 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -133,7 +133,7 @@ extension SwiftTrace {
        /**
         The inner invocation instance on the stack of the current thread.
         */
-       open func invocation() -> Invocation! {
+       open func invocation() -> Invocation? {
            return Invocation.current
        }
 
@@ -233,9 +233,7 @@ extension SwiftTrace {
                    let decorated = entryDecorate(stack: &stack,
                                                  invocation: invocation), shouldPrint {
                    ThreadLocal.current().caller()?.subLogged = true
-                   let indent = String(repeating: SwiftTrace.traceIndent,
-                                       count: invocation.stackDepth)
-                   logOutput("\(subLogging() ? "\n" : "")\(indent)\(decorated)",
+                   logOutput((subLogging() ? "\n" : "")+invocation.indent+decorated,
                              autoBitCast(invocation.swiftSelf), invocation.stackDepth)
                }
        }
@@ -267,10 +265,8 @@ extension SwiftTrace {
                                                   invocation: invocation), shouldPrint {
                    let slow = elapsed > slowThreshold ? slowEmphasis : ""
                    logOutput("""
-                        \(invocation.subLogged ? """
-                            \n\(String(repeating: "  ",
-                                       count: invocation.stackDepth))<-
-                            """ : objcMethod != nil ? " ->" : "") \
+                        \(invocation.subLogged ? "\n\(invocation.indent)<-"
+                            : objcMethod != nil ? " ->" : "") \
                         \(returnValue)\(String(format: SwiftTrace.timeFormat,
                                 elapsed * 1000.0)+slow)\(subLogging() ? "" : "\n")
                         """, autoBitCast(invocation.swiftSelf), invocation.stackDepth)
@@ -340,18 +336,18 @@ extension SwiftTrace {
 
        /** find "self" for the current invocation */
        open func getSelf<T>(as: T.Type = T.self) -> T {
-           return autoBitCast(invocation().swiftSelf)
+           return autoBitCast(invocation()!.swiftSelf)
        }
 
        /** find Class for the current invocation */
        open func getClass() -> AnyClass {
-           let id: AnyObject = autoBitCast(invocation().swiftSelf)
+           let id: AnyObject = autoBitCast(invocation()!.swiftSelf)
            return object_isClass(id) ? autoBitCast(id) : object_getClass(id)!
        }
 
        /** pointer to memory for return of struct */
        open func structReturn<T>(as: T.Type = T.self) -> UnsafeMutablePointer<T> {
-           return UnsafeMutablePointer(cast: invocation().structReturn!)
+           return UnsafeMutablePointer(cast: invocation()!.structReturn!)
        }
 
        /** convert arguments & return results to a specifi type */
@@ -433,6 +429,9 @@ extension SwiftTrace {
            public var userInfo: Any?
 
            public var numberLive = 0
+
+           public var indent: String { String(repeating: SwiftTrace.traceIndent,
+                                              count: stackDepth) }
 
            /**
             micro-second precision time.

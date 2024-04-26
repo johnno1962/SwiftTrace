@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftLifetime.swift#23 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftLifetime.swift#24 $
 //
 //  Trace instance life cycle for tracking down reference cycles.
 //  =============================================================
@@ -83,7 +83,7 @@ extension SwiftTrace {
                 liveObjects[metaType]!
                     .remove(autoBitCast(instance))
             }
-            invocation().numberLive = liveObjects[metaType]!.count
+            invocation()?.numberLive = liveObjects[metaType]!.count
             OSSpinLockUnlock(&liveObjectsLock)
             return metaType
         }
