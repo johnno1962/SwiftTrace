@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftLifetime.swift#24 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftLifetime.swift#25 $
 //
 //  Trace instance life cycle for tracking down reference cycles.
 //  =============================================================
@@ -59,6 +59,8 @@ extension SwiftTrace {
                               replaceWith: nullImplementationType? = nil) {
             isAllocator = signature.contains(".__allocating_init(") ||
                 !class_isMetaClass(objcClass) && signature.contains(" init")
+                    && !signature.contains(" initial")
+
             isDeallocator = signature.contains("cxx_destruct") ||
                 signature.contains(".__deallocating_deinit") // not used
             super.init(name: signature, vtableSlot: vtableSlot,
