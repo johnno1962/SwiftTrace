@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#201 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#205 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -449,7 +449,8 @@ extension SwiftTrace {
             guard invocation.shouldDecorate else {
                 return invocation.swizzle.signature
             }
-            let objcSelf = unsafeBitCast(invocation.swiftSelf, to: AnyObject.self)
+            let objcSelf = isReturn && self.signature == "dealloc" ? NSObject() :
+                unsafeBitCast(invocation.swiftSelf, to: AnyObject.self)
             if !isReturn {
                 invocation.arguments.append(objcSelf)
             }

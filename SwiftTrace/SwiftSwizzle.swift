@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#65 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#67 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
