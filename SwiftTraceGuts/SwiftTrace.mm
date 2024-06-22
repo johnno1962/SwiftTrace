@@ -3,7 +3,7 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#115 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#118 $
 //
 
 #import "include/SwiftTrace.h"
@@ -215,6 +215,8 @@ void appBundleImages(void (^callback)(const char *imageName, const struct mach_h
             strncmp(imageName, bundleFrameworks, frameworkPathLength) == 0 ||
             (strstr(imageName, "/DerivedData/") &&
              strstr(imageName, ".framework/")) ||
+            strstr(imageName, ".debug.dylib") || // Xcode16
+            strstr(imageName, ".xctest/") ||
             strstr(imageName, "/eval"))
             callback(imageName, _dyld_get_image_header(i),
                      _dyld_get_image_vmaddr_slide(i));
