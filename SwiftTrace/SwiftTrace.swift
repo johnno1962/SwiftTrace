@@ -6,12 +6,17 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#324 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#325 $
 //
 
+#if DEBUG || !DEBUG_ONLY
 import Foundation
 #if SWIFT_PACKAGE
+#if DEBUG_ONLY
+@_exported import SwiftTraceGutsD
+#else
 @_exported import SwiftTraceGuts
+#endif
 #endif
 
 /**
@@ -671,3 +676,4 @@ extension UnsafePointer where Pointee == Int8 {
         return false
     }
 }
+#endif

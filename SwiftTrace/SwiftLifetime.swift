@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftLifetime.swift#25 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftLifetime.swift#26 $
 //
 //  Trace instance life cycle for tracking down reference cycles.
 //  =============================================================
@@ -24,6 +24,7 @@
 //  added to the tracked class.
 //
 
+#if DEBUG || !DEBUG_ONLY
 import Foundation
 
 extension SwiftTrace {
@@ -170,3 +171,4 @@ extension SwiftTrace {
         }
     }
 }
+#endif

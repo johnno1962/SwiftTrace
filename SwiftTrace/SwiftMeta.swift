@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#110 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#111 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -14,6 +14,7 @@
 //  =====================================
 //
 
+#if DEBUG || !DEBUG_ONLY
 import Foundation
 
 /**
@@ -706,3 +707,4 @@ extension NSRegularExpression {
             range: NSMakeRange(0, string.utf16.count)).location != NSNotFound
     }
 }
+#endif

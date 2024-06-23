@@ -4,9 +4,10 @@
 //
 //  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/ObjCBridge.mm#2 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/ObjCBridge.mm#3 $
 //
 
+#if DEBUG || !DEBUG_ONLY
 #import "include/SwiftTrace.h"
 
 #ifndef SWIFTUISUPPORT
@@ -162,4 +163,5 @@
     return OSMakeRect(1, 2, 3, 4);
 }
 @end
+#endif
 #endif

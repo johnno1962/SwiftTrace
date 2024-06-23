@@ -1,8 +1,9 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_x86.s#3 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_x86.s#4 $
 
 // *** This architecture is no longer supported *** //
 
+#if DEBUG || !DEBUG_ONLY
 #if defined(__i386__)
 .text
 .align 12
@@ -51,4 +52,5 @@ _xt_forwarding_trampolines_next:
 
 _xt_forwarding_trampolines_end:
     nop
+#endif
 #endif

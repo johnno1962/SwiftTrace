@@ -6,9 +6,10 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#68 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/include/SwiftTrace.h#69 $
 //
 
+#if DEBUG || !DEBUG_ONLY
 #ifndef SWIFTTRACE_H
 #define SWIFTTRACE_H
 
@@ -306,4 +307,5 @@ struct dyld_interpose_tuple {
 - (OSRect)a:(float)a i:(int)i b:(double)b c:(NSString *_Nullable)c o:o s:(SEL _Nullable)s;
 
 @end
+#endif
 #endif

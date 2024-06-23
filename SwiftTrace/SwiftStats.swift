@@ -8,9 +8,10 @@
 //  Obtaining invocation statistics
 //  ===============================
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStats.swift#6 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStats.swift#7 $
 //
 
+#if DEBUG || !DEBUG_ONLY
 import Foundation
 
 extension SwiftTrace {
@@ -73,3 +74,4 @@ extension SwiftTrace {
         return calls
     }
 }
+#endif

@@ -3,9 +3,10 @@
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#118 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#119 $
 //
 
+#if DEBUG || !DEBUG_ONLY
 #import "include/SwiftTrace.h"
 #import <mach-o/dyld.h>
 #import <dlfcn.h>
@@ -234,3 +235,4 @@ const char *callerBundle() {
 const char *_Nonnull swiftTrace_path() {
     return __FILE__;
 }
+#endif

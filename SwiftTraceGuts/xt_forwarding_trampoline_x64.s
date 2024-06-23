@@ -1,9 +1,10 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_x64.s#11 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_x64.s#12 $
 
 //  https://en.wikipedia.org/wiki/X86_calling_conventions
 //  Layout shadowed in SwiftStack.swift
 
+#if DEBUG || !DEBUG_ONLY
 #if defined(__LP64__) && !defined(__arm64__)
 .text
 .align 12
@@ -159,4 +160,5 @@ _xt_forwarding_trampolines_next:
 _xt_forwarding_trampolines_end:
     nop
 
+#endif
 #endif

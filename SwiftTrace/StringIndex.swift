@@ -12,6 +12,7 @@
 //  $Id: //depot/StringIndex/Sources/StringIndex/StringIndex.swift#34 $
 //
 
+#if DEBUG || !DEBUG_ONLY
 import Foundation
 
 // Basic operators to offset String.Index when used in a subscript
@@ -260,3 +261,4 @@ extension StringProtocol {
         insert(contentsOf: String(newElement), at: i)
     }
 }
+#endif

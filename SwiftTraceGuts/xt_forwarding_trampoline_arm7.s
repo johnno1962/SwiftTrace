@@ -1,8 +1,9 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_arm7.s#2 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_arm7.s#3 $
 
 // *** This architecture is no longer supported *** //
 
+#if DEBUG || !DEBUG_ONLY
 #ifdef __arm__
 
 #include <arm/arch.h>
@@ -47,5 +48,6 @@ b _xt_forwarding_trampoline;
 .endr
 
 _xt_forwarding_trampolines_end:
+#endif
 #endif
 #endif

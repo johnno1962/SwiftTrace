@@ -1,9 +1,10 @@
 
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_arm64.s#8 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/xt_forwarding_trampoline_arm64.s#9 $
 
 // for ARM64 abi see http://infocenter.arm.com/help/topic/com.arm.doc.ihi0055b/IHI0055B_aapcs64.pdf
 //  Layout shadowed in SwiftStack.swift
 
+#if DEBUG || !DEBUG_ONLY
 #if defined(__arm64__)
 .text
 .align 14
@@ -102,4 +103,5 @@ _xt_forwarding_trampolines_next:
 _xt_forwarding_trampolines_end:
     nop
 
+#endif
 #endif

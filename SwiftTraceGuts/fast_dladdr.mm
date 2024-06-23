@@ -3,9 +3,10 @@
 //  
 //  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#21 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/fast_dladdr.mm#22 $
 //
 
+#if DEBUG || !DEBUG_ONLY
 #import "include/SwiftTrace.h"
 
 #import <mach-o/dyld.h>
@@ -462,3 +463,4 @@ void injection_stack(void) {
         printf(" %s\n", describeImageInfo(&info).UTF8String);
     }
 }
+#endif

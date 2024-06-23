@@ -16,6 +16,7 @@
 //  $Id: //depot/EasyPointer/Sources/EasyPointer/EasyPointer.swift#7 $
 //
 
+#if DEBUG || !DEBUG_ONLY
 public func autoBitCast<IN,OUT>(_ x: IN) -> OUT {
     if SwiftMeta.sizeof(anyType: IN.self) !=
         SwiftMeta.sizeof(anyType: OUT.self) {
@@ -110,3 +111,4 @@ extension UnsafeRawPointer {
         return UnsafeRawPointer(lhs) < rhs
     }
 }
+#endif

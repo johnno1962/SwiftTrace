@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 20/04/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStack.swift#22 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStack.swift#23 $
 //
 //  Stack layout used by assembly trampolines
 //  =========================================
@@ -14,6 +14,7 @@
 //  https://github.com/apple/swift/blob/main/docs/ABI/CallingConvention.rst
 //
 
+#if DEBUG || !DEBUG_ONLY
 import Foundation
 
 extension SwiftTrace {
@@ -199,3 +200,4 @@ extension SwiftTrace.ExitStack {
         return getReturn()
     }
 }
+#endif

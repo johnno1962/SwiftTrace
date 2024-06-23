@@ -6,12 +6,13 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#67 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#68 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
 //
 
+#if DEBUG || !DEBUG_ONLY
 import Foundation
 
 extension SwiftTrace {
@@ -544,3 +545,4 @@ extension SwiftTrace {
        }
    }
 }
+#endif

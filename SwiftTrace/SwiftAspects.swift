@@ -6,12 +6,13 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#16 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftAspects.swift#17 $
 //
 //  Add aspects to Swift methods
 //  ============================
 //
 
+#if DEBUG || !DEBUG_ONLY
 import Foundation
 
 extension SwiftTrace {
@@ -127,4 +128,4 @@ extension SwiftTrace {
         }
     }
 }
-
+#endif

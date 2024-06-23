@@ -5,12 +5,13 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#79 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#80 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
 //
 
+#if DEBUG || !DEBUG_ONLY
 import Foundation
 
 #if canImport(Darwin) // Apple platforms only..
@@ -306,4 +307,5 @@ extension SwiftTrace {
         interposed.pointee.removeAll()
     }
 }
+#endif
 #endif
