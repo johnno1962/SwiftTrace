@@ -6,13 +6,15 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#325 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#327 $
 //
 
 #if DEBUG || !DEBUG_ONLY
 import Foundation
 #if SWIFT_PACKAGE
-#if DEBUG_ONLY
+#if canImport(InjectionNextC)
+@_exported import InjectionNextC
+#elseif DEBUG_ONLY
 @_exported import SwiftTraceGutsD
 #else
 @_exported import SwiftTraceGuts
@@ -411,7 +413,8 @@ open class SwiftTrace: NSObject {
         var stop = false
 
         guard (className.hasPrefix("_Tt") || className.contains(".")) &&
-                !className.hasPrefix("Swift.") else {//} && class_getSuperclass(aClass) != nil else {
+                !className.hasPrefix("Swift.") &&
+                swiftMeta.pointee.ClassAddressPoint > 1 else {//} && class_getSuperclass(aClass) != nil else {
             //print("Object is not instance of Swift class")
             return false
         }

@@ -212,7 +212,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         class MyTracer: SwiftTrace.Swizzle {
 
-            override func onEntry(stack: inout SwiftTrace.EntryStack) {
+            override func onEntry(stack: inout SwiftTrace.EntryStack,
+                                  invocation: SwiftTrace.Swizzle.Invocation) {
                 print( ">> "+signature )
             }
         }

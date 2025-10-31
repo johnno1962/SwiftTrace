@@ -82,7 +82,8 @@ public class TestClass: NSObject, P, SwiftTraceArg {
 
 class MyTracer: SwiftTrace.Decorated {
 
-    override func onEntry(stack: inout SwiftTrace.EntryStack) {
+    override func onEntry(stack: inout SwiftTrace.EntryStack,
+                          invocation: SwiftTrace.Swizzle.Invocation) {
         //print(stack)
         print("MyTracer.onEntry, arguments: ", arguments)
         if signature == "SwiftTwaceApp.TestClass.zzz(_: Swift.Int, f: Swift.Double, g: Swift.Float, h: Swift.String, f1: CoreGraphics.CGFloat, g1: Swift.Float, h1: Swift.Double, f2: Swift.Double, g2: Swift.Float, h2: Swift.Double, e: Swift.Int, ff: Swift.Int, o: SwiftTwaceApp.TestClass) throws -> Swift.String" {
@@ -90,7 +91,8 @@ class MyTracer: SwiftTrace.Decorated {
         }
     }
 
-    override func onExit(stack: inout SwiftTrace.ExitStack) {
+    override func onExit(stack: inout SwiftTrace.ExitStack,
+                         invocation: SwiftTrace.Swizzle.Invocation) {
         //print(stack)
         print("\(getSelf() as AnyObject)")
         if signature == "SwiftTwaceApp.TestClass.ssssss(a: SwiftTwaceApp.TestStruct) -> SwiftTwaceApp.TestStruct" {
