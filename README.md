@@ -87,7 +87,7 @@ Which traces are applied can be filtered using method name inclusion and exclusi
 ```
 These methods must be called before you start the trace as they are applied during the "Swizzle" phase.
 There is a default set of exclusions setup as a result of testing by tracing UIKit.
-                      
+
     open class var defaultMethodExclusions: String {
         return """
             \\.getter| (?:retain|_tryRetain|release|_isDeallocating|.cxx_destruct|dealloc|description| debugDescription)]|initWithCoder|\
@@ -145,7 +145,7 @@ Then, add a handler for the type using the following api:
      SwiftTrace.traceBundle(containing: UIView.class)
      // becomes
      UIView.traceBundle()
-     
+
      SwiftTrace.trace(inInstance: anObject)
      // becomes
      anObject.swiftTraceInstance()
@@ -259,7 +259,7 @@ to be able to pass them on the argument list or `SwiftTraceFloatArg` if they con
 only floats. These values and return values must fit into 32 bytes and not contain floats.
 
 #### How it works
-                      
+
 A Swift `AnyClass` instance has a layout similar to an Objective-C class with some
 additional data documented in the `ClassMetadataSwift` in SwiftMeta.swift. After this data
 there is the vtable of pointers to the class and instance member functions of the class up to

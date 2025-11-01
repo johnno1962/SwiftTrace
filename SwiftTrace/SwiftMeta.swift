@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#111 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#113 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -427,7 +427,7 @@ open class SwiftMeta: NSObject {
         }
 //        print(doesntHaveStorage)
         #endif
-        
+   
         if let swiftUIFramework = swiftUIBundlePath() {
             process(bundlePath: swiftUIFramework, problemTypes: &problemTypes)
         }

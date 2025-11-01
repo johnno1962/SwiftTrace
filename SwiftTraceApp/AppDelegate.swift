@@ -288,7 +288,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         UIColor.swiftTraceBundle()
         print(UIColor.systemBlue)
 
-        
+   
         #if !arch(arm64)
         TestClass.swiftTraceProtocolsInBundle()
         #endif
