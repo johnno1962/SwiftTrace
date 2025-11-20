@@ -1,15 +1,17 @@
 //
-//  SwiftTrace.m
+//  SwiftTrace.mm
 //  SwiftTrace
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#119 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/SwiftTrace.mm#120 $
 //
 
 #if DEBUG || !DEBUG_ONLY
 #import "include/SwiftTrace.h"
 #import <mach-o/dyld.h>
 #import <dlfcn.h>
+#import <string>
+#import <map>
 
 NSArray<Class> *objc_classArray() {
     unsigned nc;
@@ -208,10 +210,15 @@ void appBundleImages(void (^callback)(const char *imageName, const struct mach_h
     const char *mainExecutable = mainBundle.executablePath.UTF8String;
     const char *bundleFrameworks = mainBundle.privateFrameworksPath.UTF8String;
     size_t frameworkPathLength = strlen(bundleFrameworks);
+    std::map<std::string,bool> seen;
 
     for (int32_t i = _dyld_image_count()-1; i >= 0 ; i--) {
         const char *imageName = _dyld_get_image_name(i);
 //        NSLog(@"findImages: %s", imageName);
+        std::string image = imageName;
+        seen[image] = true;
+        if (seen[image+".debug.dylib"])
+            continue;
         if (strcmp(imageName, mainExecutable) == 0 ||
             strncmp(imageName, bundleFrameworks, frameworkPathLength) == 0 ||
             (strstr(imageName, "/DerivedData/") &&

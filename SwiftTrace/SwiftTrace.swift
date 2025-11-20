@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#327 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#328 $
 //
 
 #if DEBUG || !DEBUG_ONLY
@@ -127,8 +127,7 @@ open class SwiftTrace: NSObject {
     /**
      Default pattern of common/problematic symbols to be excluded from tracing
      */
-    open class var defaultMethodExclusions: String {
-        return """
+    public static var defaultMethodExclusions: String = """
             \\.getter : (?!some)|\\.hash[(]into: | async |interposedPointer|\
              (?:retain(?:Count)?|_tryRetain|release|autorelease|_isDeallocating|_?dealloc|class|self|description|\
             debugDescription|contextID|undoManager|_animatorClassForTargetClass|cursorUpdate|_isTrackingAreaObject)]|\
@@ -138,9 +137,8 @@ open class SwiftTrace: NSObject {
             UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|\
             _UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|\
             UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose| ns(?:li|is)_|\
-            Swift(Trace|Regex)|HotReloading|Xprobe|eraseToAnyView|enableInjection|.cxx_construct|_objc_initiateDealloc
+            Swift(Trace|Regex)|HotReloading|Xprobe|eraseToAnyView|enableInjection|.cxx_construct|_objc_initiateDealloc|subscript.setter
             """
-    }
 
     static var exclusionRegexp: NSRegularExpression? =
         NSRegularExpression(regexp: defaultMethodExclusions)

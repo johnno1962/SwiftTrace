@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#113 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#114 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -235,6 +235,8 @@ open class SwiftMeta: NSObject {
         "Kingfisher.ExpirationExtending": nil,
         // Gets stuck in lookupType() on device.
         "SwiftUICaseStudies.CounterTabView": nil,
+        "__C.NSURLAuthenticationChallenge": nil,
+        "Alamofire.HTTPMethod": nil,
     ]
     static var typeLookupCacheLock = OS_SPINLOCK_INIT
 

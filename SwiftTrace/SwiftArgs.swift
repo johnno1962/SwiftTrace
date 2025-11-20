@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#206 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#207 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -134,8 +134,7 @@ extension SwiftTrace {
     /**
      Default pattern of type names to be excluded from decoration
      */
-    open class var defaultLookupExclusions: String {
-        return """
+    public static var defaultLookupExclusions: String = """
             ^SwiftUI\\.(Font\\.(Design|TextStyle)|ToggleStyleConfiguration|AccessibilityChildBehavior|\
             LocalizedStringKey\\.StringInterpolation|RoundedCornerStyle|Image\\.ResizingMode|\
             PopoverAttachmentAnchor|KeyEquivalent|Text\\.(DateStyle|TruncationMode)|\
@@ -143,7 +142,6 @@ extension SwiftTrace {
             ButtonStyleConfiguration|NavigationBarItem\\.TitleDisplayMode|LayoutDirection|\
             _(View|Scene)((ListCount)?Input|Output)s)
             """
-    }
 
     static var lookupExclusionRegexp: NSRegularExpression? =
         NSRegularExpression(regexp: defaultLookupExclusions)
@@ -384,7 +382,7 @@ extension SwiftTrace {
                 } else if Self.decorateByDefault(type), let anyType = lookedUpType {
                     value = Self.handleArg(invocation: invocation,
                                            isReturn: isReturn, type: anyType)
-                } else if NSClassFromString(type) != nil {
+                } else if !type.hasPrefix("__C.") && NSClassFromString(type) != nil {
                     value = Self.handleArg(invocation: invocation,
                                            isReturn: isReturn, type: AnyObject?.self)
                 }
