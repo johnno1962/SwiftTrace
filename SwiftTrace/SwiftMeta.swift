@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#114 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#117 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -235,8 +235,6 @@ open class SwiftMeta: NSObject {
         "Kingfisher.ExpirationExtending": nil,
         // Gets stuck in lookupType() on device.
         "SwiftUICaseStudies.CounterTabView": nil,
-        "__C.NSURLAuthenticationChallenge": nil,
-        "Alamofire.HTTPMethod": nil,
     ]
     static var typeLookupCacheLock = OS_SPINLOCK_INIT
 
@@ -430,8 +428,136 @@ open class SwiftMeta: NSObject {
 //        print(doesntHaveStorage)
         #endif
    
-        if let swiftUIFramework = swiftUIBundlePath() {
+        structsAllFloats.insert(autoBitCast(CGFloat.self))
+        for typ: Any.Type in [CGFloat.self, OSPoint.self, OSSize.self,
+                              OSRect.self, OSEdgeInsets.self] {
+            structsAllFloats.insert(autoBitCast(typ))
+        }
+        if false, let swiftUIFramework = swiftUIBundlePath() {
+            let saveProblemTypes = problemTypes
+            let saveStructsAllFloats = structsAllFloats
             process(bundlePath: swiftUIFramework, problemTypes: &problemTypes)
+            var newProblemTypes = problemTypes.subtracting(saveProblemTypes)
+            for typ in newProblemTypes.map({ _typeName(autoBitCast($0)) }).sorted() {
+                print(typ)
+            }
+            print("--")
+            var newStructsAllFloats = structsAllFloats.subtracting(saveStructsAllFloats)
+            for typ in newStructsAllFloats.map({ _typeName(autoBitCast($0)) }).sorted() {
+                print(typ)
+            }
+        }
+        for known in """
+            SwiftUI.ArchivedViewCore.Metadata
+            SwiftUI.DiffResult
+            SwiftUI.DisplayList.ArchiveIDs
+            SwiftUI.ImageResolutionContext
+            SwiftUI.LinkDestination
+            SwiftUI.LinkDestination.Configuration
+            SwiftUI.OpenURLAction.SystemHandlerInput
+            SwiftUI.ReferenceDateModifier
+            SwiftUI.ResolvableAbsoluteDate
+            SwiftUI.ResolvableStringResolutionContext
+            SwiftUI.SystemFormatStyle.DateOffset
+            SwiftUI.SystemFormatStyle.Timer
+            SwiftUI.ScenePhase
+            """.components(separatedBy: "\n") {
+            if let type = SwiftMeta.lookupType(named: known) {
+                passedByReference(autoBitCast(type))
+            }
+        }
+        for known in """
+                SwiftUI.AngularGradient._Paint
+                SwiftUI.ButtonBorderShape._Inset
+                SwiftUI.Capsule._Inset
+                SwiftUI.CheckmarkToggleStyle
+                SwiftUI.Circle._Inset
+                SwiftUI.CircularUIKitProgressView
+                SwiftUI.ColorMatrix
+                SwiftUI.ConcentricRectangle.AnimatableData
+                SwiftUI.ContainerRelativeShape._Inset
+                SwiftUI.CoreBaselineOffsetPair
+                SwiftUI.DefaultDragDropPreview
+                SwiftUI.DigitalCrownEvent
+                SwiftUI.DistanceGesture
+                SwiftUI.DocumentLaunchGeometryProxy
+                SwiftUI.DragGesture
+                SwiftUI.EdgeInsets
+                SwiftUI.Ellipse._Inset
+                SwiftUI.EllipticalGradient._Paint
+                SwiftUI.EmptyAnimatableData
+                SwiftUI.FocusableFillerBounds.Metrics
+                SwiftUI.Font.ResolvedTraits
+                SwiftUI.GlassContainer.AppearanceSettings
+                SwiftUI.GlassContainer.Entry.ShapeBoundsResult
+                SwiftUI.GlassContainer.TranslationKick
+                SwiftUI.GraphicsFilter.DisplacementMap
+                SwiftUI.GraphicsFilter.GlassBackgroundStyle
+                SwiftUI.LayoutPositionQuery
+                SwiftUI.LayoutPriorityLayout
+                SwiftUI.LinearGradient._Paint
+                SwiftUI.LongPressGesture
+                SwiftUI.MagnificationGesture
+                SwiftUI.MagnifyGesture
+                SwiftUI.NamedImage.DecodedInfo
+                SwiftUI.OffsetTransition
+                SwiftUI.OpacityButtonHighlightModifier
+                SwiftUI.OpacityRendererEffect
+                SwiftUI.PanGesture.Value
+                SwiftUI.PresentationDetent.Context
+                SwiftUI.RadialGradient._Paint
+                SwiftUI.Rectangle._Inset
+                SwiftUI.RectangleCornerRadii
+                SwiftUI.ResolvedGradientVector
+                SwiftUI.ResolvedSafeAreaInsets
+                SwiftUI.RootSizeInfo
+                SwiftUI.RoundedRectangle
+                SwiftUI.RoundedRectangle._Inset
+                SwiftUI.RoundedRectangularShapeCorners.AnimatableData
+                SwiftUI.RoundedSize
+                SwiftUI.SDFStyle.Group
+                SwiftUI.ScrollStateRequestKind.UpdateValueConfig
+                SwiftUI.ShaderVectorData
+                SwiftUI.ShaderVectorData.Element
+                SwiftUI.Spacing.TextMetrics
+                SwiftUI.SpatialLongPressGesture
+                SwiftUI.SpatialTapGesture.Value
+                SwiftUI.SystemHoverEffectStyleMetrics
+                SwiftUI.SystemShadowStyleMetrics.Grounding
+                SwiftUI.SystemShadowStyleMetrics.Separated
+                SwiftUI.Text.Layout.TypographicBounds
+                SwiftUI.TextProxy
+                SwiftUI.ToolbarButtonLabelModifier
+                SwiftUI.UnevenRoundedRectangle
+                SwiftUI.UnevenRoundedRectangle._Inset
+                SwiftUI.ViewFrame
+                SwiftUI.ViewListSublistSlice
+                SwiftUI.ViewSize
+                SwiftUI.WindowDragGesture
+                SwiftUI._BrightnessEffect
+                SwiftUI._CircleLayout
+                SwiftUI._ColorMatrix
+                SwiftUI._ContrastEffect
+                SwiftUI._GrayscaleEffect
+                SwiftUI._LayoutScaleModifier
+                SwiftUI._LayoutTraits
+                SwiftUI._LayoutTraits.Dimension
+                SwiftUI._OffsetEffect
+                SwiftUI._OpacityEffect
+                SwiftUI._PositionLayout
+                SwiftUI._SaturationEffect
+                SwiftUI._ScaledValue
+                SwiftUI._ScrollLayout
+                SwiftUI._ShapeStyle_Pack.Effect
+                SwiftUI._ShapeStyle_Pack.Effect.Kind.AnimatableData
+                SwiftUI._ShapeStyle_Pack.Fill.AnimatableData
+                SwiftUI._ShapeStyle_RenderedShape
+                SwiftUI._ViewList_Group
+                __C.CGSize
+                """.components(separatedBy: "\n") {
+            if let typ = lookupType(named: known) {
+                structsAllFloats.insert(autoBitCast(typ))
+            }
         }
 
         appBundleImages { bundlePath, _, _ in
@@ -460,7 +586,7 @@ open class SwiftMeta: NSObject {
         var wasFloatType = false
 
         var symbols = [(symval: UnsafeRawPointer, symname: UnsafePointer<Int8>)]()
-        findSwiftSymbols(bundlePath, "g") { (symval, symbol, _, _) in
+        findHiddenSwiftSymbols(bundlePath, "g", .any) { (symval, symbol, _, _) in
             symbols.append((symval, symbol))
         }
 
@@ -470,6 +596,9 @@ open class SwiftMeta: NSObject {
         for (_, symbol) in symbols.sorted(by: { $0.symval < $1.symval }) {
             guard let demangled = SwiftMeta.demangle(symbol: symbol) else {
                 print("Could not demangle: \(String(cString: symbol))")
+                continue
+            }
+            if demangled.hasPrefix("(extension in ") {
                 continue
             }
             func debug(_ str: @autoclosure () -> String) {
@@ -526,7 +655,8 @@ open class SwiftMeta: NSObject {
                 continue
             }
 
-            let isFloatField = fieldType is SwiftTraceFloatArg.Type
+            let isFloatField = fieldType is SwiftTraceFloatArg.Type ||
+                structsAllFloats.contains(autoBitCast(fieldType))
             nextType(floatField: isFloatField)
 
             // Ignore non stored properties

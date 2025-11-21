@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#207 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#210 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -140,7 +140,8 @@ extension SwiftTrace {
             PopoverAttachmentAnchor|KeyEquivalent|Text\\.(DateStyle|TruncationMode)|\
             ToolbarItemPlacement|Color\\.RGBColorSpace|SwitchToggleStyle|RoundedRectangle|Capsule|\
             ButtonStyleConfiguration|NavigationBarItem\\.TitleDisplayMode|LayoutDirection|\
-            _(View|Scene)((ListCount)?Input|Output)s)
+            _(View|Scene)((ListCount)?Input|Output)s)|\
+            Alamofire\\.(HTTPMethod|Request)|URLAuthenticationChallenge|AnyView|RenderingMode$
             """
 
     static var lookupExclusionRegexp: NSRegularExpression? =
@@ -272,7 +273,7 @@ extension SwiftTrace {
             -> [(range: Range<String.Index>, type: Any.Type?)] {
             let parsingArguments = parser === Decorated.swiftArgumentTypeParser
             let start = parsingArguments ?
-                signature.index(of: .start+1 + .first(of: "(")) ??
+                signature.index(of: .start+5 + .first(of: "(")) ??
                     signature.startIndex :
                 signature.index(of: .last(of: " -> ")) ?? signature.startIndex
             let end = parsingArguments ?
@@ -338,6 +339,10 @@ extension SwiftTrace {
                 !signature.hasPrefix("protocol witness for ")
         }()
 
+        lazy var isSubscriptSetter: Bool = {
+            return signature.contains(".subscript.setter ")
+        }()
+
         public static var decorateByDefault = { (typename: String) -> Bool in
             return typeLookup || typename.hasPrefix("Swift.")
                 || typename.hasPrefix("SwiftUI.") && !typename.hasSuffix(">")
@@ -360,7 +365,9 @@ extension SwiftTrace {
                     .append(unsafeBitCast(invocation.swiftSelf, to: AnyObject.self))
             }
 
-            let typeRanges = !isReturn ? argTypeRanges : returnTypeRange
+            let typeRanges = isSubscriptSetter ?
+                !isReturn ? argTypeRanges + returnTypeRange : [] :
+                !isReturn ? argTypeRanges : returnTypeRange
             var position = !isReturn ? signature.startIndex :
                 typeRanges.last?.range.lowerBound ?? signature.startIndex
             invocation.floatArgumentOffset = 0
@@ -644,10 +651,13 @@ extension SwiftTrace {
                 out += argPointer.load(as: Bool.self) ? "true" : "false"
             } else if let optionalType = type as? OptionalTyping.Type {
                 optionalType.describe(optionalPtr: argPointer, out: &out)
-            } else {
+            } else if !(type is AnyClass &&
+                        argPointer.load(as: UnsafeRawPointer?.self) == nil) {
                 SwiftMeta.thunkToGeneric(funcPtr: describerFptr,
                                          valuePtr: argPointer,
                                          outPtr: &out, type: type)
+            } else {
+                out += "nil"
             }
         }
     }

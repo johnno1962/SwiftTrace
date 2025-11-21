@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 20/04/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStack.swift#23 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftStack.swift#24 $
 //
 //  Stack layout used by assembly trampolines
 //  =========================================
@@ -30,7 +30,7 @@ extension SwiftTrace {
      */
     public struct EntryStack {
         static let maxFloatSlots = 8
-        static let maxIntSlots = 6 // Conservative here, actually it's 8
+        static let maxIntSlots = 8 // Was 6 for Intel
 
         public var floatArg1: Double = 0.0
         public var floatArg2: Double = 0.0
