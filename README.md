@@ -6,6 +6,7 @@ add "aspects" to member functions of non-final Swift classes to have a closure c
 a function implementation executes which in turn can modify incoming arguments or the return value!
 Apart from the logging functionality, with binary distribution of Swift frameworks on the horizon perhaps
 this will be of use in the same way "Swizzling" was in days of yore.
+TL;DR consult the file [InjectionNext.swift](https://github.com/johnno1962/InjectionNext/blob/main/Sources/InjectionNext/InjectionNext.swift#L89) for some examples of the various ways this package can be used to trace methods and functions.
 
 ![SwiftTrace Example](SwiftTrace.gif)
 

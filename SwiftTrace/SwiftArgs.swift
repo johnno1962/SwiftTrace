@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#210 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#212 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -86,6 +86,17 @@ public func describer<Type>(value: Type, out: inout String) {
     }
 }
 
+@_silgen_name("swift_EnumCaseName")
+func _getEnumCaseName<T>(_ value: T) -> UnsafePointer<CChar>?
+
+public func enumNamer<Type>(value: Type, out: inout String) {
+    if let name = _getEnumCaseName(value) {
+        out += "."+String(cString: name)
+    } else {
+        out += "\(Type.self)"
+    }
+}
+
 // generic function to get return value as Any?
 public func returner<Type>(value: Type, out: inout Any?) {
     out = value
@@ -126,6 +137,8 @@ extension SwiftTrace {
     // For describing values and appending values to arguments array
     static var describerFptr = SwiftMeta.bindGeneric(name: "describer",
                                                      args: "SSzt")
+    static var enumnameFptr = SwiftMeta.bindGeneric(name: "enumNamer",
+                                                     args: "SSzt")
     static var appenderFptr = SwiftMeta.bindGeneric(name: "appender",
                                                     args: "SayypGzt")
     static var returnerFptr = SwiftMeta.bindGeneric(name: "returner",
@@ -140,8 +153,8 @@ extension SwiftTrace {
             PopoverAttachmentAnchor|KeyEquivalent|Text\\.(DateStyle|TruncationMode)|\
             ToolbarItemPlacement|Color\\.RGBColorSpace|SwitchToggleStyle|RoundedRectangle|Capsule|\
             ButtonStyleConfiguration|NavigationBarItem\\.TitleDisplayMode|LayoutDirection|\
-            _(View|Scene)((ListCount)?Input|Output)s)|\
-            Alamofire\\.(HTTPMethod|Request)|URLAuthenticationChallenge|AnyView|RenderingMode$
+            _(View|Scene)((ListCount)?Input|Output)s)|Alamofire\\.(HTTPMethod|Request)|AnyView|\
+            URLAuthenticationChallenge|DragGesture|SwiftUI\\.ViewAlignedScroll
             """
 
     static var lookupExclusionRegexp: NSRegularExpression? =
@@ -386,10 +399,11 @@ extension SwiftTrace {
                         value = Self.handleArg(invocation: invocation,
                                                isReturn: isReturn, type: lookedUpType!)
                     }
-                } else if Self.decorateByDefault(type), let anyType = lookedUpType {
+                } else if let anyType = lookedUpType, Self.decorateByDefault(type) ||
+                            SwiftMeta.enumTypes.contains(autoBitCast(anyType)) {
                     value = Self.handleArg(invocation: invocation,
                                            isReturn: isReturn, type: anyType)
-                } else if !type.hasPrefix("__C.") && NSClassFromString(type) != nil {
+                } else if lookedUpType is AnyClass {
                     value = Self.handleArg(invocation: invocation,
                                            isReturn: isReturn, type: AnyObject?.self)
                 }
@@ -653,7 +667,8 @@ extension SwiftTrace {
                 optionalType.describe(optionalPtr: argPointer, out: &out)
             } else if !(type is AnyClass &&
                         argPointer.load(as: UnsafeRawPointer?.self) == nil) {
-                SwiftMeta.thunkToGeneric(funcPtr: describerFptr,
+                SwiftMeta.thunkToGeneric(funcPtr: SwiftMeta.enumTypes
+                    .contains(autoBitCast(type)) ? enumnameFptr : describerFptr,
                                          valuePtr: argPointer,
                                          outPtr: &out, type: type)
             } else {

@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#117 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#119 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -39,7 +39,7 @@ public func getPointerType<Type>(value: Type, out: inout Any.Type?) {
     out = UnsafePointer<Type>.self
 }
 
-/// generic function to find the Array type for an element type
+/// generic function to find the meta type
 public func getMetaType<Type>(value: Type, out: inout Any.Type?) {
     out = type(of: Type.self)
 }
@@ -433,21 +433,25 @@ open class SwiftMeta: NSObject {
                               OSRect.self, OSEdgeInsets.self] {
             structsAllFloats.insert(autoBitCast(typ))
         }
-        if false, let swiftUIFramework = swiftUIBundlePath() {
+        if let swiftUIFramework = swiftUIBundlePath() {
             let saveProblemTypes = problemTypes
-            let saveStructsAllFloats = structsAllFloats
-            process(bundlePath: swiftUIFramework, problemTypes: &problemTypes)
-            var newProblemTypes = problemTypes.subtracting(saveProblemTypes)
-            for typ in newProblemTypes.map({ _typeName(autoBitCast($0)) }).sorted() {
-                print(typ)
-            }
-            print("--")
-            var newStructsAllFloats = structsAllFloats.subtracting(saveStructsAllFloats)
-            for typ in newStructsAllFloats.map({ _typeName(autoBitCast($0)) }).sorted() {
-                print(typ)
+            let saveFloatStructs = structsAllFloats
+            let skip = 01 == 1
+            process(bundlePath: swiftUIFramework, skip: skip, problemTypes: &problemTypes)
+            if !skip {
+                for typ in problemTypes.subtracting(saveProblemTypes)
+                    .map({ _typeName(autoBitCast($0)) }).sorted() {
+                    print(typ)
+                }
+                print("--")
+                for typ in structsAllFloats.subtracting(saveFloatStructs)
+                    .map({ _typeName(autoBitCast($0)) }).sorted() {
+                    print(typ)
+                }
             }
         }
-        for known in """
+        for byReference in """
+            SwiftUI.AnimationCompletionCriteria
             SwiftUI.ArchivedViewCore.Metadata
             SwiftUI.DiffResult
             SwiftUI.DisplayList.ArchiveIDs
@@ -462,26 +466,19 @@ open class SwiftMeta: NSObject {
             SwiftUI.SystemFormatStyle.Timer
             SwiftUI.ScenePhase
             """.components(separatedBy: "\n") {
-            if let type = SwiftMeta.lookupType(named: known) {
+            if let type = SwiftMeta.lookupType(named: byReference) {
                 passedByReference(autoBitCast(type))
             }
         }
-        for known in """
+        for allFloats in """
                 SwiftUI.AngularGradient._Paint
-                SwiftUI.ButtonBorderShape._Inset
                 SwiftUI.Capsule._Inset
-                SwiftUI.CheckmarkToggleStyle
                 SwiftUI.Circle._Inset
-                SwiftUI.CircularUIKitProgressView
                 SwiftUI.ColorMatrix
                 SwiftUI.ConcentricRectangle.AnimatableData
                 SwiftUI.ContainerRelativeShape._Inset
                 SwiftUI.CoreBaselineOffsetPair
-                SwiftUI.DefaultDragDropPreview
-                SwiftUI.DigitalCrownEvent
                 SwiftUI.DistanceGesture
-                SwiftUI.DocumentLaunchGeometryProxy
-                SwiftUI.DragGesture
                 SwiftUI.EdgeInsets
                 SwiftUI.Ellipse._Inset
                 SwiftUI.EllipticalGradient._Paint
@@ -496,15 +493,9 @@ open class SwiftMeta: NSObject {
                 SwiftUI.LayoutPositionQuery
                 SwiftUI.LayoutPriorityLayout
                 SwiftUI.LinearGradient._Paint
-                SwiftUI.LongPressGesture
-                SwiftUI.MagnificationGesture
-                SwiftUI.MagnifyGesture
                 SwiftUI.NamedImage.DecodedInfo
                 SwiftUI.OffsetTransition
-                SwiftUI.OpacityButtonHighlightModifier
                 SwiftUI.OpacityRendererEffect
-                SwiftUI.PanGesture.Value
-                SwiftUI.PresentationDetent.Context
                 SwiftUI.RadialGradient._Paint
                 SwiftUI.Rectangle._Inset
                 SwiftUI.RectangleCornerRadii
@@ -520,26 +511,20 @@ open class SwiftMeta: NSObject {
                 SwiftUI.ShaderVectorData
                 SwiftUI.ShaderVectorData.Element
                 SwiftUI.Spacing.TextMetrics
-                SwiftUI.SpatialLongPressGesture
-                SwiftUI.SpatialTapGesture.Value
                 SwiftUI.SystemHoverEffectStyleMetrics
                 SwiftUI.SystemShadowStyleMetrics.Grounding
                 SwiftUI.SystemShadowStyleMetrics.Separated
                 SwiftUI.Text.Layout.TypographicBounds
                 SwiftUI.TextProxy
-                SwiftUI.ToolbarButtonLabelModifier
                 SwiftUI.UnevenRoundedRectangle
                 SwiftUI.UnevenRoundedRectangle._Inset
                 SwiftUI.ViewFrame
                 SwiftUI.ViewListSublistSlice
                 SwiftUI.ViewSize
-                SwiftUI.WindowDragGesture
                 SwiftUI._BrightnessEffect
-                SwiftUI._CircleLayout
                 SwiftUI._ColorMatrix
                 SwiftUI._ContrastEffect
                 SwiftUI._GrayscaleEffect
-                SwiftUI._LayoutScaleModifier
                 SwiftUI._LayoutTraits
                 SwiftUI._LayoutTraits.Dimension
                 SwiftUI._OffsetEffect
@@ -553,9 +538,10 @@ open class SwiftMeta: NSObject {
                 SwiftUI._ShapeStyle_Pack.Fill.AnimatableData
                 SwiftUI._ShapeStyle_RenderedShape
                 SwiftUI._ViewList_Group
+                SwiftUI.UnitPoint
                 __C.CGSize
                 """.components(separatedBy: "\n") {
-            if let typ = lookupType(named: known) {
+            if let typ = lookupType(named: allFloats) {
                 structsAllFloats.insert(autoBitCast(typ))
             }
         }
@@ -573,6 +559,7 @@ open class SwiftMeta: NSObject {
      Structs that have only fields that conform to .SwiftTraceFloatArg
      */
     static var structsAllFloats = Set<UnsafeRawPointer>()
+    static var enumTypes = Set<UnsafeRawPointer>()
 
     /**
      Ferforms a one time scan of all property getters at a bundlePath to
@@ -580,7 +567,14 @@ open class SwiftMeta: NSObject {
      or UUID and are passed by reference by the compiler for some reason.
      */
     open class func process(bundlePath: UnsafePointer<Int8>,
-                   problemTypes: UnsafeMutablePointer<Set<UnsafeRawPointer>>) {
+                            skip: Bool = !SwiftTrace.typeLookup, problemTypes:
+                            UnsafeMutablePointer<Set<UnsafeRawPointer>>) {
+        findHiddenSwiftSymbols(bundlePath, "ON", .any) { (symval, symbol, _, _) in
+            enumTypes.insert(symval)
+        }
+
+        if skip { return }
+
         var offset = 0
         var currentType = ""
         var wasFloatType = false

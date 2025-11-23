@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#330 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#333 $
 //
 
 #if DEBUG || !DEBUG_ONLY
@@ -137,7 +137,8 @@ open class SwiftTrace: NSObject {
             UIImage _initWithCompositedSymbolImageLayers:name:alignUsingBaselines:|\
             _UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|\
             UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose| ns(?:li|is)_|\
-            Swift(Trace|Regex)|HotReloading|Xprobe|eraseToAnyView|enableInjection|.cxx_construct|_objc_initiateDealloc
+            Swift(Trace|Regex)|HotReloading|Xprobe|eraseToAnyView|enableInjection|.cxx_construct|_objc_initiateDealloc|\
+            InjectionNext|HotSwiftUI|SwiftUI\\.(Font|Image\\.Scale)|_UIViewControllerTransitionRequest|[gt]Board] ->
             """
 
     static var exclusionRegexp: NSRegularExpression? =
@@ -327,7 +328,8 @@ open class SwiftTrace: NSObject {
             tClass = class_getSuperclass(tClass)
         }
 
-        if class_getInstanceMethod(aClass, retainSelector) != nil {
+        if class_getInstanceMethod(aClass, retainSelector) != nil,
+           !className.hasPrefix("UIWeb") {
             trace(objcClass: object_getClass(aClass)!, which: "+")
         }
         trace(objcClass: aClass, which: "-")
@@ -344,7 +346,8 @@ open class SwiftTrace: NSObject {
 //                    print("Patching #\(slotIndex) \(name)")
                     vtableSlot.pointee = swizzle.forwardingImplementation
                 }
-            } else if !name.contains(".getter :") {
+            } else if getenv("INJECTION_DETAIL") != nil &&
+                        !name.contains(".getter :") {
                 print("Excluding SwiftTrace of \(name)")
             }
         }
