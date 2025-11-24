@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#333 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#334 $
 //
 
 #if DEBUG || !DEBUG_ONLY
@@ -138,7 +138,7 @@ open class SwiftTrace: NSObject {
             _UIWindowSceneDeviceOrientationSettingsDiffAction _updateDeviceOrientationWithSettingObserverContext:windowScene:transitionContext:|\
             UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose| ns(?:li|is)_|\
             Swift(Trace|Regex)|HotReloading|Xprobe|eraseToAnyView|enableInjection|.cxx_construct|_objc_initiateDealloc|\
-            InjectionNext|HotSwiftUI|SwiftUI\\.(Font|Image\\.Scale)|_UIViewControllerTransitionRequest|[gt]Board] ->
+            InjectionNext|HotSwiftUI|SwiftUI\\.(Font|Image\\.Scale)|_UIViewControllerTransitionRequest|p(ush|op)Context:|[gt]Board] ->
             """
 
     static var exclusionRegexp: NSRegularExpression? =

@@ -4,14 +4,14 @@
 //
 //  Created by John Holdsworth on 21/01/2022.
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTraceGuts/Trampolines.mm#6 $
+//  $Id: //depot/SwiftTrace/SwiftTraceGuts/Trampolines.mm#7 $
 //
 
 #if DEBUG || !DEBUG_ONLY
 #import "include/SwiftTrace.h"
 
 //
-//  Trampoline code thanks to:
+//  Trampoline code adapted from:
 //  https://github.com/OliverLetterer/imp_implementationForwardingToSelector
 //
 //  imp_implementationForwardingToSelector.m
@@ -138,18 +138,14 @@ static NSMutableArray *normalTrampolinePages = nil;
 
 static SPLForwardingTrampolinePage *nextTrampolinePage()
 {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        normalTrampolinePages = [NSMutableArray array];
-    });
+    static std::vector<SPLForwardingTrampolinePage *> normalTrampolinePages;
 
-    NSMutableArray *thisArray = normalTrampolinePages;
-
-    SPLForwardingTrampolinePage *trampolinePage = (SPLForwardingTrampolinePage *)[thisArray.lastObject pointerValue];
+    auto &thisArray = normalTrampolinePages;
+    auto trampolinePage = thisArray.empty() ? nullptr : thisArray.back();
 
     if (!trampolinePage || (trampolinePage->nextAvailableTrampolineIndex == numberOfTrampolinesPerPage) ) {
         trampolinePage = SPLForwardingTrampolinePageAlloc();
-        [thisArray addObject:[NSValue valueWithPointer:trampolinePage]];
+        thisArray.push_back(trampolinePage);
     }
 
     return trampolinePage;

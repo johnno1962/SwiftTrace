@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#212 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#214 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -154,7 +154,7 @@ extension SwiftTrace {
             ToolbarItemPlacement|Color\\.RGBColorSpace|SwitchToggleStyle|RoundedRectangle|Capsule|\
             ButtonStyleConfiguration|NavigationBarItem\\.TitleDisplayMode|LayoutDirection|\
             _(View|Scene)((ListCount)?Input|Output)s)|Alamofire\\.(HTTPMethod|Request)|AnyView|\
-            URLAuthenticationChallenge|DragGesture|SwiftUI\\.ViewAlignedScroll
+            URLAuthenticationChallenge|SwiftUI\\.(DragGesture|ViewAlignedScroll|SensoryFeedback)
             """
 
     static var lookupExclusionRegexp: NSRegularExpression? =

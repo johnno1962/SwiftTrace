@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#119 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#121 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -387,6 +387,96 @@ open class SwiftMeta: NSObject {
     static var approximateFieldInfoByTypeName = [String: [FieldInfo]]()
     static var doesntHaveStorage = Set<String>()
 
+    public static var usePrecalculated = 01 == 1
+    public static var swiftUIPassedByReference = """
+        SwiftUI.AnimationCompletionCriteria
+        SwiftUI.ArchivedViewCore.Metadata
+        SwiftUI.DiffResult
+        SwiftUI.DisplayList.ArchiveIDs
+        SwiftUI.ImageResolutionContext
+        SwiftUI.LinkDestination
+        SwiftUI.LinkDestination.Configuration
+        SwiftUI.OpenURLAction.SystemHandlerInput
+        SwiftUI.ReferenceDateModifier
+        SwiftUI.ResolvableAbsoluteDate
+        SwiftUI.ResolvableStringResolutionContext
+        SwiftUI.SystemFormatStyle.DateOffset
+        SwiftUI.SystemFormatStyle.Timer
+        SwiftUI.ScrollTargetBehavior
+        SwiftUI.ScenePhase
+        """
+    public static var swiftUIStructsAllFloats = """
+        SwiftUI.AngularGradient._Paint
+        SwiftUI.Capsule._Inset
+        SwiftUI.Circle._Inset
+        SwiftUI.ColorMatrix
+        SwiftUI.ConcentricRectangle.AnimatableData
+        SwiftUI.ContainerRelativeShape._Inset
+        SwiftUI.CoreBaselineOffsetPair
+        SwiftUI.DistanceGesture
+        SwiftUI.EdgeInsets
+        SwiftUI.Ellipse._Inset
+        SwiftUI.EllipticalGradient._Paint
+        SwiftUI.EmptyAnimatableData
+        SwiftUI.FocusableFillerBounds.Metrics
+        SwiftUI.Font.ResolvedTraits
+        SwiftUI.GlassContainer.AppearanceSettings
+        SwiftUI.GlassContainer.Entry.ShapeBoundsResult
+        SwiftUI.GlassContainer.TranslationKick
+        SwiftUI.GraphicsFilter.DisplacementMap
+        SwiftUI.GraphicsFilter.GlassBackgroundStyle
+        SwiftUI.LayoutPositionQuery
+        SwiftUI.LayoutPriorityLayout
+        SwiftUI.LinearGradient._Paint
+        SwiftUI.NamedImage.DecodedInfo
+        SwiftUI.OffsetTransition
+        SwiftUI.OpacityRendererEffect
+        SwiftUI.RadialGradient._Paint
+        SwiftUI.Rectangle._Inset
+        SwiftUI.RectangleCornerRadii
+        SwiftUI.ResolvedGradientVector
+        SwiftUI.ResolvedSafeAreaInsets
+        SwiftUI.RootSizeInfo
+        SwiftUI.RoundedRectangle
+        SwiftUI.RoundedRectangle._Inset
+        SwiftUI.RoundedRectangularShapeCorners.AnimatableData
+        SwiftUI.RoundedSize
+        SwiftUI.SDFStyle.Group
+        SwiftUI.ScrollStateRequestKind.UpdateValueConfig
+        SwiftUI.ShaderVectorData
+        SwiftUI.ShaderVectorData.Element
+        SwiftUI.Spacing.TextMetrics
+        SwiftUI.SystemHoverEffectStyleMetrics
+        SwiftUI.SystemShadowStyleMetrics.Grounding
+        SwiftUI.SystemShadowStyleMetrics.Separated
+        SwiftUI.Text.Layout.TypographicBounds
+        SwiftUI.TextProxy
+        SwiftUI.UnevenRoundedRectangle
+        SwiftUI.UnevenRoundedRectangle._Inset
+        SwiftUI.ViewFrame
+        SwiftUI.ViewListSublistSlice
+        SwiftUI.ViewSize
+        SwiftUI._BrightnessEffect
+        SwiftUI._ColorMatrix
+        SwiftUI._ContrastEffect
+        SwiftUI._GrayscaleEffect
+        SwiftUI._LayoutTraits
+        SwiftUI._LayoutTraits.Dimension
+        SwiftUI._OffsetEffect
+        SwiftUI._OpacityEffect
+        SwiftUI._PositionLayout
+        SwiftUI._SaturationEffect
+        SwiftUI._ScaledValue
+        SwiftUI._ScrollLayout
+        SwiftUI._ShapeStyle_Pack.Effect
+        SwiftUI._ShapeStyle_Pack.Effect.Kind.AnimatableData
+        SwiftUI._ShapeStyle_Pack.Fill.AnimatableData
+        SwiftUI._ShapeStyle_RenderedShape
+        SwiftUI._ViewList_Group
+        SwiftUI.UnitPoint
+        __C.CGSize
+        """
+
     public static var structsPassedByReference: Set<UnsafeRawPointer> = {
         var problemTypes = Set<UnsafeRawPointer>()
         func passedByReference(_ type: Any.Type) {
@@ -436,9 +526,9 @@ open class SwiftMeta: NSObject {
         if let swiftUIFramework = swiftUIBundlePath() {
             let saveProblemTypes = problemTypes
             let saveFloatStructs = structsAllFloats
-            let skip = 01 == 1
-            process(bundlePath: swiftUIFramework, skip: skip, problemTypes: &problemTypes)
-            if !skip {
+            process(bundlePath: swiftUIFramework, skip: usePrecalculated,
+                    problemTypes: &problemTypes)
+            if !usePrecalculated {
                 for typ in problemTypes.subtracting(saveProblemTypes)
                     .map({ _typeName(autoBitCast($0)) }).sorted() {
                     print(typ)
@@ -450,99 +540,16 @@ open class SwiftMeta: NSObject {
                 }
             }
         }
-        for byReference in """
-            SwiftUI.AnimationCompletionCriteria
-            SwiftUI.ArchivedViewCore.Metadata
-            SwiftUI.DiffResult
-            SwiftUI.DisplayList.ArchiveIDs
-            SwiftUI.ImageResolutionContext
-            SwiftUI.LinkDestination
-            SwiftUI.LinkDestination.Configuration
-            SwiftUI.OpenURLAction.SystemHandlerInput
-            SwiftUI.ReferenceDateModifier
-            SwiftUI.ResolvableAbsoluteDate
-            SwiftUI.ResolvableStringResolutionContext
-            SwiftUI.SystemFormatStyle.DateOffset
-            SwiftUI.SystemFormatStyle.Timer
-            SwiftUI.ScenePhase
-            """.components(separatedBy: "\n") {
-            if let type = SwiftMeta.lookupType(named: byReference) {
-                passedByReference(autoBitCast(type))
+        if usePrecalculated {
+            for byReference in swiftUIPassedByReference.components(separatedBy: "\n") {
+                if let type = SwiftMeta.lookupType(named: byReference) {
+                    passedByReference(autoBitCast(type))
+                }
             }
-        }
-        for allFloats in """
-                SwiftUI.AngularGradient._Paint
-                SwiftUI.Capsule._Inset
-                SwiftUI.Circle._Inset
-                SwiftUI.ColorMatrix
-                SwiftUI.ConcentricRectangle.AnimatableData
-                SwiftUI.ContainerRelativeShape._Inset
-                SwiftUI.CoreBaselineOffsetPair
-                SwiftUI.DistanceGesture
-                SwiftUI.EdgeInsets
-                SwiftUI.Ellipse._Inset
-                SwiftUI.EllipticalGradient._Paint
-                SwiftUI.EmptyAnimatableData
-                SwiftUI.FocusableFillerBounds.Metrics
-                SwiftUI.Font.ResolvedTraits
-                SwiftUI.GlassContainer.AppearanceSettings
-                SwiftUI.GlassContainer.Entry.ShapeBoundsResult
-                SwiftUI.GlassContainer.TranslationKick
-                SwiftUI.GraphicsFilter.DisplacementMap
-                SwiftUI.GraphicsFilter.GlassBackgroundStyle
-                SwiftUI.LayoutPositionQuery
-                SwiftUI.LayoutPriorityLayout
-                SwiftUI.LinearGradient._Paint
-                SwiftUI.NamedImage.DecodedInfo
-                SwiftUI.OffsetTransition
-                SwiftUI.OpacityRendererEffect
-                SwiftUI.RadialGradient._Paint
-                SwiftUI.Rectangle._Inset
-                SwiftUI.RectangleCornerRadii
-                SwiftUI.ResolvedGradientVector
-                SwiftUI.ResolvedSafeAreaInsets
-                SwiftUI.RootSizeInfo
-                SwiftUI.RoundedRectangle
-                SwiftUI.RoundedRectangle._Inset
-                SwiftUI.RoundedRectangularShapeCorners.AnimatableData
-                SwiftUI.RoundedSize
-                SwiftUI.SDFStyle.Group
-                SwiftUI.ScrollStateRequestKind.UpdateValueConfig
-                SwiftUI.ShaderVectorData
-                SwiftUI.ShaderVectorData.Element
-                SwiftUI.Spacing.TextMetrics
-                SwiftUI.SystemHoverEffectStyleMetrics
-                SwiftUI.SystemShadowStyleMetrics.Grounding
-                SwiftUI.SystemShadowStyleMetrics.Separated
-                SwiftUI.Text.Layout.TypographicBounds
-                SwiftUI.TextProxy
-                SwiftUI.UnevenRoundedRectangle
-                SwiftUI.UnevenRoundedRectangle._Inset
-                SwiftUI.ViewFrame
-                SwiftUI.ViewListSublistSlice
-                SwiftUI.ViewSize
-                SwiftUI._BrightnessEffect
-                SwiftUI._ColorMatrix
-                SwiftUI._ContrastEffect
-                SwiftUI._GrayscaleEffect
-                SwiftUI._LayoutTraits
-                SwiftUI._LayoutTraits.Dimension
-                SwiftUI._OffsetEffect
-                SwiftUI._OpacityEffect
-                SwiftUI._PositionLayout
-                SwiftUI._SaturationEffect
-                SwiftUI._ScaledValue
-                SwiftUI._ScrollLayout
-                SwiftUI._ShapeStyle_Pack.Effect
-                SwiftUI._ShapeStyle_Pack.Effect.Kind.AnimatableData
-                SwiftUI._ShapeStyle_Pack.Fill.AnimatableData
-                SwiftUI._ShapeStyle_RenderedShape
-                SwiftUI._ViewList_Group
-                SwiftUI.UnitPoint
-                __C.CGSize
-                """.components(separatedBy: "\n") {
-            if let typ = lookupType(named: allFloats) {
-                structsAllFloats.insert(autoBitCast(typ))
+            for allFloats in swiftUIStructsAllFloats.components(separatedBy: "\n") {
+                if let typ = lookupType(named: allFloats) {
+                    structsAllFloats.insert(autoBitCast(typ))
+                }
             }
         }
 
