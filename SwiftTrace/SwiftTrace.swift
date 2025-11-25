@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#334 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#337 $
 //
 
 #if DEBUG || !DEBUG_ONLY
@@ -139,11 +139,35 @@ open class SwiftTrace: NSObject {
             UIColorEffect colorEffectSaturate:|UIWindow _windowWithContextId:|RxSwift.ScheduledDisposable.dispose| ns(?:li|is)_|\
             Swift(Trace|Regex)|HotReloading|Xprobe|eraseToAnyView|enableInjection|.cxx_construct|_objc_initiateDealloc|\
             InjectionNext|HotSwiftUI|SwiftUI\\.(Font|Image\\.Scale)|_UIViewControllerTransitionRequest|p(ush|op)Context:|[gt]Board] ->
-            """
+            """+traceRepaired
 
     static var exclusionRegexp: NSRegularExpression? =
         NSRegularExpression(regexp: defaultMethodExclusions)
     static var inclusionRegexp: NSRegularExpression?
+
+    /**
+     New feature where if INJECTION_TRACE_REPAIR is set
+     a record is kept of the currently tracing function
+     which if it fails and the tmp file is not deleted
+     is added to a regex of methods not to trace which
+     should avoid the crash next time the app is run.
+     */
+    static let traceRepairFile = { getenv("INJECTION_TRACE_REPAIR") != nil ?
+        NSTemporaryDirectory()+"/swiftTrace.tmp" : nil }()
+    static let traceRepaired: String = {
+        let repairedKey = "_kSwiftTraceRepaired"
+        let defaults = UserDefaults.standard
+        var repaired = defaults.string(forKey: repairedKey) ?? ""
+        if let lastFailed = traceRepairFile,
+           let signature = try? String(contentsOfFile: lastFailed) {
+            repaired += "|\\Q\(signature)\\E"
+            defaults.set(repaired, forKey: repairedKey)
+        }
+        if !repaired.isEmpty {
+            print("Supressing SwiftTrace of "+repaired)
+        }
+        return repaired
+    }()
 
     /**
      Exclude symbols matching this pattern. If not specified

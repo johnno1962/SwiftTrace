@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#68 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#69 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -99,6 +99,8 @@ extension SwiftTrace {
 
        /** This Sizzle has been swizzled */
        var reSwizzled = false
+       /** Has successfully decorated */
+       var hasDecorated = false
 
        /** Closure that can be called instead of original implementation */
        public let nullImplmentation: nullImplementationType?
@@ -229,6 +231,11 @@ extension SwiftTrace {
                    }
                }
 
+               if !hasDecorated, let tmpfile = traceRepairFile,
+                  let tmpFP = fopen(tmpfile, "w") {
+                   fputs(signature, tmpFP)
+                   fclose(tmpFP)
+               }
                let shouldPrint = invocation.shouldDecorate && notFilteredOut()
                if shouldPrint || isLifetime,
                    let decorated = entryDecorate(stack: &stack,
@@ -271,6 +278,10 @@ extension SwiftTrace {
                         \(returnValue)\(String(format: SwiftTrace.timeFormat,
                                 elapsed * 1000.0)+slow)\(subLogging() ? "" : "\n")
                         """, autoBitCast(invocation.swiftSelf), invocation.stackDepth)
+               }
+               if !hasDecorated, let tmpfile = traceRepairFile {
+                   hasDecorated = true
+                   unlink(tmpfile)
                }
                totalElapsed += elapsed
                invocationCount += 1
