@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#214 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftArgs.swift#215 $
 //
 //  Decorate trace with argument/return values
 //  ==========================================
@@ -108,16 +108,19 @@ extension SwiftTrace {
      'false' skips any decoration steps when visiting Swift code
      'true' decorates normally
      */
+    nonisolated(unsafe)
     static public var swiftDecorateArgs = (onEntry: true, onExit: true)
 
     /**
      Enable auto decoration of unknown types
      */
+    nonisolated(unsafe)
     static public var typeLookup = false
 
     /**
      Decorating "Any" is not fully understood.
      */
+    nonisolated(unsafe)
     public static var decorateAny = false {
         didSet {
             SwiftMeta.typeLookupCache["Any"] = decorateAny ? Any.self : nil
@@ -127,26 +130,33 @@ extension SwiftTrace {
     /**
      A "pagmatic" limit on the size of structs that will be decorated
      */
+    nonisolated(unsafe)
     static public var maxIntegerArgumentSlots = 4
 
     /**
      A limit on argument description size
      */
+    nonisolated(unsafe)
     static public var maxArgumentDescriptionBytes = 1_000
 
     // For describing values and appending values to arguments array
+    nonisolated(unsafe)
     static var describerFptr = SwiftMeta.bindGeneric(name: "describer",
                                                      args: "SSzt")
+    nonisolated(unsafe)
     static var enumnameFptr = SwiftMeta.bindGeneric(name: "enumNamer",
                                                      args: "SSzt")
+    nonisolated(unsafe)
     static var appenderFptr = SwiftMeta.bindGeneric(name: "appender",
                                                     args: "SayypGzt")
+    nonisolated(unsafe)
     static var returnerFptr = SwiftMeta.bindGeneric(name: "returner",
                                                     args: "ypSgzt")
 
     /**
      Default pattern of type names to be excluded from decoration
      */
+    nonisolated(unsafe)
     public static var defaultLookupExclusions: String = """
             ^SwiftUI\\.(Font\\.(Design|TextStyle)|ToggleStyleConfiguration|AccessibilityChildBehavior|\
             LocalizedStringKey\\.StringInterpolation|RoundedCornerStyle|Image\\.ResizingMode|\
@@ -157,6 +167,7 @@ extension SwiftTrace {
             URLAuthenticationChallenge|SwiftUI\\.(DragGesture|ViewAlignedScroll|SensoryFeedback)
             """
 
+    nonisolated(unsafe)
     static var lookupExclusionRegexp: NSRegularExpression? =
         NSRegularExpression(regexp: defaultLookupExclusions)
 
@@ -356,6 +367,7 @@ extension SwiftTrace {
             return signature.contains(".subscript.setter ")
         }()
 
+        nonisolated(unsafe)
         public static var decorateByDefault = { (typename: String) -> Bool in
             return typeLookup || typename.hasPrefix("Swift.")
                 || typename.hasPrefix("SwiftUI.") && !typename.hasSuffix(">")
@@ -429,6 +441,7 @@ extension SwiftTrace {
         /**
          Mapping of Swift type names to handler for that concrete type
          */
+        nonisolated(unsafe)
         public static var swiftTypeHandlers: [String: (Invocation, Bool) -> String?] = [
             "()": { _,_ in return "Void" }
         ]
@@ -521,6 +534,7 @@ extension SwiftTrace {
         /**
          Mapping of objc type encodings to handlers for that concrete type
          */
+        nonisolated(unsafe)
         public static var objcTypeHandlers: [String: (Invocation, Bool) -> String?] = [
             "@": { handleArg(invocation: $0, isReturn: $1, type: AnyObject?.self) },
             "#": { handleArg(invocation: $0, isReturn: $1, type: AnyObject?.self) },

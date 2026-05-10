@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftLifetime.swift#26 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftLifetime.swift#27 $
 //
 //  Trace instance life cycle for tracking down reference cycles.
 //  =============================================================
@@ -29,8 +29,11 @@ import Foundation
 
 extension SwiftTrace {
 
+    nonisolated(unsafe)
     public static var liveObjects = [UnsafeRawPointer: Set<UnsafeRawPointer>]()
+    nonisolated(unsafe)
     public static var liveObjectsLock = OS_SPINLOCK_INIT
+    nonisolated(unsafe)
     private static var reaperKey = strdup("_reaper_")!
 
     open class LifetimeTracker: Decorated {

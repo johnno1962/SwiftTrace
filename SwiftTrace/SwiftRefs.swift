@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftRefs.swift#4 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftRefs.swift#5 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -30,21 +30,27 @@ extension SwiftMeta {
     /**
      Get approximate nformation about the fields of a type
      */
-    open class func fieldInfo(forAnyType: Any.Type) -> [FieldInfo]? {
+    public class func fieldInfo(forAnyType: Any.Type) -> [FieldInfo]? {
         _ = structsPassedByReference
         return approximateFieldInfoByTypeName[_typeName(forAnyType)]
     }
 
+    nonisolated(unsafe)
     static var approximateFieldInfoByTypeName = [String: [FieldInfo]]()
+    nonisolated(unsafe)
     static var doesntHaveStorage = Set<String>()
 
     /**
      Structs that have only fields that conform to .SwiftTraceFloatArg
      */
+    nonisolated(unsafe)
     static var structsAllFloats = Set<UnsafeRawPointer>()
+    nonisolated(unsafe)
     static var enumTypes = Set<UnsafeRawPointer>()
 
+    nonisolated(unsafe)
     public static var usePrecalculated = 01 == 1
+    nonisolated(unsafe)
     public static var swiftUIPassedByReference = """
         SwiftUI.AnimationCompletionCriteria
         SwiftUI.ArchivedViewCore.Metadata
@@ -63,6 +69,7 @@ extension SwiftMeta {
         SwiftUI.ScrollIndicatorVisibility
         SwiftUI.ScenePhase
         """
+    nonisolated(unsafe)
     public static var swiftUIStructsAllFloats = """
         SwiftUI.AngularGradient._Paint
         SwiftUI.Capsule._Inset
@@ -135,6 +142,7 @@ extension SwiftMeta {
         __C.CGSize
         """
 
+    nonisolated(unsafe)
     public static var structsPassedByReference: Set<UnsafeRawPointer> = {
         var problemTypes = Set<UnsafeRawPointer>()
         func passedByReference(_ type: Any.Type) {
@@ -225,9 +233,9 @@ extension SwiftMeta {
      look out for structs that are or contain bridged(?) values such as URL
      or UUID and are passed by reference by the compiler for some reason.
      */
-    open class func process(bundlePath: UnsafePointer<Int8>,
-                            skip: Bool = !SwiftTrace.typeLookup, problemTypes:
-                            UnsafeMutablePointer<Set<UnsafeRawPointer>>) {
+    public class func process(bundlePath: UnsafePointer<Int8>,
+                              skip: Bool = !SwiftTrace.typeLookup, problemTypes:
+                              UnsafeMutablePointer<Set<UnsafeRawPointer>>) {
 //        let start = Date.timeIntervalSinceReferenceDate
 //        defer { print("Took \(Date.timeIntervalSinceReferenceDate-start) " +
 //                      "to process \(String(cString: bundlePath))") }

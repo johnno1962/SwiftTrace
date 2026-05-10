@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#69 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftSwizzle.swift#70 $
 //
 //  Mechanics of Swizzling Swift
 //  ============================
@@ -22,22 +22,30 @@ extension SwiftTrace {
     /**
      Hook to intercept all trace output
      */
+    nonisolated(unsafe)
     public static var logOutput: (String, UnsafeRawPointer?, Int) -> () = {
         print($0, terminator: "")
         _ = ($1, $2) // self, indent
     }
 
     /** Used for real time filtering */
+    nonisolated(unsafe)
     static var includeFilter: NSRegularExpression?
+    nonisolated(unsafe)
     static var excludeFilter: NSRegularExpression?
+    nonisolated(unsafe)
     static var filterGeneration = 0
 
     /** Used to gather order in which methods are called */
+    nonisolated(unsafe)
     static var firstCalled: Swizzle?
+    nonisolated(unsafe)
     static var lastCalled: Swizzle?
 
     /** highlight slow invocations */
+    nonisolated(unsafe)
     public static var slowThreshold = 0.1
+    nonisolated(unsafe)
     public static var slowEmphasis = "🔥"
 
     @objc open class var traceFilterInclude: String? {
@@ -169,6 +177,7 @@ extension SwiftTrace {
        }
 
        /** Called from assembly code on entry to Swizzled method */
+       nonisolated(unsafe)
        static var onEntry: @convention(c) (_ swizzle: Swizzle, _ returnAddress: UnsafeRawPointer,
            _ stackPointer: UnsafeMutablePointer<UInt64>) -> IMP? = {
                (swizzle, returnAddress, stackPointer) -> IMP? in
@@ -188,6 +197,7 @@ extension SwiftTrace {
        }
 
        /** Called from assembly code when Patched method returns */
+       nonisolated(unsafe)
        static var onExit: @convention(c) () -> UnsafeRawPointer = {
            let threadLocal = ThreadLocal.current()
            let invocation = threadLocal.invocationStack.last!
@@ -485,8 +495,10 @@ extension SwiftTrace {
         */
        public class ThreadLocal {
 
+           nonisolated(unsafe)
            private static var keyVar: pthread_key_t = 0
 
+           nonisolated(unsafe)
            private static var pthreadKey: pthread_key_t = {
                let ret = pthread_key_create(&keyVar, {
                    #if os(Linux) || os(Android)

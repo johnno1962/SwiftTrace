@@ -6,7 +6,7 @@
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#125 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftMeta.swift#126 $
 //
 //  Requires https://github.com/johnno1962/StringIndex.git
 //
@@ -144,9 +144,13 @@ open class SwiftMeta: NSObject {
     /**
      Definitions related to auto-traceability of types
      */
+    nonisolated(unsafe)
     public static let RTLD_NEXT = UnsafeMutableRawPointer(bitPattern: -1)!
+    nonisolated(unsafe)
     public static let RTLD_DEFAULT = UnsafeMutableRawPointer(bitPattern: -2)!
+    nonisolated(unsafe)
     public static let RTLD_SELF = UnsafeMutableRawPointer(bitPattern: -3)!
+    nonisolated(unsafe)
     public static let RTLD_MAIN_ONLY = UnsafeMutableRawPointer(bitPattern: -5)!
     open class func mangle(_ name: String) -> String {
         return "\(name.utf8.count)\(name)"
@@ -173,12 +177,17 @@ open class SwiftMeta: NSObject {
      */
     public static let returnAnyType = "ypXpSgzt"
 
+    nonisolated(unsafe)
     static var getOptionalTypeFptr = bindGeneric(name: "getOptionalType")
+    nonisolated(unsafe)
     static var getMixedTypeFptr = bindGeneric(name: "getMixedType")
+    nonisolated(unsafe)
     static var getEnumTypeFptr = bindGeneric(name: "getEnumType")
+    nonisolated(unsafe)
     static var getMetaTypeFptr = bindGeneric(name: "getMetaType")
 
     /// Handled container types
+    nonisolated(unsafe)
     public static var wrapperHandlers = [
         "Swift.Optional<": getOptionalTypeFptr,
         "Swift.Array<": bindGeneric(name: "getArrayType"),
@@ -194,6 +203,7 @@ open class SwiftMeta: NSObject {
                                                args: "ypXpSgztSo6NSUnitCRbz"),
     ]
 
+    nonisolated(unsafe)
     public static var conformanceManglings = [
         "Swift.Set<": "H",
         "Swift.Range<": "L"
@@ -207,10 +217,12 @@ open class SwiftMeta: NSObject {
         return out
     }
 
+    nonisolated(unsafe)
     public static var nameAbbreviations = [
         "Swift": "s"
     ]
 
+    nonisolated(unsafe)
     public static var typeLookupCache: [String: Any.Type?] = [
         // These types have non-standard manglings
         "Swift.String": String.self,
@@ -236,6 +248,7 @@ open class SwiftMeta: NSObject {
         // Gets stuck in lookupType() on device.
         "SwiftUICaseStudies.CounterTabView": nil,
     ]
+    nonisolated(unsafe)
     static var typeLookupCacheLock = OS_SPINLOCK_INIT
 
     /**

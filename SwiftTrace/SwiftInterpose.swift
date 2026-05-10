@@ -5,7 +5,7 @@
 //  Created by John Holdsworth on 23/09/2020.
 //  Copyright © 2020 John Holdsworth. All rights reserved.
 //
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#80 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftInterpose.swift#81 $
 //
 //  Extensions to SwiftTrace using dyld_dynamic_interpose
 //  =====================================================
@@ -21,12 +21,15 @@ extension SwiftTrace {
     /// to interpose i.e. constructors, functions (methods),
     /// getters of Opaque type (for SwiftUI body properties)
     /// and setters and destructors.
+    nonisolated(unsafe)
     public static var traceableFunctionSuffixes = ["fC", "F", "Qrvg", "s", "fD"]
 
     /// Regexp pattern for functions to exclude from interposing
+    nonisolated(unsafe)
     public static var interposeEclusions: NSRegularExpression? = nil
 
     /// Base rebindings applied to each injected file.
+    nonisolated(unsafe)
     public static var initialRebindings = [rebinding]()
 
     /// "interpose" aspects onto Swift function name.

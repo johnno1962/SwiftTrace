@@ -6,7 +6,7 @@
 //  Copyright © 2016 John Holdsworth. All rights reserved.
 //
 //  Repo: https://github.com/johnno1962/SwiftTrace
-//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#337 $
+//  $Id: //depot/SwiftTrace/SwiftTrace/SwiftTrace.swift#338 $
 //
 
 #if DEBUG || !DEBUG_ONLY
@@ -32,32 +32,38 @@ open class SwiftTrace: NSObject {
     /**
      Format for ms of time spend in method
      */
+    nonisolated(unsafe)
     public static var timeFormat = " %.1fms"
 
     /**
      Format for idenifying class instance
      */
+    nonisolated(unsafe)
     public static var identifyFormat = "<%@ %p>"
 
     /**
      Indentation amongst different call levels on the stack
      */
+    nonisolated(unsafe)
     public static var traceIndent = "  "
 
     /**
         Class used to create "Sizzle" instances representing a member function
      */
+    nonisolated(unsafe)
     public static var swizzleFactory: Swizzle.Type = Decorated.self
 
     /**
         Class used to create "Invocation" instances representing a
         specific call to a member function on the "ThreadLocal" stack.
      */
+    nonisolated(unsafe)
     public static var defaultInvocationFactory = Swizzle.Invocation.self
 
     /**
         Does the class have a .cxx_destruct method for tracking deallocs?
      */
+    nonisolated(unsafe)
     public static var tracksDeallocs = Set<UnsafeRawPointer>()
 
     /**
@@ -65,20 +71,23 @@ open class SwiftTrace: NSObject {
      */
     public typealias nullImplementationType = @convention(c) () -> AnyObject?
 
+    nonisolated(unsafe)
     public static var lastSwiftTrace = SwiftTrace(previous: nil, subLevels: 0)
 
     /// Previous interposes need to be tracked
-    fileprivate static var interposed = [UnsafeRawPointer: UnsafeRawPointer]()
+    nonisolated(unsafe) fileprivate static var interposed = [UnsafeRawPointer: UnsafeRawPointer]()
 
     /**
      Returns a pointer to the interposed dictionary. Required to
      ensure only one interposed dictionary us used if the user
      includes SwiftTrace as a package or pod in their project.
      */
-    @objc public class var interposedPointer: UnsafeMutableRawPointer {
+    @objc nonisolated(unsafe)
+    public class var interposedPointer: UnsafeMutableRawPointer {
         return UnsafeMutableRawPointer(&interposed)
     }
 
+    nonisolated(unsafe)
     static var bundlesInterposed = Set<String>()
 
     public class var isTracing: Bool {
@@ -127,6 +136,7 @@ open class SwiftTrace: NSObject {
     /**
      Default pattern of common/problematic symbols to be excluded from tracing
      */
+    nonisolated(unsafe)
     public static var defaultMethodExclusions: String = """
             \\.getter : (?!some)|\\.hash[(]into: | async |interposedPointer|\
              (?:retain(?:Count)?|_tryRetain|release|autorelease|_isDeallocating|_?dealloc|class|self|description|\
@@ -141,8 +151,10 @@ open class SwiftTrace: NSObject {
             InjectionNext|HotSwiftUI|SwiftUI\\.(Font|Image\\.Scale)|_UIViewControllerTransitionRequest|p(ush|op)Context:|[gt]Board] ->
             """+traceRepaired
 
+    nonisolated(unsafe)
     static var exclusionRegexp: NSRegularExpression? =
         NSRegularExpression(regexp: defaultMethodExclusions)
+    nonisolated(unsafe)
     static var inclusionRegexp: NSRegularExpression?
 
     /**
@@ -195,6 +207,7 @@ open class SwiftTrace: NSObject {
     /**
      Default/current implementation for method filter
      */
+    nonisolated(unsafe)
     static var _methodFilter: (_ symbol: String) -> Swizzle.Type? = {
         (symbol) in
         return
@@ -473,13 +486,15 @@ open class SwiftTrace: NSObject {
         return stop
     }
 
+    nonisolated(unsafe)
     public static var preserveStatics = false
     public static let deviceInjection = lastPseudoImage() != nil
 
     /// Determine if symbol name is injectable
     /// - Parameter symname: Pointer to symbol name
     /// - Returns: Whether symbol should be patched
-    @objc public static var injectableSymbol: // STSymbolFilter
+    @objc nonisolated(unsafe)
+    public static var injectableSymbol: // STSymbolFilter
         (UnsafePointer<CChar>) -> Bool = { symname in
 //        print("Injectable?", String(cString: symname))
         let symstart = symname +
