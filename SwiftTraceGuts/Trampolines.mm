@@ -72,6 +72,8 @@ static const int32_t SPLForwardingTrampolineInstructionCount = 62;
 #define PAGE_SIZE (1<<14)
 #elif defined(__LP64__) // x86_64
 static const int32_t SPLForwardingTrampolineInstructionCount = 92;
+#undef  PAGE_SIZE
+#define PAGE_SIZE (1<<12)
 #else
 #error SwiftTrace is not supported on this platform
 #endif

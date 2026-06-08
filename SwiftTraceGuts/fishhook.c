@@ -30,6 +30,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/types.h>
+#include <sys/errno.h>
 #include <mach/mach.h>
 #include <mach/vm_map.h>
 #include <mach/vm_region.h>
@@ -131,9 +132,14 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
   uint32_t *indirect_symbol_indices = indirect_symtab + section->reserved1;
   void **indirect_symbol_bindings = (void **)((uintptr_t)slide + section->addr);
   vm_prot_t oldProtection = VM_PROT_READ;
+  // iOS 27+ requires page aligned address
+  uintptr_t page_mask = ~(PAGE_SIZE-1), aligned = (uintptr_t)indirect_symbol_bindings&page_mask,
+    rounded = ((uintptr_t)indirect_symbol_bindings-aligned + section->size + PAGE_SIZE-1)&page_mask;
   if (isDataConst) {
     oldProtection = get_protection(rebindings);
-    mprotect(indirect_symbol_bindings, section->size, PROT_READ | PROT_WRITE);
+    if (mprotect((void *)aligned, rounded, PROT_READ | PROT_WRITE) != KERN_SUCCESS)
+      printf("fishhook: mprotect(%p, 0x%lx, 0x%x) failed: %s\n",
+             (void *)aligned, rounded, PROT_READ | PROT_WRITE, strerror(errno));
   }
   for (uint i = 0; i < section->size / sizeof(void *); i++) {
     uint32_t symtab_index = indirect_symbol_indices[i];
@@ -193,7 +199,7 @@ static void perform_rebinding_with_section(struct rebindings_entry *rebindings,
     if (oldProtection & VM_PROT_EXECUTE) {
       protection |= PROT_EXEC;
     }
-    mprotect(indirect_symbol_bindings, section->size, protection);
+    mprotect((void *)aligned, rounded, protection);
   }
 }
 
