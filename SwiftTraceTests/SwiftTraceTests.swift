@@ -58,7 +58,8 @@ class SwiftTwaceTests: XCTestCase {
 
         class TestSwizzle: SwiftTrace.Swizzle {
 
-            override func onEntry(stack: inout SwiftTrace.EntryStack) {
+            override func onEntry(stack: inout SwiftTrace.EntryStack,
+                                  invocation: Invocation) {
                 args = "\(stack.intArg1) \(getSelf(as: TestClass.self).i) \(stack.floatArg1)"
             }
         }
